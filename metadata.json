@@ -1,0 +1,5 @@
+{
+  "name": "Staffing",
+  "description": "A responsive resource capacity planning application featuring an interactive heatmap, project and employee management, and bulk editing capabilities.",
+  "requestFramePermissions": []
+}

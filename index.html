@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Capacity Planner</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Gilroy', 'Inter', 'sans-serif'],
+            },
+            colors: {
+              primary: '#ee3a5e',
+              'primary-hover': '#d63453',
+              background: '#F5F2EB',
+              surface: '#FFFEFA',
+            },
+            boxShadow: {
+              'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+              'float': '0 10px 40px -10px rgba(0, 0, 0, 0.15)',
+              'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.05)',
+              'glow': '0 0 20px rgba(255, 255, 255, 0.8)',
+              'liquid': '0 4px 14px 0 rgba(0, 0, 0, 0.08)',
+            },
+            transitionTimingFunction: {
+              'spring': 'cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background-color: rgba(200, 190, 180, 0.3);
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(180, 170, 160, 0.5);
+      }
+      
+      .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .hide-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+
+      body {
+        background-color: #F5F2EB;
+        /* Warm beige/white light leaks */
+        background-image: 
+          radial-gradient(at 10% 0%, hsla(38, 30%, 94%, 1) 0px, transparent 50%),
+          radial-gradient(at 90% 0%, hsla(28, 30%, 96%, 1) 0px, transparent 50%),
+          radial-gradient(at 0% 100%, hsla(38, 20%, 94%, 1) 0px, transparent 50%),
+          radial-gradient(at 80% 100%, hsla(28, 20%, 96%, 1) 0px, transparent 50%);
+        background-attachment: fixed;
+        background-size: cover;
+      }
+      
+      body.dark {
+        background-color: #1a1614;
+        background-image: 
+          radial-gradient(at 50% 0%, hsla(30, 20%, 15%, 1) 0px, transparent 50%);
+      }
+      
+      /* Liquid Animation Utilities */
+      .liquid-hover {
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
+      }
+      .liquid-hover:hover {
+        transform: scale(1.05);
+      }
+      .liquid-hover:active {
+        transform: scale(0.95);
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react-dom": "https://esm.sh/react-dom@^19.2.3"
+  }
+}
+</script>
+</head>
+  <body class="text-slate-800 antialiased overflow-hidden selection:bg-primary/20">
+    <div id="root"></div>
+  </body>
+</html>
