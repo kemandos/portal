@@ -77,20 +77,20 @@ function App() {
                 const monthsToCheck = MONTHS.slice(0, viewState.timeRange === '3M' ? 3 : viewState.timeRange === '6M' ? 6 : 9);
                 const t = themeSettings.thresholds || { under: 50, balanced: 90, over: 110 };
                 
-                let totalHours = 0;
+                let totalPt = 0;
                 let totalCapacity = 0;
                 
                 monthsToCheck.forEach(m => {
                     const alloc = item.allocations[m];
                     if (alloc) {
-                        totalHours += alloc.hours;
-                        totalCapacity += alloc.total;
+                        totalPt += alloc.pt;
+                        totalCapacity += alloc.capacity;
                     } else {
-                        totalCapacity += 160; 
+                        totalCapacity += 20; 
                     }
                 });
 
-                const ratio = totalCapacity > 0 ? totalHours / totalCapacity : 0;
+                const ratio = totalCapacity > 0 ? totalPt / totalCapacity : 0;
                 const percentage = ratio * 100;
                 
                 let status = 'Fully Allocated';
@@ -111,12 +111,45 @@ function App() {
         });
     });
 
-    // Grouping Logic applied to filtered items
+    // --- Recalculate allocations (Roll-up) ---
+    // Ensure parent allocation matches the sum of children
+    const calculatedItems = filteredItems.map(item => {
+        if (!item.children) return item;
+
+        const newAllocations = { ...item.allocations };
+        
+        MONTHS.forEach(month => {
+             // Sum children PT for this month
+             const totalPt = item.children!.reduce((sum, child) => {
+                 return sum + (child.allocations[month]?.pt || 0);
+             }, 0);
+
+             // Get capacity from existing record or default to 20 PT
+             const existing = item.allocations[month];
+             const capacity = existing ? existing.capacity : 20;
+
+             // Determine status
+             let status: 'optimal' | 'over' | 'under' | 'empty' = 'optimal';
+             if (totalPt === 0) status = 'empty';
+             else if (totalPt > capacity) status = 'over';
+             else if (totalPt < capacity) status = 'under';
+
+             newAllocations[month] = {
+                 pt: totalPt,
+                 capacity: capacity,
+                 status
+             };
+        });
+
+        return { ...item, allocations: newAllocations };
+    });
+
+    // Grouping Logic applied to calculated items
     if (viewState.mode === 'People') {
-        if (groupBy === 'None') return filteredItems;
+        if (groupBy === 'None') return calculatedItems;
         if (groupBy === 'Department') {
             const groups: Record<string, Resource[]> = {};
-            filteredItems.forEach(item => {
+            calculatedItems.forEach(item => {
                 const dept = item.department || 'Unassigned';
                 if (!groups[dept]) groups[dept] = [];
                 groups[dept].push(item);
@@ -133,7 +166,7 @@ function App() {
         }
         if (groupBy === 'Managing Consultant') {
              const groups: Record<string, Resource[]> = {};
-            filteredItems.forEach(item => {
+            calculatedItems.forEach(item => {
                 const mgr = item.manager || 'Unassigned';
                 if (!groups[mgr]) groups[mgr] = [];
                 groups[mgr].push(item);
@@ -148,16 +181,18 @@ function App() {
                 children
             }));
         }
-         return filteredItems; 
+         return calculatedItems; 
     } else {
         // Projects Mode
-        if (groupBy === 'None') return filteredItems;
+        if (groupBy === 'None') return calculatedItems;
         if (groupBy === 'Dealfolder') {
-             // Reconstruct parent folders with filtered children
+             // Reconstruct parent folders with filtered/calculated children
              return MOCK_PROJECTS.map(folder => {
-                 const matchingChildren = (folder.children || []).filter(child => 
-                     filteredItems.some(fi => fi.id === child.id)
-                 );
+                 // Use calculatedItems to find the updated child (with rolled-up pt)
+                 const matchingChildren = (folder.children || []).map(child => 
+                     calculatedItems.find(c => c.id === child.id)
+                 ).filter((c): c is Resource => !!c);
+
                  if (matchingChildren.length === 0) return null;
                  
                  return {
@@ -168,7 +203,7 @@ function App() {
                  };
              }).filter(Boolean) as Resource[];
         }
-        return filteredItems;
+        return calculatedItems;
     }
   }, [viewState.mode, groupBy, activeFilters, viewState.timeRange, themeSettings.thresholds]);
 
@@ -294,33 +329,35 @@ function App() {
 
       {/* Floating Action Bar (Bulk Actions) */}
       {hasSelection && (
-        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-[540px] px-4">
-            <div className="bg-slate-900/95 backdrop-blur-md text-white rounded-xl shadow-2xl px-4 py-2.5 flex items-center justify-between animate-in slide-in-from-bottom-5 fade-in duration-300 border border-white/10">
-                <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center size-8 rounded-full bg-primary text-white font-bold text-xs shadow-lg shadow-primary/20">
+        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 flex items-center justify-center w-full px-4 pointer-events-none">
+            <div className="bg-[#1e293b] text-white rounded-2xl shadow-[0_8px_40px_-12px_rgba(0,0,0,0.5)] p-2 pr-4 flex items-center gap-6 animate-in slide-in-from-bottom-5 fade-in duration-300 border border-white/10 ring-1 ring-black/20 pointer-events-auto backdrop-blur-xl">
+                <div className="flex items-center gap-4 pl-2">
+                    <div className="flex items-center justify-center size-10 rounded-full bg-[#e11d48] text-white font-bold text-sm shadow-[0_4px_12px_rgba(225,29,72,0.4)] ring-2 ring-[#e11d48]/50 ring-offset-2 ring-offset-[#1e293b]">
                         {getSelectionCount()}
                     </div>
-                    <div className="flex flex-col">
-                        <span className="text-sm font-bold text-white leading-none mb-0.5">
+                    <div className="flex flex-col gap-0.5">
+                        <span className="text-sm font-bold text-white leading-none">
                             {selectionLabel}
                         </span>
-                        <span className="text-[10px] text-white/40 font-medium leading-none">Select action below</span>
+                        <span className="text-[11px] text-slate-400 font-medium leading-none">
+                            Select action below
+                        </span>
                     </div>
                 </div>
                 
-                <div className="flex items-center h-full">
-                    <div className="h-8 w-px bg-white/10 mx-3"></div>
-                    
+                <div className="h-8 w-px bg-white/10" />
+
+                <div className="flex items-center gap-3">
                     <button 
                         onClick={() => setIsBulkModalOpen(true)}
-                        className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-all text-xs font-bold active:scale-95 group"
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white transition-all text-xs font-bold active:scale-95 border border-white/5 hover:border-white/20 hover:shadow-lg shadow-black/20"
                     >
-                        <ClipboardList size={16} className="text-white/80 group-hover:text-white" />
+                        <ClipboardList size={16} className="text-slate-300" />
                         Assign
                     </button>
                     {viewState.mode === 'Projects' && (
-                        <button className="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-all text-xs font-bold active:scale-95 group ml-2">
-                             <Merge size={16} className="text-white/80 group-hover:text-white" />
+                        <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white transition-all text-xs font-bold active:scale-95 border border-white/5 hover:border-white/20 hover:shadow-lg shadow-black/20">
+                             <Merge size={16} className="text-slate-300" />
                              Merge
                         </button>
                     )}
@@ -331,7 +368,7 @@ function App() {
                             setSelectionRange(null); 
                             setSelectedMonthIndices([]);
                         }}
-                        className="p-2 rounded-full hover:bg-white/10 text-white/40 hover:text-white transition-colors ml-2"
+                        className="p-2 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
                     >
                         <X size={18} />
                     </button>
@@ -344,6 +381,7 @@ function App() {
         isOpen={isEditModalOpen} 
         onClose={() => setIsEditModalOpen(false)} 
         initialData={editContext}
+        viewMode={viewState.mode}
       />
       <BulkAssignmentModal 
         isOpen={isBulkModalOpen} 

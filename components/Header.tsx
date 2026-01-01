@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutGrid, Settings } from 'lucide-react';
+import { Users, Settings } from 'lucide-react';
 import { ViewState } from '../types';
 
 interface HeaderProps {
@@ -36,14 +36,14 @@ export const Header: React.FC<HeaderProps> = ({ viewState, setViewState, onOpenS
   return (
     <header className="sticky top-0 z-40 px-4 md:px-6 py-4 transition-all">
         {/* Floating Glass Container */}
-        <div className="max-w-[1600px] mx-auto bg-[#FDFBF7]/60 backdrop-blur-xl border border-white/40 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.05)] px-4 py-2 flex items-center justify-between gap-4">
+        <div className="max-w-[1920px] mx-auto bg-[#FDFBF7]/60 backdrop-blur-xl border border-white/40 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.05)] px-4 py-2 flex items-center justify-between gap-4">
           
           {/* Logo & View Toggle */}
           <div className="flex items-center gap-4 min-w-[200px]">
             <div className="size-9 bg-gradient-to-br from-white/80 to-white/20 rounded-xl flex items-center justify-center text-primary shadow-lg shadow-primary/10 ring-1 ring-white/60">
-              <LayoutGrid size={20} />
+              <Users size={20} />
             </div>
-            <h1 className="text-lg font-bold tracking-tight hidden md:block text-slate-900/90 drop-shadow-sm">Capacity Planner</h1>
+            <h1 className="text-lg font-bold tracking-tight hidden md:block text-slate-900/90 drop-shadow-sm">Staffing</h1>
             
             {/* Desktop Toggle (Liquid Segmented Control) */}
             <div className={`hidden md:flex bg-gray-100/30 backdrop-blur-sm p-1 rounded-xl ml-4 border border-white/20 shadow-inner gap-1`}>

@@ -1,37 +1,139 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { X, Search, Minus, Plus, Trash2, CheckCircle, Lightbulb, Briefcase } from 'lucide-react';
-import { MOCK_PROJECTS } from '../../constants';
+import { X, Search, Minus, Plus, Trash2, CheckCircle, Briefcase, User, Calendar } from 'lucide-react';
+import { MOCK_PROJECTS, MOCK_PEOPLE, MONTHS } from '../../constants';
+import { Resource } from '../../types';
 
 interface EditAssignmentModalProps {
   onClose: () => void;
   isOpen: boolean;
   initialData?: { resourceId?: string; month?: string };
+  viewMode: 'People' | 'Projects';
 }
 
-export const EditAssignmentModal: React.FC<EditAssignmentModalProps> = ({ onClose, isOpen, initialData }) => {
-  const [searchTerm, setSearchTerm] = useState('Redesign - Q3 Marketing');
+export const EditAssignmentModal: React.FC<EditAssignmentModalProps> = ({ onClose, isOpen, initialData, viewMode }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedItemType, setSelectedItemType] = useState<'Project' | 'Employee'>('Project');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  // Defaulting to 1.0 PT (8 hours) for initial view
-  const [ptValue, setPtValue] = useState(1.0); 
+  const [ptValue, setPtValue] = useState(0.0); 
+  const [mode, setMode] = useState<'edit' | 'add'>('add');
+  const [selectedMonth, setSelectedMonth] = useState<string>(MONTHS[0]);
+  const [targetResource, setTargetResource] = useState<Resource | null>(null);
+  
   const searchRef = useRef<HTMLDivElement>(null);
 
-  const searchableProjects = useMemo(() => {
-    const list: { id: string, name: string, subtext: string }[] = [];
-    const traverse = (nodes: any[]) => {
+  // Combine Projects and People for search
+  const searchableItems = useMemo(() => {
+    const list: { id: string, name: string, subtext: string, type: 'Project' | 'Employee', avatar?: string }[] = [];
+    
+    // Traverse Projects
+    const traverseProjects = (nodes: any[]) => {
         nodes.forEach(node => {
             if (node.type === 'project') {
-                list.push({ id: node.id, name: node.name, subtext: node.subtext });
+                // Heuristic: Exclude folders (projects that contain other projects) from search results
+                // We only want assignable projects
+                const isFolder = node.children && node.children.some((c: any) => c.type === 'project');
+                if (!isFolder) {
+                    list.push({ id: node.id, name: node.name, subtext: node.subtext, type: 'Project' });
+                }
             }
-            if (node.children) traverse(node.children);
+            if (node.children) traverseProjects(node.children);
         });
     };
-    traverse(MOCK_PROJECTS);
-    return list;
+    traverseProjects(MOCK_PROJECTS);
+
+    // Traverse People
+    const traversePeople = (nodes: any[]) => {
+        nodes.forEach(node => {
+            if (node.type === 'employee') {
+                list.push({ id: node.id, name: node.name, subtext: node.subtext, type: 'Employee', avatar: node.avatar });
+            }
+            if (node.children) traversePeople(node.children);
+        });
+    };
+    traversePeople(MOCK_PEOPLE);
+
+    // Remove duplicates based on ID
+    return Array.from(new Map(list.map(item => [item.id, item])).values());
   }, []);
 
-  const filteredProjects = searchableProjects.filter(p => 
+  const filteredItems = searchableItems.filter(p => 
+    p.type === selectedItemType && 
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Determine context and pre-fill data when modal opens
+  useEffect(() => {
+    if (isOpen && initialData) {
+        // Determine dataset based on current view mode
+        const isPeopleView = viewMode === 'People';
+        const dataset = isPeopleView ? MOCK_PEOPLE : MOCK_PROJECTS;
+        
+        // Initialize month
+        const initialMonth = initialData.month || MONTHS[0];
+        setSelectedMonth(initialMonth);
+
+        let foundResource: Resource | null = null;
+        let foundDepth = -1;
+
+        const find = (nodes: Resource[], depth: number): boolean => {
+            for (const node of nodes) {
+                if (node.id === initialData.resourceId) {
+                    foundResource = node;
+                    foundDepth = depth;
+                    return true;
+                }
+                if (node.children) {
+                    if (find(node.children, depth + 1)) return true;
+                }
+            }
+            return false;
+        };
+
+        if (initialData.resourceId) {
+             // Search only in the dataset relevant to the current view
+            find(dataset, 0);
+        }
+
+        if (foundResource) {
+            const res = foundResource as Resource;
+            setTargetResource(res);
+            
+            // Logic:
+            // If Depth 2 (Child) -> Edit Mode. We are editing a specific assignment.
+            // If Depth 1 (Parent) -> Add Mode. We are adding a new assignment to this parent.
+            
+            if (foundDepth === 2) {
+                // Child Row -> Edit Assignment
+                setMode('edit');
+                setSearchTerm(res.name);
+                setSelectedItemType(res.type === 'project' ? 'Project' : 'Employee');
+                // Use PT value directly for the selected month
+                const allocation = res.allocations[initialMonth];
+                setPtValue(allocation ? allocation.pt : 0);
+            } else {
+                // Parent Row (or Group) -> Add Assignment
+                setMode('add');
+                setSearchTerm(''); // Empty for search
+                setPtValue(0);
+                
+                // Determine what we are searching for based on View Mode
+                if (isPeopleView) {
+                    setSelectedItemType('Project');
+                } else {
+                    setSelectedItemType('Employee');
+                }
+            }
+        }
+    }
+  }, [isOpen, initialData, viewMode]);
+
+  // Update PT Value when selected month changes (only in Edit mode)
+  useEffect(() => {
+      if (mode === 'edit' && targetResource) {
+          const allocation = targetResource.allocations[selectedMonth];
+          setPtValue(allocation ? allocation.pt : 0);
+      }
+  }, [selectedMonth, mode, targetResource]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -45,22 +147,24 @@ export const EditAssignmentModal: React.FC<EditAssignmentModalProps> = ({ onClos
 
   if (!isOpen) return null;
 
+  const dynamicLabel = viewMode === 'People' ? 'Project' : 'Employee';
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div 
-        className="absolute inset-0 bg-slate-900/10 backdrop-blur-[2px] transition-opacity" 
+        className="absolute inset-0 bg-slate-900/20 backdrop-blur-[2px] transition-opacity" 
         onClick={onClose}
       ></div>
-      <div className="relative w-full max-w-[500px] bg-[#FDFBF7]/90 backdrop-blur-2xl border border-white/50 rounded-2xl shadow-glass overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300 ease-spring">
+      <div className="relative w-full max-w-[500px] bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300 ease-spring">
         
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100/30">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <div>
-            <h2 className="text-lg font-bold text-slate-900">Edit Assignment</h2>
-            <p className="text-xs text-slate-500 mt-0.5">Allocation ID: #88234-AX</p>
+            <h2 className="text-lg font-bold text-slate-900">{mode === 'edit' ? 'Edit Assignment' : 'New Assignment'}</h2>
+            <p className="text-xs text-slate-500 mt-0.5">Allocation ID: {initialData?.resourceId ? `#${initialData.resourceId.substring(0,5).toUpperCase()}-AX` : '---'}</p>
           </div>
           <button 
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-white/40 transition-colors text-slate-500 hover:text-slate-700"
+            className="p-2 rounded-full hover:bg-slate-100 transition-colors text-slate-500 hover:text-slate-700"
           >
             <X size={20} />
           </button>
@@ -69,53 +173,82 @@ export const EditAssignmentModal: React.FC<EditAssignmentModalProps> = ({ onClos
         <div className="p-6 overflow-y-auto space-y-6 min-h-[300px]">
           
           <div className="space-y-2 relative" ref={searchRef}>
-            <label className="text-sm font-semibold text-slate-900">Project / Employee</label>
+            <label className="text-sm font-semibold text-slate-900">{dynamicLabel}</label>
             <div className="relative group">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={18} />
               <input 
                 type="text" 
-                className="w-full pl-10 pr-20 py-3 bg-white/50 border border-white/50 rounded-xl text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all shadow-sm backdrop-blur-sm"
+                className={`w-full pl-10 pr-24 py-3 border border-gray-200 rounded-xl text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all shadow-sm ${mode === 'edit' ? 'bg-gray-50 text-slate-500 cursor-not-allowed' : 'bg-slate-50'}`}
                 value={searchTerm}
                 onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    setIsSearchOpen(true);
+                    if (mode === 'add') {
+                        setSearchTerm(e.target.value);
+                        setIsSearchOpen(true);
+                    }
                 }}
-                onFocus={() => setIsSearchOpen(true)}
-                placeholder="Search projects..."
+                onFocus={() => {
+                    if (mode === 'add') setIsSearchOpen(true);
+                }}
+                disabled={mode === 'edit'}
+                placeholder={`Search for a ${dynamicLabel.toLowerCase()}...`}
               />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400 bg-white/60 px-2 py-1 rounded border border-white/50 shadow-sm pointer-events-none">
-                Project
+              <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold px-2 py-1 rounded border shadow-sm pointer-events-none transition-colors
+                  ${selectedItemType === 'Project' ? 'text-primary bg-primary/5 border-primary/20' : 'text-emerald-600 bg-emerald-50 border-emerald-200'}`}>
+                {selectedItemType}
               </span>
             </div>
 
-            {isSearchOpen && (
-                <div className="absolute top-full left-0 w-full mt-1 bg-white/90 backdrop-blur-xl rounded-xl shadow-xl border border-white/50 z-50 max-h-60 overflow-y-auto custom-scrollbar animate-in fade-in zoom-in-95 duration-200">
-                    {filteredProjects.length > 0 ? (
-                        filteredProjects.map(project => (
+            {isSearchOpen && mode === 'add' && (
+                <div className="absolute top-full left-0 w-full mt-1 bg-white rounded-xl shadow-xl border border-gray-100 z-50 max-h-60 overflow-y-auto custom-scrollbar animate-in fade-in zoom-in-95 duration-200">
+                    {filteredItems.length > 0 ? (
+                        filteredItems.map(item => (
                             <button
-                                key={project.id}
+                                key={item.id}
                                 onClick={() => {
-                                    setSearchTerm(project.name);
+                                    setSearchTerm(item.name);
+                                    setSelectedItemType(item.type);
                                     setIsSearchOpen(false);
                                 }}
-                                className="w-full text-left px-4 py-3 hover:bg-slate-50/50 border-b border-gray-50/50 last:border-0 transition-colors group flex items-start gap-3"
+                                className="w-full text-left px-4 py-3 hover:bg-slate-50 border-b border-gray-50 last:border-0 transition-colors group flex items-center gap-3"
                             >
-                                <div className="mt-0.5 p-1.5 rounded-lg bg-primary/10 text-primary shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
-                                    <Briefcase size={14} />
+                                <div className={`p-1.5 rounded-lg shrink-0 transition-colors 
+                                    ${item.type === 'Project' 
+                                        ? 'bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white' 
+                                        : 'bg-emerald-500/10 text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white'}`}>
+                                    {item.type === 'Project' ? <Briefcase size={16} /> : <User size={16} />}
                                 </div>
-                                <div>
-                                    <div className="text-sm font-semibold text-slate-900">{project.name}</div>
-                                    <div className="text-xs text-slate-500">{project.subtext || 'Active Project'}</div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="text-sm font-bold text-slate-900 truncate">{item.name}</div>
+                                    <div className="text-xs text-slate-500 truncate">{item.subtext || item.type}</div>
                                 </div>
                             </button>
                         ))
                     ) : (
                         <div className="px-4 py-3 text-xs text-slate-400 text-center italic">
-                            No projects found
+                            No {selectedItemType === 'Project' ? 'projects' : 'employees'} found
                         </div>
                     )}
                 </div>
             )}
+          </div>
+
+          <div className="space-y-2">
+             <label className="text-sm font-semibold text-slate-900 block">Select Month</label>
+             <div className="relative">
+                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
+                 <select 
+                    value={selectedMonth} 
+                    onChange={(e) => setSelectedMonth(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-gray-200 rounded-xl text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all appearance-none cursor-pointer hover:bg-slate-100"
+                 >
+                     {MONTHS.map(m => (
+                         <option key={m} value={m}>{m}</option>
+                     ))}
+                 </select>
+                 <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none border-l border-gray-300 pl-4 text-xs font-bold text-slate-500">
+                     2024
+                 </div>
+             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
@@ -126,16 +259,16 @@ export const EditAssignmentModal: React.FC<EditAssignmentModalProps> = ({ onClos
               <div className="flex items-center h-12">
                 <button 
                   onClick={() => setPtValue(prev => Math.max(0, prev - 0.5))}
-                  className="w-12 h-full flex items-center justify-center bg-white/50 border border-white/50 rounded-l-xl hover:bg-white active:bg-slate-100 transition-colors text-slate-600 active:scale-95"
+                  className="w-12 h-full flex items-center justify-center bg-slate-50 border border-gray-200 rounded-l-xl hover:bg-white active:bg-slate-100 transition-colors text-slate-600 active:scale-95"
                 >
                   <Minus size={18} />
                 </button>
-                <div className="h-full flex-1 border-y border-white/50 flex items-center justify-center bg-white/30 text-lg font-bold text-slate-900">
+                <div className="h-full flex-1 border-y border-gray-200 flex items-center justify-center bg-white text-lg font-bold text-slate-900">
                   {ptValue.toFixed(1)} PT
                 </div>
                 <button 
                   onClick={() => setPtValue(prev => prev + 0.5)}
-                  className="w-12 h-full flex items-center justify-center bg-white/50 border border-white/50 rounded-r-xl hover:bg-white active:bg-slate-100 transition-colors text-slate-600 active:scale-95"
+                  className="w-12 h-full flex items-center justify-center bg-slate-50 border border-gray-200 rounded-r-xl hover:bg-white active:bg-slate-100 transition-colors text-slate-600 active:scale-95"
                 >
                   <Plus size={18} />
                 </button>
@@ -143,13 +276,13 @@ export const EditAssignmentModal: React.FC<EditAssignmentModalProps> = ({ onClos
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-900 block">Current Load</label>
-              <div className="px-4 bg-white/40 rounded-xl border border-white/50 flex flex-col justify-center h-12 gap-1">
+              <label className="text-sm font-semibold text-slate-900 block">Current Load <span className="text-slate-400 font-normal">({selectedMonth})</span></label>
+              <div className="px-4 bg-slate-50 rounded-xl border border-gray-200 flex flex-col justify-center h-12 gap-1">
                 <div className="flex justify-between text-[10px] font-medium text-slate-500">
                   <span>Total: {ptValue} / 20.0 PT</span>
-                  <span className="text-emerald-600">Available</span>
+                  <span className="text-emerald-600 font-bold">Available</span>
                 </div>
-                <div className="h-1.5 w-full bg-gray-200/50 rounded-full overflow-hidden">
+                <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-primary rounded-full shadow-sm transition-all duration-500" 
                     style={{ width: `${Math.min(100, (ptValue / 20) * 100)}%` }}
@@ -162,24 +295,26 @@ export const EditAssignmentModal: React.FC<EditAssignmentModalProps> = ({ onClos
           <div className="space-y-2">
             <label className="text-sm font-semibold text-slate-900">Notes</label>
             <textarea 
-              className="w-full p-4 bg-white/50 border border-white/50 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all resize-none shadow-sm backdrop-blur-sm"
+              className="w-full p-4 bg-slate-50 border border-gray-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all resize-none shadow-sm"
               rows={3}
               placeholder="Add details about this assignment (optional)..."
-              defaultValue="Frontend development focus for the Q3 sprint cycle."
+              defaultValue={mode === 'edit' ? "Frontend development focus for the Q3 sprint cycle." : ""}
             />
           </div>
 
         </div>
 
-        <div className="px-6 py-4 bg-white/30 border-t border-white/40 flex items-center justify-between backdrop-blur-sm">
-          <button className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-red-500 hover:bg-red-50/50 rounded-lg transition-colors active:scale-95">
-            <Trash2 size={18} />
-            <span>Delete</span>
-          </button>
-          <div className="flex gap-3">
+        <div className="px-6 py-4 bg-slate-50 border-t border-gray-200 flex items-center justify-between">
+          {mode === 'edit' && (
+            <button className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-red-500 hover:bg-red-50 rounded-lg transition-colors active:scale-95">
+                <Trash2 size={18} />
+                <span>Delete</span>
+            </button>
+          )}
+          <div className={`flex gap-3 ${mode === 'add' ? 'w-full justify-end' : ''}`}>
             <button 
               onClick={onClose}
-              className="px-5 py-2.5 text-sm font-semibold text-slate-600 bg-white/60 border border-white/60 rounded-lg hover:bg-white transition-all shadow-sm active:scale-95"
+              className="px-5 py-2.5 text-sm font-semibold text-slate-600 bg-white border border-gray-200 rounded-lg hover:bg-slate-50 transition-all shadow-sm active:scale-95"
             >
               Cancel
             </button>
@@ -188,7 +323,7 @@ export const EditAssignmentModal: React.FC<EditAssignmentModalProps> = ({ onClos
               className="px-6 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg shadow-lg shadow-primary/30 transition-all flex items-center gap-2 active:scale-95"
             >
               <CheckCircle size={18} />
-              Save Changes
+              {mode === 'edit' ? 'Save Changes' : 'Create Assignment'}
             </button>
           </div>
         </div>

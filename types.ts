@@ -1,6 +1,7 @@
+
 export interface Allocation {
-  hours: number;
-  total: number;
+  pt: number;
+  capacity: number;
   status: 'optimal' | 'over' | 'under' | 'empty';
 }
 

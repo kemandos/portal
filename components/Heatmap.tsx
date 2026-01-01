@@ -315,20 +315,19 @@ export const Heatmap: React.FC<HeatmapProps> = ({
     handleMouseEnter(resource.id, monthIndex, rowIndex);
 
     const allocation = resource.allocations[month];
-    if (allocation && allocation.hours > 0) {
-        const percentage = (allocation.total > 0) 
-            ? (allocation.hours / allocation.total) * 100 
+    if (allocation && allocation.pt > 0) {
+        const percentage = (allocation.capacity > 0) 
+            ? (allocation.pt / allocation.capacity) * 100 
             : 999;
         
         // Find assigned projects (breakdown)
         const breakdown = resource.children?.filter(child => 
             child.type === 'project' && 
             child.allocations[month] && 
-            child.allocations[month].hours > 0
+            child.allocations[month].pt > 0
         ).map(child => ({
             name: child.name,
-            // Convert Hours to PT (1 PT = 8 Hours)
-            pt: child.allocations[month].hours / 8 
+            pt: child.allocations[month].pt
         }));
 
         const rect = (e.target as HTMLElement).getBoundingClientRect();
@@ -522,12 +521,12 @@ export const Heatmap: React.FC<HeatmapProps> = ({
                                         {/* Months Cells */}
                                         {visibleMonths.map((month, monthIndex) => {
                                             const allocation = row.resource.allocations[month];
-                                            const hasAllocation = allocation && allocation.hours > 0;
+                                            const hasAllocation = allocation && allocation.pt > 0;
                                             
                                             // Calculate Percentage Safe from Infinity
-                                            const percentage = (allocation && allocation.total > 0) 
-                                                ? (allocation.hours / allocation.total) * 100 
-                                                : (allocation && allocation.hours > 0 ? 999 : 0);
+                                            const percentage = (allocation && allocation.capacity > 0) 
+                                                ? (allocation.pt / allocation.capacity) * 100 
+                                                : (allocation && allocation.pt > 0 ? 999 : 0);
 
                                             // Determine if this cell should have no background (for projects in People view)
                                             const shouldRemoveBackground = viewMode === 'People' && row.resource.type === 'project';
@@ -539,9 +538,8 @@ export const Heatmap: React.FC<HeatmapProps> = ({
                                             const isColSelected = selectedMonthIndices.includes(monthIndex);
                                             const isSelected = isRangeSelected || isColSelected;
                                             
-                                            // PT Calculation: 1 PT = 8 Hours
-                                            const ptAllocated = allocation ? (allocation.hours / 8) : 0;
-                                            const ptCapacity = allocation && allocation.total > 0 ? (allocation.total / 8) : 20.0; // Default 20.0
+                                            const ptAllocated = allocation ? allocation.pt : 0;
+                                            const ptCapacity = allocation && allocation.capacity > 0 ? allocation.capacity : 20.0;
                                             
                                             const isCompactMode = density === 'compact';
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { ViewState, ThemeSettings, Filter, Resource, SelectionRange } from '../types';
 import { Heatmap } from '../components/Heatmap';
-import { LayoutGrid, Settings, Search } from 'lucide-react';
+import { Users, Settings, Search } from 'lucide-react';
 
 interface LayoutProps {
   viewState: ViewState;
@@ -37,9 +37,9 @@ export const MobileLayout: React.FC<LayoutProps> = ({
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 py-3 shadow-sm flex items-center justify-between">
          <div className="flex items-center gap-3">
              <div className="size-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
-              <LayoutGrid size={20} />
+              <Users size={20} />
             </div>
-            <h1 className="text-lg font-bold">Capacity</h1>
+            <h1 className="text-lg font-bold">Staffing</h1>
          </div>
          <div className="flex items-center gap-2">
             <button className="p-2 rounded-full hover:bg-slate-100 text-slate-500">

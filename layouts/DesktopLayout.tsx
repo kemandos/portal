@@ -137,20 +137,20 @@ export const DesktopLayout: React.FC<LayoutProps> = ({
     const t = themeSettings?.thresholds || { under: 50, balanced: 90, over: 110 };
 
     flatData.forEach(res => {
-        let totalHours = 0;
+        let totalPt = 0;
         let totalCapacity = 0;
         
         monthsToCheck.forEach(m => {
             const alloc = res.allocations[m];
             if (alloc) {
-                totalHours += alloc.hours;
-                totalCapacity += alloc.total;
+                totalPt += alloc.pt;
+                totalCapacity += alloc.capacity;
             } else {
-                totalCapacity += 160; 
+                totalCapacity += 20; 
             }
         });
 
-        const ratio = totalCapacity > 0 ? totalHours / totalCapacity : 0;
+        const ratio = totalCapacity > 0 ? totalPt / totalCapacity : 0;
         const percentage = ratio * 100;
 
         if (percentage <= t.under) {

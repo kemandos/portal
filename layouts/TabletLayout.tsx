@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ViewState, ThemeSettings, Filter, Resource, SelectionRange } from '../types';
 import { Heatmap } from '../components/Heatmap';
+import { Users } from 'lucide-react';
 
 interface LayoutProps {
   viewState: ViewState;
@@ -38,9 +39,9 @@ export const TabletLayout: React.FC<LayoutProps> = ({
             <div className="flex items-center justify-between w-full max-w-[1400px] mx-auto">
                 <div className="flex items-center gap-3 w-[240px]">
                     <div className="text-primary flex items-center justify-center">
-                        <span className="material-symbols-outlined text-[28px]"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></span>
+                        <Users size={28} />
                     </div>
-                    <h1 className="text-[#1b0d10] text-xl font-bold tracking-tight">Capacity</h1>
+                    <h1 className="text-[#1b0d10] text-xl font-bold tracking-tight">Staffing</h1>
                 </div>
                 <div className="flex-1 flex justify-center">
                     <div className="bg-[#f3e7ea] p-1 rounded-xl flex items-center">
