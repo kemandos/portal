@@ -25,13 +25,15 @@ interface LayoutProps {
   setExpandedRows: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   selectedMonthIndices?: number[];
   onMonthSelectionChange?: (indices: number[]) => void;
+  onAddChild?: (resourceId: string) => void;
+  onInlineSave?: (resourceId: string, month: string, value: number, isCapacity: boolean) => void;
 }
 
 export const TabletLayout: React.FC<LayoutProps> = ({ 
     viewState, setViewState, currentData, handleSelectionChange, handleItemClick, onOpenSettings, themeSettings,
     groupBy, setGroupBy, activeFilters, onAddFilter, onRemoveFilter, density,
     selectionRange, onSelectionRangeChange, onCellClick, expandedRows, setExpandedRows,
-    selectedMonthIndices, onMonthSelectionChange
+    selectedMonthIndices, onMonthSelectionChange, onAddChild, onInlineSave
 }) => {
   return (
     <div className="bg-background text-[#1b0d10] font-sans antialiased h-screen flex flex-col overflow-hidden selection:bg-primary/20">
@@ -86,6 +88,8 @@ export const TabletLayout: React.FC<LayoutProps> = ({
                         setExpandedRows={setExpandedRows}
                         selectedMonthIndices={selectedMonthIndices}
                         onMonthSelectionChange={onMonthSelectionChange}
+                        onAddChild={onAddChild}
+                        onInlineSave={onInlineSave}
                     />
                 </div>
             </div>

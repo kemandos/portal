@@ -5,13 +5,14 @@ import { MobileLayout } from './layouts/MobileLayout';
 import { EditAssignmentModal } from './components/modals/EditAssignmentModal';
 import { BulkAssignmentModal } from './components/modals/BulkAssignmentModal';
 import { SettingsModal } from './components/modals/SettingsModal';
-import { MOCK_PROJECTS, MOCK_PEOPLE, MONTHS } from './constants';
+import { MONTHS } from './constants';
 import { ViewState, ThemeSettings, Filter, Resource, SelectionRange } from './types';
 import { ClipboardList, Merge, X } from 'lucide-react';
+import { useStaffingData } from './hooks/useStaffingData';
 
 function App() {
   const [viewState, setViewState] = useState<ViewState>({
-    mode: 'People',
+    mode: 'Projects', // Default to Projects based on screenshot
     timeRange: '6M',
     selectedIds: []
   });
@@ -22,6 +23,15 @@ function App() {
     cellStyle: 'modern',
     thresholds: { under: 50, balanced: 90, over: 110 }
   });
+
+  // Custom Hook managing data state and business logic
+  const { 
+      peopleData, 
+      projectData, 
+      handleSaveAssignment, 
+      handleDeleteAssignment, 
+      handleInlineSave 
+  } = useStaffingData(viewState.mode);
 
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({
       'f1': true, 'p1': true, 'g1': true, 'e1': true
@@ -37,10 +47,7 @@ function App() {
   }, [themeSettings.mode]);
   
   const [selectionRange, setSelectionRange] = useState<SelectionRange | null>(null);
-  
-  // New state for column (month) selection
   const [selectedMonthIndices, setSelectedMonthIndices] = useState<number[]>([]);
-
   const [groupBy, setGroupBy] = useState<string>('None');
   const [density, setDensity] = useState<'comfortable' | 'compact'>('comfortable');
   const [activeFilters, setActiveFilters] = useState<Filter[]>([
@@ -51,8 +58,7 @@ function App() {
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   
-  const [editContext, setEditContext] = useState<{resourceId?: string, month?: string}>({});
-
+  const [editContext, setEditContext] = useState<{resourceId?: string, month?: string, months?: string[], isAddMode?: boolean}>({});
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   useEffect(() => {
@@ -61,12 +67,12 @@ function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Filter and Processing Logic for View
+  // Note: This could be moved to a selector/hook if it grows larger
   const processedData = useMemo(() => {
-    const rawDataSource = viewState.mode === 'Projects' ? MOCK_PROJECTS : MOCK_PEOPLE;
-    // Flatten to leaves (Employees or Projects) for filtering
+    const rawDataSource = viewState.mode === 'Projects' ? projectData : peopleData;
     const allItems = rawDataSource.flatMap(parent => parent.children || []);
 
-    // Filter Logic
     const filteredItems = allItems.filter(item => {
         if (activeFilters.length === 0) return true;
 
@@ -104,31 +110,25 @@ function App() {
             if (filter.key === 'Managing Consultant') return filter.values.includes(item.manager || 'Unassigned');
             if (filter.key === 'Department') return filter.values.includes(item.department || 'Unassigned');
             if (filter.key === 'Employee') return filter.values.includes(item.name);
-            // Skill filter now uses 'every' (AND logic) instead of 'some' (OR logic)
             if (filter.key === 'Skill') return filter.values.every(s => item.skills?.includes(s));
             
             return true;
         });
     });
 
-    // --- Recalculate allocations (Roll-up) ---
-    // Ensure parent allocation matches the sum of children
     const calculatedItems = filteredItems.map(item => {
         if (!item.children) return item;
 
         const newAllocations = { ...item.allocations };
         
         MONTHS.forEach(month => {
-             // Sum children PT for this month
              const totalPt = item.children!.reduce((sum, child) => {
                  return sum + (child.allocations[month]?.pt || 0);
              }, 0);
 
-             // Get capacity from existing record or default to 20 PT
              const existing = item.allocations[month];
              const capacity = existing ? existing.capacity : 20;
 
-             // Determine status
              let status: 'optimal' | 'over' | 'under' | 'empty' = 'optimal';
              if (totalPt === 0) status = 'empty';
              else if (totalPt > capacity) status = 'over';
@@ -144,7 +144,6 @@ function App() {
         return { ...item, allocations: newAllocations };
     });
 
-    // Grouping Logic applied to calculated items
     if (viewState.mode === 'People') {
         if (groupBy === 'None') return calculatedItems;
         if (groupBy === 'Department') {
@@ -183,12 +182,9 @@ function App() {
         }
          return calculatedItems; 
     } else {
-        // Projects Mode
         if (groupBy === 'None') return calculatedItems;
         if (groupBy === 'Dealfolder') {
-             // Reconstruct parent folders with filtered/calculated children
-             return MOCK_PROJECTS.map(folder => {
-                 // Use calculatedItems to find the updated child (with rolled-up pt)
+             return projectData.map(folder => {
                  const matchingChildren = (folder.children || []).map(child => 
                      calculatedItems.find(c => c.id === child.id)
                  ).filter((c): c is Resource => !!c);
@@ -205,7 +201,7 @@ function App() {
         }
         return calculatedItems;
     }
-  }, [viewState.mode, groupBy, activeFilters, viewState.timeRange, themeSettings.thresholds]);
+  }, [viewState.mode, groupBy, activeFilters, viewState.timeRange, themeSettings.thresholds, peopleData, projectData]);
 
   const flattenedRows = useMemo(() => {
     const rows: { resource: Resource; depth: number; isGroupHeader: boolean }[] = [];
@@ -223,8 +219,40 @@ function App() {
   }, [processedData, expandedRows]);
 
   const handleCellClick = (resourceId: string, month: string) => {
-      setEditContext({ resourceId, month });
+      // Determine if multiple months are selected
+      const visibleMonths = MONTHS.slice(0, viewState.timeRange === '3M' ? 3 : viewState.timeRange === '6M' ? 6 : 9);
+      let targetMonths = [month];
+
+      if (selectedMonthIndices.length > 0) {
+          targetMonths = selectedMonthIndices.map(i => visibleMonths[i]).filter(Boolean);
+      } else if (selectionRange) {
+          const start = Math.min(selectionRange.start.monthIndex, selectionRange.end.monthIndex);
+          const end = Math.max(selectionRange.start.monthIndex, selectionRange.end.monthIndex);
+          if (start !== end) {
+              targetMonths = [];
+              for(let i=start; i<=end; i++) {
+                  if (visibleMonths[i]) targetMonths.push(visibleMonths[i]);
+              }
+          }
+      }
+
+      setEditContext({ resourceId, month, months: targetMonths, isAddMode: false });
       setIsEditModalOpen(true);
+  };
+
+  const handleAddChild = (resourceId: string) => {
+      setEditContext({ resourceId, isAddMode: true });
+      setIsEditModalOpen(true);
+  };
+  
+  const handleSaveWrapper = (data: any) => {
+      handleSaveAssignment(data);
+      setIsEditModalOpen(false);
+  };
+
+  const handleDeleteWrapper = (resourceId: string, parentId?: string, month?: string, months?: string[]) => {
+      handleDeleteAssignment(resourceId, parentId, month, months);
+      setIsEditModalOpen(false);
   };
 
   const handleSelectionChange = (ids: string[]) => {
@@ -252,7 +280,6 @@ function App() {
 
   const modalData = useMemo(() => {
     let selectedIds = [...viewState.selectedIds];
-    
     if (selectedIds.length === 0 && selectionRange) {
          const startRow = Math.min(selectionRange.start.rowIndex, selectionRange.end.rowIndex);
          const endRow = Math.max(selectionRange.start.rowIndex, selectionRange.end.rowIndex);
@@ -262,10 +289,8 @@ function App() {
              }
          }
     }
-
     const visibleMonths = MONTHS.slice(0, viewState.timeRange === '3M' ? 3 : viewState.timeRange === '6M' ? 6 : 9);
     let initialMonthsSet = new Set<string>();
-
     if (selectionRange) {
         const startIdx = Math.min(selectionRange.start.monthIndex, selectionRange.end.monthIndex);
         const endIdx = Math.max(selectionRange.start.monthIndex, selectionRange.end.monthIndex);
@@ -273,11 +298,9 @@ function App() {
             if (visibleMonths[i]) initialMonthsSet.add(visibleMonths[i]);
         }
     }
-
     selectedMonthIndices.forEach(idx => {
         if (visibleMonths[idx]) initialMonthsSet.add(visibleMonths[idx]);
     });
-
     return { selectedIds, initialMonths: Array.from(initialMonthsSet) };
   }, [viewState.selectedIds, selectionRange, selectedMonthIndices, flattenedRows, viewState.timeRange]);
 
@@ -287,7 +310,6 @@ function App() {
     handleItemClick: (id: string) => { setEditContext({resourceId: id}); setIsEditModalOpen(true); },
     onOpenSettings: () => setIsSettingsModalOpen(true),
     themeSettings, groupBy, setGroupBy, activeFilters,
-    // Fix: Upsert filter instead of appending to avoid duplicates which caused AND logic between same-key filters
     onAddFilter: (f: Filter) => setActiveFilters(prev => {
         const existingIdx = prev.findIndex(item => item.key === f.key);
         if (existingIdx >= 0) {
@@ -302,8 +324,10 @@ function App() {
     selectionRange, 
     onSelectionRangeChange: handleRangeChange,
     onCellClick: handleCellClick,
+    onAddChild: handleAddChild,
     expandedRows, setExpandedRows,
-    selectedMonthIndices, onMonthSelectionChange: handleMonthSelectionChange
+    selectedMonthIndices, onMonthSelectionChange: handleMonthSelectionChange,
+    onInlineSave: handleInlineSave
   };
 
   const isSingleCellRange = selectionRange && 
@@ -327,7 +351,6 @@ function App() {
           <DesktopLayout {...commonProps} />
       )}
 
-      {/* Floating Action Bar (Bulk Actions) */}
       {hasSelection && (
         <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 flex items-center justify-center w-full px-4 pointer-events-none">
             <div className="bg-[#1e293b] text-white rounded-2xl shadow-[0_8px_40px_-12px_rgba(0,0,0,0.5)] p-2 pr-4 flex items-center gap-6 animate-in slide-in-from-bottom-5 fade-in duration-300 border border-white/10 ring-1 ring-black/20 pointer-events-auto backdrop-blur-xl">
@@ -382,6 +405,9 @@ function App() {
         onClose={() => setIsEditModalOpen(false)} 
         initialData={editContext}
         viewMode={viewState.mode}
+        currentData={viewState.mode === 'People' ? peopleData : projectData}
+        onSave={handleSaveWrapper}
+        onDelete={handleDeleteWrapper}
       />
       <BulkAssignmentModal 
         isOpen={isBulkModalOpen} 

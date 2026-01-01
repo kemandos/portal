@@ -27,13 +27,15 @@ interface LayoutProps {
   setExpandedRows: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   selectedMonthIndices?: number[];
   onMonthSelectionChange?: (indices: number[]) => void;
+  onAddChild?: (resourceId: string) => void;
+  onInlineSave?: (resourceId: string, month: string, value: number, isCapacity: boolean) => void;
 }
 
 export const DesktopLayout: React.FC<LayoutProps> = ({ 
     viewState, setViewState, currentData, handleSelectionChange, handleItemClick, onOpenSettings, themeSettings,
     groupBy, setGroupBy, activeFilters, onAddFilter, onRemoveFilter, density, setDensity,
     selectionRange, onSelectionRangeChange, onCellClick, expandedRows, setExpandedRows,
-    selectedMonthIndices, onMonthSelectionChange
+    selectedMonthIndices, onMonthSelectionChange, onAddChild, onInlineSave
 }) => {
   const [isGroupMenuOpen, setIsGroupMenuOpen] = useState(false);
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
@@ -403,6 +405,8 @@ export const DesktopLayout: React.FC<LayoutProps> = ({
                     setExpandedRows={setExpandedRows}
                     selectedMonthIndices={selectedMonthIndices}
                     onMonthSelectionChange={onMonthSelectionChange}
+                    onAddChild={onAddChild}
+                    onInlineSave={onInlineSave}
                 />
             </div>
         </div>

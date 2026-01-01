@@ -25,12 +25,14 @@ interface LayoutProps {
   setExpandedRows: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   selectedMonthIndices?: number[];
   onMonthSelectionChange?: (indices: number[]) => void;
+  onAddChild?: (resourceId: string) => void;
+  onInlineSave?: (resourceId: string, month: string, value: number, isCapacity: boolean) => void;
 }
 
 export const MobileLayout: React.FC<LayoutProps> = ({ 
     viewState, setViewState, currentData, handleSelectionChange, handleItemClick, onOpenSettings, themeSettings, density,
     selectionRange, onSelectionRangeChange, onCellClick, expandedRows, setExpandedRows,
-    selectedMonthIndices, onMonthSelectionChange
+    selectedMonthIndices, onMonthSelectionChange, onAddChild, onInlineSave
 }) => {
   return (
     <div className="flex flex-col h-screen bg-background text-slate-900 font-sans">
@@ -105,6 +107,8 @@ export const MobileLayout: React.FC<LayoutProps> = ({
             setExpandedRows={setExpandedRows}
             selectedMonthIndices={selectedMonthIndices}
             onMonthSelectionChange={onMonthSelectionChange}
+            onAddChild={onAddChild}
+            onInlineSave={onInlineSave}
         />
       </main>
     </div>

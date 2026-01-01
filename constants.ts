@@ -9,13 +9,13 @@ const ALLOC_UNDER = { pt: 10, capacity: 20, status: 'under' as const };
 const ALLOC_EMPTY = { pt: 0, capacity: 20, status: 'empty' as const };
 
 // Shared Projects
-const PROJECT_CLOUD = { id: 'p1', name: 'Cloud Migration', subtext: 'Strategic Accounts • Cloud Lift', type: 'project' as const, initials: 'CM', status: 'Active' as const };
-const PROJECT_ANDROID = { id: 'p2', name: 'Android App V2', subtext: 'Mobile Revamp • Active', type: 'project' as const, initials: 'AA', status: 'Active' as const };
-const PROJECT_MAPS = { id: 'p3', name: 'Maps API Integration', subtext: 'Tech Stack • Critical', type: 'project' as const, initials: 'MA', status: 'At Risk' as const };
-const PROJECT_STOREFRONT = { id: 'p4', name: 'Storefront Redesign', subtext: 'Holiday Prep • Planned', type: 'project' as const, initials: 'SR', status: 'Planning' as const };
-const PROJECT_MARKETING = { id: 'p5', name: 'Redesign - Q3 Marketing', subtext: 'Marketing • High Priority', type: 'project' as const, initials: 'RM', status: 'Active' as const, color: 'bg-rose-500' };
-const PROJECT_ALPHA = { id: 'p6', name: 'Alpha: Platform Revamp', subtext: 'Infrastructure', type: 'project' as const, initials: 'AP', status: 'Active' as const, color: 'bg-blue-500' };
-const PROJECT_BETA = { id: 'p7', name: 'Beta: Mobile API', subtext: 'API Team', type: 'project' as const, initials: 'BM', status: 'Active' as const, color: 'bg-orange-500' };
+const PROJECT_CLOUD = { id: 'p1', name: 'Cloud Migration', subtext: 'Strategic Accounts • Cloud Lift', type: 'project' as const, initials: 'CM', status: 'Active' as const, avatar: 'https://cdn-icons-png.flaticon.com/128/2331/2331895.png' };
+const PROJECT_ANDROID = { id: 'p2', name: 'Android App V2', subtext: 'Mobile Revamp • Active', type: 'project' as const, initials: 'AA', status: 'Active' as const, avatar: 'https://cdn-icons-png.flaticon.com/128/888/888859.png' };
+const PROJECT_MAPS = { id: 'p3', name: 'Maps API Integration', subtext: 'Tech Stack • Critical', type: 'project' as const, initials: 'MA', status: 'At Risk' as const, avatar: 'https://cdn-icons-png.flaticon.com/128/684/684908.png' };
+const PROJECT_STOREFRONT = { id: 'p4', name: 'Storefront Redesign', subtext: 'Holiday Prep • Planned', type: 'project' as const, initials: 'SR', status: 'Planning' as const, avatar: 'https://cdn-icons-png.flaticon.com/128/3144/3144456.png' };
+const PROJECT_MARKETING = { id: 'p5', name: 'Redesign - Q3 Marketing', subtext: 'Marketing • High Priority', type: 'project' as const, initials: 'RM', status: 'Active' as const, color: 'bg-rose-500', avatar: 'https://cdn-icons-png.flaticon.com/128/1998/1998087.png' };
+const PROJECT_ALPHA = { id: 'p6', name: 'Alpha: Platform Revamp', subtext: 'Infrastructure', type: 'project' as const, initials: 'AP', status: 'Active' as const, color: 'bg-blue-500', avatar: 'https://cdn-icons-png.flaticon.com/128/8327/8327883.png' };
+const PROJECT_BETA = { id: 'p7', name: 'Beta: Mobile API', subtext: 'API Team', type: 'project' as const, initials: 'BM', status: 'Active' as const, color: 'bg-orange-500', avatar: 'https://cdn-icons-png.flaticon.com/128/8017/8017833.png' };
 
 // Shared Employees
 const EMP_JANE = { id: 'e1', name: 'Jane Doe', subtext: 'Senior Dev • London', type: 'employee' as const, avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026024d', status: 'Active' as const, manager: 'Alice Wong', department: 'Engineering' };
