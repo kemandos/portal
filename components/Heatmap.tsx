@@ -374,9 +374,12 @@ export const Heatmap: React.FC<HeatmapProps> = ({
           return (
             <div className={`relative ${sizeClass} rounded-lg bg-white flex-shrink-0 border border-gray-100 shadow-sm transition-transform duration-300 ease-spring hover:scale-110 hover:shadow-glow overflow-hidden p-1`}>
                 <div className="w-full h-full flex items-center justify-center">
-                    <img src={resource.avatar} alt={resource.name} className="max-w-full max-h-full object-contain" />
+                    <img 
+                        src={resource.avatar} 
+                        alt={resource.name} 
+                        className={`max-w-full max-h-full object-contain ${viewMode === 'Projects' ? 'grayscale' : ''}`}
+                    />
                 </div>
-                {resource.status && <div className={`absolute bottom-0 right-0 ${statusIndicatorClass} ${resource.status === 'Active' ? 'bg-green-500' : 'bg-amber-500'} border-2 border-white rounded-full z-10 shadow-sm transform translate-x-1/3 translate-y-1/3`}></div>}
             </div>
           );
       }
@@ -748,7 +751,7 @@ export const Heatmap: React.FC<HeatmapProps> = ({
                                                     onMouseUp={() => handleMouseUp(resource.id, monthIndex, editValue, isProjectRoot)}
                                                 >
                                                     <div className={`w-full ${cellHeight} rounded-lg flex items-center justify-center text-xs font-bold transition-all duration-300 relative group/cell 
-                                                        ${isSelected ? 'scale-100 ring-1 ring-primary/30' : 'hover:scale-105 hover:brightness-110 hover:shadow-liquid hover:-translate-y-0.5'}
+                                                        ${isSelected ? 'scale-100' : 'hover:scale-105 hover:brightness-110 hover:shadow-liquid hover:-translate-y-0.5'}
                                                         ${isEditing ? 'bg-white ring-2 ring-primary shadow-lg z-50 scale-105' : ''}
                                                         active:scale-95 active:duration-100 ease-spring
                                                         `}

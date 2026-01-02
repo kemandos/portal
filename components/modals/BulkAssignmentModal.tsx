@@ -77,18 +77,6 @@ export const BulkAssignmentModal: React.FC<BulkAssignmentModalProps> = ({ onClos
       );
   }, [allEmployees, localSelectedIds, searchTerm]);
 
-  const employeeCapacities = useMemo(() => {
-      const caps: Record<string, number> = {};
-      selectedEmployees.forEach(emp => {
-          // Standard capacities in PT (roughly 20 days a month) - Mock logic
-          if (!caps[emp.id]) {
-             const options = [15.0, 18.0, 20.0, 22.0];
-             caps[emp.id] = options[Math.floor(Math.random() * options.length)];
-          }
-      });
-      return caps;
-  }, [selectedEmployees]);
-
   useEffect(() => {
       setAllocations(prev => {
           const newAllocations = { ...prev };
@@ -96,7 +84,7 @@ export const BulkAssignmentModal: React.FC<BulkAssignmentModalProps> = ({ onClos
               if (!newAllocations[emp.id]) newAllocations[emp.id] = {};
               activeMonths.forEach(m => {
                   if (newAllocations[emp.id][m] === undefined) {
-                      newAllocations[emp.id][m] = 10.0; // Default 10 PT allocation
+                      newAllocations[emp.id][m] = 0.0; // Default to 0 PT allocation for new assignment
                   }
               });
           });
@@ -285,9 +273,14 @@ export const BulkAssignmentModal: React.FC<BulkAssignmentModalProps> = ({ onClos
                                     
                                     {activeMonths.map((month) => {
                                         const val = allocations[employee.id]?.[month] ?? 0;
-                                        const max = employeeCapacities[employee.id] || 20.0;
-                                        const total = val; 
-                                        const isOver = total > max;
+                                        
+                                        // Calculate Projected Availability based on Real Data
+                                        const alloc = employee.allocations[month];
+                                        const existingPT = alloc ? alloc.pt : 0;
+                                        const capacity = alloc ? alloc.capacity : 20; // Default capacity 20 if not set
+                                        
+                                        const projected = existingPT + val;
+                                        const isOver = projected > capacity;
 
                                         return (
                                             <div key={month} className="w-32 shrink-0 flex flex-col justify-center items-center gap-1 px-1">
@@ -312,7 +305,7 @@ export const BulkAssignmentModal: React.FC<BulkAssignmentModalProps> = ({ onClos
                                                     </div>
                                                 </div>
                                                 <span className={`text-[10px] font-semibold ${isOver ? 'text-red-500' : 'text-emerald-500'}`}>
-                                                    {total.toFixed(1)} / {max.toFixed(1)} PT
+                                                    {projected.toFixed(1)} / {capacity.toFixed(1)} PT
                                                 </span>
                                             </div>
                                         );

@@ -48,6 +48,10 @@ export const updateResourceTree = (
         if (child) {
              if (!child.allocations[month]) child.allocations[month] = { pt: 0, capacity: 20, status: 'optimal' };
              child.allocations[month].pt = pt;
+             
+             // Update Metadata if provided
+             if (childTemplate.role) child.role = childTemplate.role;
+             if (childTemplate.subtext) child.subtext = childTemplate.subtext;
         } else {
             const newId = `${childEntityId}::${parentId}`;
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -102,4 +106,37 @@ export const removeAllocationForMonths = (data: Resource[], parentId: string, ch
         }
     }
     return newData;
+};
+
+// Flatten and combine projects/people for search
+export const getSearchableItems = (people: Resource[], projects: Resource[]) => {
+    const list: { id: string, name: string, subtext: string, type: 'Project' | 'Employee', avatar?: string, department?: string }[] = [];
+    
+    // Traverse Projects
+    const traverseProjects = (nodes: Resource[]) => {
+        nodes.forEach(node => {
+            if (node.type === 'project') {
+                // Only add actual projects, not folders
+                const isFolder = node.children && node.children.some(c => c.type === 'project');
+                if (!isFolder) {
+                    list.push({ id: node.id, name: node.name, subtext: node.subtext, type: 'Project' });
+                }
+            }
+            if (node.children) traverseProjects(node.children);
+        });
+    };
+    traverseProjects(projects);
+
+    // Traverse People
+    const traversePeople = (nodes: Resource[]) => {
+        nodes.forEach(node => {
+            if (node.type === 'employee') {
+                list.push({ id: node.id, name: node.name, subtext: node.subtext, type: 'Employee', avatar: node.avatar, department: node.department });
+            }
+            if (node.children) traversePeople(node.children);
+        });
+    };
+    traversePeople(people);
+
+    return Array.from(new Map(list.map(item => [item.id, item])).values());
 };

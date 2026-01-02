@@ -19,6 +19,7 @@ interface SaveAssignmentPayload {
     pt: number;
     newItem?: { id: string, name: string, type: 'project' | 'employee' | 'group', subtext: string };
     isCapacityEdit?: boolean;
+    role?: string;
 }
 
 export const useStaffingData = (viewMode: 'People' | 'Projects') => {
@@ -60,15 +61,37 @@ export const useStaffingData = (viewMode: 'People' | 'Projects') => {
             const projectObj = findResource(projectData, projectId) || (data.newItem && data.newItem.type === 'project' ? data.newItem : null);
 
             if (personObj && projectObj) {
-                setPeopleData(prev => updateResourceTree(prev, personId, projectId, m, data.pt, projectObj));
-                setProjectData(prev => updateResourceTree(prev, projectId, personId, m, data.pt, personObj));
+                // Determine Role
+                // If provided in payload, use it. Otherwise fall back to existing.
+                const roleToUse = data.role;
+
+                // Create templates for updating both trees.
+                // In Project View: Child is Employee. Child needs 'role'.
+                // In People View: Child is Project. Child *also* needs 'role' to persist the selection if we edit later.
+                
+                const personTemplateForProjectView = {
+                    ...personObj,
+                    role: roleToUse,
+                    subtext: roleToUse || personObj.subtext
+                };
+
+                const projectTemplateForPeopleView = {
+                    ...projectObj,
+                    role: roleToUse, // Store role on the assignment (project node under person)
+                    // We typically don't change the project subtext to the role, but we can store it in 'role' property
+                };
+                
+                // Update People View Data (Person -> Project)
+                setPeopleData(prev => updateResourceTree(prev, personId, projectId, m, data.pt, projectTemplateForPeopleView));
+                
+                // Update Project View Data (Project -> Person)
+                setProjectData(prev => updateResourceTree(prev, projectId, personId, m, data.pt, personTemplateForProjectView));
             }
         });
     }, [viewMode, peopleData, projectData]);
 
     const handleInlineSave = useCallback((resourceId: string, month: string, value: number, isCapacity: boolean) => {
        const cleanResourceId = getCleanId(resourceId);
-       
        const dataSource = viewMode === 'Projects' ? projectData : peopleData;
        const parentId = findParentId(dataSource, resourceId);
 

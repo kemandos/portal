@@ -16,6 +16,7 @@ export interface Resource {
   color?: string; // For project dots
   manager?: string; // Managing Consultant / Team Lead
   department?: string; // Engineering, Design, Product
+  role?: string; // Role in the project (e.g. Project Lead, Engineer)
   skills?: string[]; // React, Node, UX, etc.
   allocations: Record<string, Allocation>; // Key is Month string e.g. "Jan '24"
   children?: Resource[]; // For nested rows like Dealfolders or Projects under Employees

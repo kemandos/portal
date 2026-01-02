@@ -69,33 +69,49 @@ export const DesktopLayout: React.FC<LayoutProps> = ({
 
   const filterCategories = viewState.mode === 'People' 
     ? ['Managing Consultant', 'Department', 'Employee', 'Skill', 'Status']
-    : ['Status']; 
+    : ['Project Lead', 'Managing Consultant', 'Dealfolder', 'Deal', 'Employee', 'Status'];
 
   const getOptionsForCategory = (category: string) => {
       const rawData = viewState.mode === 'Projects' ? MOCK_PROJECTS : MOCK_PEOPLE;
-      const allItems = rawData.flatMap(g => g.children || []);
+      // Note: rawData structure is grouping -> items.
       
-      const filteredContext = allItems.filter(item => {
-          return activeFilters.every(f => {
-              if (f.key === category) return true;
-              if (f.key === 'Managing Consultant') return f.values.includes(item.manager || '');
-              if (f.key === 'Department') return f.values.includes(item.department || '');
-              // Match App.tsx: Use 'every' for Skills to implement AND logic
-              if (f.key === 'Skill') return f.values.every(s => item.skills?.includes(s));
-              if (f.key === 'Employee') return f.values.includes(item.name);
-              if (f.key === 'Status') return f.values.includes(item.status || 'Active');
-              return true;
-          });
-      });
-
       const values = new Set<string>();
-      filteredContext.forEach(item => {
-          if (category === 'Managing Consultant' && item.manager) values.add(item.manager);
-          if (category === 'Department' && item.department) values.add(item.department);
-          if (category === 'Employee') values.add(item.name);
-          if (category === 'Skill' && item.skills) item.skills.forEach(s => values.add(s));
-          if (category === 'Status') values.add(item.status || 'Active');
-      });
+
+      if (viewState.mode === 'Projects') {
+        // Project View Logic
+        // Structure: Dealfolder (Group) -> Project -> Employee (Assignment)
+        
+        rawData.forEach(folder => {
+            if (category === 'Dealfolder') {
+                values.add(folder.name);
+            }
+            
+            folder.children?.forEach(project => {
+                if (category === 'Deal') values.add(project.name);
+                if (category === 'Project Lead' && project.manager) values.add(project.manager);
+                if (category === 'Status') values.add(project.status || 'Active');
+
+                project.children?.forEach(empAssignment => {
+                     // In Project View, child is Employee Assignment
+                     if (category === 'Employee') values.add(empAssignment.name);
+                     if (category === 'Managing Consultant' && empAssignment.manager) values.add(empAssignment.manager);
+                });
+            });
+        });
+
+      } else {
+        // People View Logic
+        // Structure: Group -> Employee -> Project (Assignment)
+        const allEmployees = rawData.flatMap(g => g.children || []);
+        
+        allEmployees.forEach(emp => {
+            if (category === 'Employee') values.add(emp.name);
+            if (category === 'Managing Consultant' && emp.manager) values.add(emp.manager);
+            if (category === 'Department' && emp.department) values.add(emp.department);
+            if (category === 'Skill' && emp.skills) emp.skills.forEach(s => values.add(s));
+            if (category === 'Status') values.add(emp.status || 'Active');
+        });
+      }
 
       return Array.from(values).sort();
   };

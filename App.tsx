@@ -17,12 +17,25 @@ function App() {
     selectedIds: []
   });
 
-  const [themeSettings, setThemeSettings] = useState<ThemeSettings>({
+  // Separate Settings for People View
+  const [peopleThemeSettings, setPeopleThemeSettings] = useState<ThemeSettings>({
+    mode: 'light',
+    colorTheme: 'emerald', // Different default to distinguish
+    cellStyle: 'modern',
+    thresholds: { under: 50, balanced: 90, over: 110 }
+  });
+
+  // Separate Settings for Projects View
+  const [projectThemeSettings, setProjectThemeSettings] = useState<ThemeSettings>({
     mode: 'light',
     colorTheme: 'rose',
     cellStyle: 'modern',
     thresholds: { under: 50, balanced: 90, over: 110 }
   });
+
+  // Derived state to get current settings based on mode
+  const currentThemeSettings = viewState.mode === 'People' ? peopleThemeSettings : projectThemeSettings;
+  const setCurrentThemeSettings = viewState.mode === 'People' ? setPeopleThemeSettings : setProjectThemeSettings;
 
   // Custom Hook managing data state and business logic
   const { 
@@ -39,12 +52,12 @@ function App() {
 
   // Apply Dark Mode Class
   useEffect(() => {
-    if (themeSettings.mode === 'dark') {
+    if (currentThemeSettings.mode === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
-  }, [themeSettings.mode]);
+  }, [currentThemeSettings.mode]);
   
   const [selectionRange, setSelectionRange] = useState<SelectionRange | null>(null);
   const [selectedMonthIndices, setSelectedMonthIndices] = useState<number[]>([]);
@@ -71,6 +84,18 @@ function App() {
   // Note: This could be moved to a selector/hook if it grows larger
   const processedData = useMemo(() => {
     const rawDataSource = viewState.mode === 'Projects' ? projectData : peopleData;
+    const settings = viewState.mode === 'People' ? peopleThemeSettings : projectThemeSettings;
+    
+    // Create a map for Dealfolder lookup if in Project View
+    const projectParentMap = new Map<string, string>();
+    if (viewState.mode === 'Projects') {
+        projectData.forEach(folder => {
+            folder.children?.forEach(child => {
+                projectParentMap.set(child.id, folder.name);
+            });
+        });
+    }
+
     const allItems = rawDataSource.flatMap(parent => parent.children || []);
 
     const filteredItems = allItems.filter(item => {
@@ -81,7 +106,7 @@ function App() {
 
             if (filter.key === 'Utilization') {
                 const monthsToCheck = MONTHS.slice(0, viewState.timeRange === '3M' ? 3 : viewState.timeRange === '6M' ? 6 : 9);
-                const t = themeSettings.thresholds || { under: 50, balanced: 90, over: 110 };
+                const t = settings.thresholds || { under: 50, balanced: 90, over: 110 };
                 
                 let totalPt = 0;
                 let totalCapacity = 0;
@@ -106,11 +131,33 @@ function App() {
                 return filter.values.includes(status);
             }
 
+            // Common Filters
             if (filter.key === 'Status') return filter.values.includes(item.status || 'Active');
-            if (filter.key === 'Managing Consultant') return filter.values.includes(item.manager || 'Unassigned');
-            if (filter.key === 'Department') return filter.values.includes(item.department || 'Unassigned');
-            if (filter.key === 'Employee') return filter.values.includes(item.name);
-            if (filter.key === 'Skill') return filter.values.every(s => item.skills?.includes(s));
+
+            // People View Specific
+            if (viewState.mode === 'People') {
+                if (filter.key === 'Managing Consultant') return filter.values.includes(item.manager || 'Unassigned');
+                if (filter.key === 'Department') return filter.values.includes(item.department || 'Unassigned');
+                if (filter.key === 'Employee') return filter.values.includes(item.name);
+                if (filter.key === 'Skill') return filter.values.every(s => item.skills?.includes(s));
+            } 
+            // Projects View Specific
+            else {
+                if (filter.key === 'Dealfolder') {
+                    const parentName = projectParentMap.get(item.id);
+                    return parentName && filter.values.includes(parentName);
+                }
+                if (filter.key === 'Deal') return filter.values.includes(item.name);
+                if (filter.key === 'Project Lead') return filter.values.includes(item.manager || '');
+                if (filter.key === 'Employee') {
+                    // Check if any child (assigned employee) matches
+                    return item.children && item.children.some(child => filter.values.includes(child.name));
+                }
+                if (filter.key === 'Managing Consultant') {
+                    // Check if any child (assigned employee) has this manager
+                    return item.children && item.children.some(child => child.manager && filter.values.includes(child.manager));
+                }
+            }
             
             return true;
         });
@@ -201,7 +248,7 @@ function App() {
         }
         return calculatedItems;
     }
-  }, [viewState.mode, groupBy, activeFilters, viewState.timeRange, themeSettings.thresholds, peopleData, projectData]);
+  }, [viewState.mode, groupBy, activeFilters, viewState.timeRange, peopleData, projectData, peopleThemeSettings, projectThemeSettings]);
 
   const flattenedRows = useMemo(() => {
     const rows: { resource: Resource; depth: number; isGroupHeader: boolean }[] = [];
@@ -309,7 +356,7 @@ function App() {
     handleSelectionChange,
     handleItemClick: (id: string) => { setEditContext({resourceId: id}); setIsEditModalOpen(true); },
     onOpenSettings: () => setIsSettingsModalOpen(true),
-    themeSettings, groupBy, setGroupBy, activeFilters,
+    themeSettings: currentThemeSettings, groupBy, setGroupBy, activeFilters,
     onAddFilter: (f: Filter) => setActiveFilters(prev => {
         const existingIdx = prev.findIndex(item => item.key === f.key);
         if (existingIdx >= 0) {
@@ -419,8 +466,8 @@ function App() {
       <SettingsModal 
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
-        themeSettings={themeSettings}
-        setThemeSettings={setThemeSettings}
+        themeSettings={currentThemeSettings}
+        setThemeSettings={setCurrentThemeSettings}
       />
     </>
   );
