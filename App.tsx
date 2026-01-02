@@ -7,12 +7,12 @@ import { BulkAssignmentModal } from './components/modals/BulkAssignmentModal';
 import { SettingsModal } from './components/modals/SettingsModal';
 import { MONTHS } from './constants';
 import { ViewState, ThemeSettings, Filter, Resource, SelectionRange } from './types';
-import { ClipboardList, Merge, X } from 'lucide-react';
+import { ClipboardList, X } from 'lucide-react';
 import { useStaffingData } from './hooks/useStaffingData';
 
 function App() {
   const [viewState, setViewState] = useState<ViewState>({
-    mode: 'Projects', // Default to Projects based on screenshot
+    mode: 'People', // Updated default to People
     timeRange: '6M',
     selectedIds: []
   });
@@ -61,7 +61,7 @@ function App() {
   
   const [selectionRange, setSelectionRange] = useState<SelectionRange | null>(null);
   const [selectedMonthIndices, setSelectedMonthIndices] = useState<number[]>([]);
-  const [groupBy, setGroupBy] = useState<string>('None');
+  const [groupBy, setGroupBy] = useState<string>('Managing Consultant'); // Updated default
   const [density, setDensity] = useState<'comfortable' | 'compact'>('comfortable');
   const [activeFilters, setActiveFilters] = useState<Filter[]>([
      { key: 'Status', values: ['Active'] }
@@ -240,6 +240,7 @@ function App() {
                  
                  return {
                      ...folder,
+                     type: 'group' as const,
                      children: matchingChildren,
                      subtext: `${matchingChildren.length} Projects`,
                      isExpanded: true
@@ -425,12 +426,6 @@ function App() {
                         <ClipboardList size={16} className="text-slate-300" />
                         Assign
                     </button>
-                    {viewState.mode === 'Projects' && (
-                        <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white transition-all text-xs font-bold active:scale-95 border border-white/5 hover:border-white/20 hover:shadow-lg shadow-black/20">
-                             <Merge size={16} className="text-slate-300" />
-                             Merge
-                        </button>
-                    )}
                     
                     <button 
                         onClick={() => { 
@@ -466,8 +461,11 @@ function App() {
       <SettingsModal 
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
-        themeSettings={currentThemeSettings}
-        setThemeSettings={setCurrentThemeSettings}
+        peopleSettings={peopleThemeSettings}
+        setPeopleSettings={setPeopleThemeSettings}
+        projectSettings={projectThemeSettings}
+        setProjectSettings={setProjectThemeSettings}
+        initialView={viewState.mode}
       />
     </>
   );

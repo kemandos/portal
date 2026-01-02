@@ -1,46 +1,70 @@
 import React, { useState, useEffect } from 'react';
-import { X, Sliders, Droplet, Palette } from 'lucide-react';
+import { X, Sliders, Droplet, Palette, Users, Briefcase } from 'lucide-react';
 import { ThemeSettings } from '../../types';
 
 interface SettingsModalProps {
   onClose: () => void;
   isOpen: boolean;
-  themeSettings: ThemeSettings;
-  setThemeSettings: React.Dispatch<React.SetStateAction<ThemeSettings>>;
+  peopleSettings: ThemeSettings;
+  setPeopleSettings: React.Dispatch<React.SetStateAction<ThemeSettings>>;
+  projectSettings: ThemeSettings;
+  setProjectSettings: React.Dispatch<React.SetStateAction<ThemeSettings>>;
+  initialView: 'People' | 'Projects';
 }
 
-export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, isOpen, themeSettings, setThemeSettings }) => {
+export const SettingsModal: React.FC<SettingsModalProps> = ({ 
+  onClose, 
+  isOpen, 
+  peopleSettings, 
+  setPeopleSettings, 
+  projectSettings, 
+  setProjectSettings,
+  initialView
+}) => {
+  const [activeTab, setActiveTab] = useState<'People' | 'Projects'>(initialView);
+
+  // Local state for the form
   const [thresholdColors, setThresholdColors] = useState({
-      under: themeSettings.thresholdColors?.under || '#f1f5f9',
-      balanced: themeSettings.thresholdColors?.balanced || '#10b981',
-      optimal: themeSettings.thresholdColors?.optimal || '#f43f5e',
-      over: themeSettings.thresholdColors?.over || '#dc2626'
+      under: '#f1f5f9',
+      balanced: '#10b981',
+      optimal: '#f43f5e',
+      over: '#dc2626'
   });
 
   const [thresholds, setThresholds] = useState({
-      under: themeSettings.thresholds?.under || 50,
-      balanced: themeSettings.thresholds?.balanced || 90,
-      over: themeSettings.thresholds?.over || 110
+      under: 50,
+      balanced: 90,
+      over: 110
   });
 
-  const [opacity, setOpacity] = useState(themeSettings.heatmapOpacity !== undefined ? themeSettings.heatmapOpacity : 1);
+  const [opacity, setOpacity] = useState(1);
 
+  // Sync local state when tab or isOpen changes
   useEffect(() => {
     if (isOpen) {
+        // Determine which settings to load based on active tab
+        const currentSettings = activeTab === 'People' ? peopleSettings : projectSettings;
+
         setThresholdColors({
-            under: themeSettings.thresholdColors?.under || '#f1f5f9',
-            balanced: themeSettings.thresholdColors?.balanced || '#10b981',
-            optimal: themeSettings.thresholdColors?.optimal || '#f43f5e',
-            over: themeSettings.thresholdColors?.over || '#dc2626'
+            under: currentSettings.thresholdColors?.under || '#f1f5f9',
+            balanced: currentSettings.thresholdColors?.balanced || '#10b981',
+            optimal: currentSettings.thresholdColors?.optimal || '#f43f5e',
+            over: currentSettings.thresholdColors?.over || '#dc2626'
         });
         setThresholds({
-            under: themeSettings.thresholds?.under || 50,
-            balanced: themeSettings.thresholds?.balanced || 90,
-            over: themeSettings.thresholds?.over || 110
+            under: currentSettings.thresholds?.under || 50,
+            balanced: currentSettings.thresholds?.balanced || 90,
+            over: currentSettings.thresholds?.over || 110
         });
-        setOpacity(themeSettings.heatmapOpacity !== undefined ? themeSettings.heatmapOpacity : 1);
+        setOpacity(currentSettings.heatmapOpacity !== undefined ? currentSettings.heatmapOpacity : 1);
     }
-  }, [isOpen, themeSettings]);
+  }, [isOpen, activeTab, peopleSettings, projectSettings]);
+
+  // Handle Tab Switch (reset state to new tab's settings)
+  const handleTabChange = (tab: 'People' | 'Projects') => {
+      setActiveTab(tab);
+      // Effect will handle loading data
+  };
 
   const handleThresholdColorChange = (key: 'under' | 'balanced' | 'optimal' | 'over', val: string) => {
       setThresholdColors(prev => ({ ...prev, [key]: val }));
@@ -52,7 +76,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, isOpen, t
   };
 
   const handleSave = () => {
-      setThemeSettings(prev => ({ 
+      const setter = activeTab === 'People' ? setPeopleSettings : setProjectSettings;
+      
+      setter(prev => ({ 
           ...prev, 
           thresholdColors: thresholdColors,
           thresholds: thresholds,
@@ -81,8 +107,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, isOpen, t
           </button>
         </div>
 
-        <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
+        <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
             
+            {/* View Toggle */}
+            <div className="flex p-1 bg-slate-200/50 rounded-xl">
+                <button 
+                    onClick={() => handleTabChange('People')} 
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'People' ? 'bg-white shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                    <Users size={14} />
+                    People View
+                </button>
+                <button 
+                    onClick={() => handleTabChange('Projects')} 
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'Projects' ? 'bg-white shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                    <Briefcase size={14} />
+                    Projects View
+                </button>
+            </div>
+
             <div className="space-y-3 pb-4 border-b border-gray-100/30">
                  <label className="text-sm font-bold text-slate-900 flex items-center gap-2">
                     <Droplet size={16} className="text-slate-500" />
@@ -106,7 +150,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, isOpen, t
             <div className="space-y-5">
                  <label className="text-sm font-bold text-slate-900 flex items-center gap-2">
                     <Sliders size={16} className="text-slate-500" />
-                    Capacity Thresholds
+                    Capacity Thresholds ({activeTab})
                 </label>
                 
                 <div className="space-y-4">
@@ -273,7 +317,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, isOpen, t
                     onClick={handleSave}
                     className="w-full py-2.5 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors shadow-lg shadow-slate-900/10"
                 >
-                    Save Preferences
+                    Save {activeTab} Preferences
                 </button>
             </div>
         </div>
