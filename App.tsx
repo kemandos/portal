@@ -3,6 +3,7 @@ import { DesktopLayout } from './layouts/DesktopLayout';
 import { TabletLayout } from './layouts/TabletLayout';
 import { MobileLayout } from './layouts/MobileLayout';
 import { EditAssignmentModal } from './components/modals/EditAssignmentModal';
+import { MobileEditAssignmentModal } from './components/modals/MobileEditAssignmentModal';
 import { BulkAssignmentModal } from './components/modals/BulkAssignmentModal';
 import { SettingsModal } from './components/modals/SettingsModal';
 import { MONTHS } from './constants';
@@ -389,6 +390,9 @@ function App() {
   else if (selectionRange && !isSingleCellRange) selectionLabel = 'Cells selected';
   else if (selectedMonthIndices.length > 0) selectionLabel = 'Months selected';
 
+  // Determine if we are on mobile to select correct modal
+  const isMobile = windowWidth < 768;
+
   return (
     <>
       {windowWidth < 768 ? (
@@ -399,8 +403,8 @@ function App() {
           <DesktopLayout {...commonProps} />
       )}
 
-      {hasSelection && (
-        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50 flex items-center justify-center w-full px-4 pointer-events-none">
+      {hasSelection && !isMobile && (
+        <div className="fixed bottom-[calc(2rem+env(safe-area-inset-bottom))] left-1/2 transform -translate-x-1/2 z-50 flex items-center justify-center w-full px-4 pointer-events-none">
             <div className="bg-[#1e293b] text-white rounded-2xl shadow-[0_8px_40px_-12px_rgba(0,0,0,0.5)] p-2 pr-4 flex items-center gap-6 animate-in slide-in-from-bottom-5 fade-in duration-300 border border-white/10 ring-1 ring-black/20 pointer-events-auto backdrop-blur-xl">
                 <div className="flex items-center gap-4 pl-2">
                     <div className="flex items-center justify-center size-10 rounded-full bg-[#e11d48] text-white font-bold text-sm shadow-[0_4px_12px_rgba(225,29,72,0.4)] ring-2 ring-[#e11d48]/50 ring-offset-2 ring-offset-[#1e293b]">
@@ -442,15 +446,28 @@ function App() {
         </div>
       )}
 
-      <EditAssignmentModal 
-        isOpen={isEditModalOpen} 
-        onClose={() => setIsEditModalOpen(false)} 
-        initialData={editContext}
-        viewMode={viewState.mode}
-        currentData={viewState.mode === 'People' ? peopleData : projectData}
-        onSave={handleSaveWrapper}
-        onDelete={handleDeleteWrapper}
-      />
+      {isMobile ? (
+          <MobileEditAssignmentModal 
+            isOpen={isEditModalOpen} 
+            onClose={() => setIsEditModalOpen(false)} 
+            initialData={editContext}
+            viewMode={viewState.mode}
+            currentData={viewState.mode === 'People' ? peopleData : projectData}
+            onSave={handleSaveWrapper}
+            onDelete={handleDeleteWrapper}
+          />
+      ) : (
+          <EditAssignmentModal 
+            isOpen={isEditModalOpen} 
+            onClose={() => setIsEditModalOpen(false)} 
+            initialData={editContext}
+            viewMode={viewState.mode}
+            currentData={viewState.mode === 'People' ? peopleData : projectData}
+            onSave={handleSaveWrapper}
+            onDelete={handleDeleteWrapper}
+          />
+      )}
+      
       <BulkAssignmentModal 
         isOpen={isBulkModalOpen} 
         onClose={() => setIsBulkModalOpen(false)}
