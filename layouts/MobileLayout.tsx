@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ViewState, ThemeSettings, Filter, Resource, SelectionRange } from '../types';
 import { MobileListView } from '../components/MobileListView';
-import { Users, X, Filter as FilterIcon, ChevronDown, Check, ChevronRight, Briefcase, ChevronUp, Layers, Plus, RefreshCw } from 'lucide-react';
+import { Header } from '../components/Header';
+import { X, Filter as FilterIcon, ChevronDown, Check, ChevronRight, Layers, Plus, RefreshCw } from 'lucide-react';
 import { MOCK_PEOPLE, MOCK_PROJECTS } from '../constants';
 
 interface LayoutProps {
@@ -34,28 +35,19 @@ export const MobileLayout: React.FC<LayoutProps> = ({
     viewState, setViewState, currentData, handleSelectionChange, handleItemClick, themeSettings,
     activeFilters, onAddFilter, onRemoveFilter, onCellClick, 
     selectedMonthIndices, onAddChild, groupBy, setGroupBy,
-    expandedRows, setExpandedRows
+    expandedRows, setExpandedRows, onOpenSettings
 }) => {
   
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [activeFilterCategory, setActiveFilterCategory] = useState<string | null>(null);
   const [isSelectionMode] = useState(true);
+  const [isGroupMenuOpen, setIsGroupMenuOpen] = useState(false);
   
   // Pull to Refresh State
   const [pullY, setPullY] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const touchStartY = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  // Enforce 3M view on mobile mount
-  useEffect(() => {
-    setViewState(prev => {
-        if (prev.timeRange !== '3M') {
-            return { ...prev, timeRange: '3M' };
-        }
-        return prev;
-    });
-  }, [setViewState]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
       if (containerRef.current?.scrollTop === 0) {
@@ -149,185 +141,194 @@ export const MobileLayout: React.FC<LayoutProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-[#F9FAFB] text-slate-900 font-sans w-full overflow-hidden">
+    <div className="flex flex-col h-[100dvh] bg-[#F5F2EB] text-slate-900 font-sans w-full overflow-hidden">
       
       {/* Header */}
-      <header className="flex-none sticky top-0 z-50 transition-all duration-300">
-         <div className="absolute inset-0 bg-white/80 backdrop-blur-xl border-b border-white/50 shadow-[0_4px_30px_rgba(0,0,0,0.03)]" />
-         
-         <div className="relative z-10">
-             {/* Row 1: Toggles */}
-             <div className="px-5 pt-6 pb-3">
-                 <div className="flex gap-4 p-2 rounded-[24px] bg-slate-200/40 border border-white/60 shadow-inner backdrop-blur-xl">
-                     <button 
-                        onClick={() => setViewState(v => ({...v, mode: 'People'}))}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl font-bold text-sm transition-all duration-300 relative overflow-hidden group ${viewState.mode === 'People' ? 'bg-white text-slate-900 shadow-lg shadow-black/5 ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-700 hover:bg-white/40'}`}
-                     >
-                         <span className="relative z-10 flex items-center gap-2">
-                             <Users size={18} className={viewState.mode === 'People' ? 'text-primary' : 'text-slate-400'} /> 
-                             People
-                         </span>
-                     </button>
-                     <button 
-                        onClick={() => setViewState(v => ({...v, mode: 'Projects'}))}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl font-bold text-sm transition-all duration-300 relative overflow-hidden group ${viewState.mode === 'Projects' ? 'bg-white text-slate-900 shadow-lg shadow-black/5 ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-700 hover:bg-white/40'}`}
-                     >
-                         <span className="relative z-10 flex items-center gap-2">
-                             <Briefcase size={18} className={viewState.mode === 'Projects' ? 'text-primary' : 'text-slate-400'} /> 
-                             Projects
-                         </span>
-                     </button>
-                 </div>
-             </div>
-
-             {/* Row 2: Filter Button */}
-             <div className="px-5 pb-5">
-                 <button 
+      <Header 
+        viewState={viewState}
+        setViewState={setViewState}
+        onOpenSettings={onOpenSettings}
+        isDesktop={false}
+      />
+      
+      {/* Controls Bar - Sticky below header */}
+      <div className="sticky top-[112px] z-30 px-3 pb-2 transition-all duration-300">
+         <div className="bg-[#FDFBF7]/60 backdrop-blur-xl border border-white/40 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.05)] p-2">
+            
+            <div className="flex items-center gap-2 justify-between">
+                {/* Filter Button */}
+                <button 
                     onClick={() => setIsFilterSheetOpen(!isFilterSheetOpen)}
                     className={`
-                        w-full flex items-center justify-between px-5 py-3.5 rounded-[20px] border text-sm font-bold transition-all active:scale-[0.98] backdrop-blur-md shadow-sm
-                        ${activeFilters.length > 0 || isFilterSheetOpen ? 'bg-white border-primary/30 ring-2 ring-primary/10 text-slate-900 shadow-primary/5' : 'bg-white/50 border-white/60 hover:bg-white/80 text-slate-500'}
+                        flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border transition-all active:scale-95
+                        ${activeFilters.length > 0 || isFilterSheetOpen 
+                            ? 'bg-white shadow-sm text-primary border-transparent ring-1 ring-black/5' 
+                            : 'bg-transparent border-transparent text-slate-500 hover:bg-white/40'}
                     `}
-                 >
-                     <div className="flex items-center gap-3">
-                         <div className={`p-1.5 rounded-lg ${activeFilters.length > 0 ? 'bg-primary/10 text-primary' : 'bg-slate-200/50 text-slate-400'}`}>
-                             <FilterIcon size={16} />
-                         </div>
-                         <span>Filter & Group</span>
-                     </div>
-                     <div className="flex items-center gap-3">
-                         {activeFilters.length > 0 && (
-                             <span className="bg-primary text-white text-[10px] px-2.5 py-1 rounded-full shadow-lg shadow-primary/20 font-bold">
-                                 {activeFilters.length} Active
-                             </span>
-                         )}
-                         {isFilterSheetOpen ? <ChevronUp size={16} className="text-slate-400" /> : <ChevronDown size={16} className="text-slate-400" />}
-                     </div>
-                 </button>
-             </div>
+                >
+                    <div className="relative">
+                        <FilterIcon size={14} />
+                        {activeFilters.length > 0 && (
+                            <span className="absolute -top-1.5 -right-1.5 size-3 bg-primary text-white text-[8px] flex items-center justify-center rounded-full shadow-sm ring-1 ring-white">
+                                {activeFilters.length}
+                            </span>
+                        )}
+                    </div>
+                    <span>Filters</span>
+                </button>
 
-             {/* Row 3: Active Filters */}
-             {activeFilters.length > 0 && !isFilterSheetOpen && (
-                 <div className="flex gap-2 overflow-x-auto px-5 pb-5 hide-scrollbar">
-                     {activeFilters.map((filter, idx) => (
-                         <div key={idx} className="flex items-center gap-2 px-3 py-1.5 bg-white/70 border border-white/60 shadow-sm backdrop-blur-md rounded-lg whitespace-nowrap min-w-fit">
-                             <span className="text-xs font-bold text-slate-600">{filter.key}:</span>
-                             <span className="text-xs font-bold text-[#ee3a5e]">{filter.values[0]}{filter.values.length > 1 ? ` +${filter.values.length - 1}` : ''}</span>
+                <div className="w-px h-6 bg-gray-300/50" />
+
+                {/* Group Dropdown Trigger */}
+                <div className="flex-[1.5] relative">
+                    <button 
+                        onClick={() => setIsGroupMenuOpen(!isGroupMenuOpen)}
+                        className={`
+                            w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs font-bold border transition-all active:scale-95
+                            ${groupBy !== 'None'
+                                ? 'bg-white shadow-sm text-primary border-transparent ring-1 ring-black/5' 
+                                : 'bg-transparent border-transparent text-slate-500 hover:bg-white/40'}
+                        `}
+                    >
+                        <div className="flex items-center gap-2 truncate">
+                            <Layers size={14} />
+                            <span className="truncate">Group: {groupBy}</span>
+                        </div>
+                        <ChevronDown size={14} className="opacity-50" />
+                    </button>
+
+                    {/* Group Dropdown Menu */}
+                    {isGroupMenuOpen && (
+                         <div className="absolute top-full right-0 mt-2 w-56 bg-white/90 backdrop-blur-xl rounded-xl shadow-glass border border-white/50 py-1 z-50 animate-in fade-in slide-in-from-top-2">
+                            {groupOptions.map(opt => (
+                                <button 
+                                    key={opt}
+                                    onClick={() => { setGroupBy(opt); setIsGroupMenuOpen(false); }}
+                                    className="w-full flex items-center justify-between px-4 py-3 text-xs font-medium text-slate-700 hover:bg-slate-50/50 transition-colors border-b border-gray-100/50 last:border-0"
+                                >
+                                    {opt}
+                                    {groupBy === opt && <Check size={14} className="text-primary" />}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Active Filters Row */}
+            {activeFilters.length > 0 && (
+                <div className="flex gap-2 overflow-x-auto hide-scrollbar mt-2 pt-2 border-t border-gray-200/50">
+                    {activeFilters.map((filter, idx) => (
+                         <div key={idx} className="flex items-center gap-1 bg-white border border-gray-200/50 px-2 py-1 rounded-lg shadow-sm whitespace-nowrap">
+                             <span className="text-[10px] font-bold text-slate-500 uppercase">{filter.key}:</span>
+                             <span className="text-[10px] font-bold text-primary">{filter.values[0]}{filter.values.length > 1 ? ` +${filter.values.length - 1}` : ''}</span>
                              <button 
                                 onClick={(e) => { e.stopPropagation(); onRemoveFilter(idx); }}
-                                className="ml-1 p-0.5 rounded-full hover:bg-slate-200 text-slate-400"
+                                className="ml-1 p-0.5 rounded-full hover:bg-slate-100 text-slate-400"
                              >
                                  <X size={12} />
                              </button>
                          </div>
-                     ))}
-                 </div>
-             )}
-         </div>
-
-         {/* Dropdown Filter Menu */}
-         {isFilterSheetOpen && (
-            <div className="absolute top-full left-0 right-0 bg-white shadow-[0_20px_40px_-10px_rgba(0,0,0,0.1)] border-t border-gray-100 z-[60] animate-in slide-in-from-top-5 duration-200 max-h-[70vh] flex flex-col">
-                 <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-slate-50/50">
-                    <div className="mb-4 bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
-                        <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2 bg-slate-50/50">
-                            <Layers size={14} className="text-slate-400" />
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Group By</span>
-                        </div>
-                        <div className="p-2 flex flex-col gap-1">
-                            {groupOptions.map(opt => (
-                                <button 
-                                    key={opt}
-                                    onClick={() => setGroupBy(opt)}
-                                    className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${groupBy === opt ? 'bg-[#ee3a5e]/5 text-[#ee3a5e] font-bold' : 'text-slate-700 hover:bg-slate-50'}`}
-                                >
-                                    {opt}
-                                    {groupBy === opt && <Check size={14} />}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                    {/* ... Filter Logic ... */}
-                    {filterCategories.map(category => {
-                        const isOpen = activeFilterCategory === category;
-                        const activeCount = activeFilters.find(f => f.key === category)?.values.length || 0;
-                        return (
-                            <div key={category} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm transition-all mb-3 last:mb-0">
-                                <button 
-                                    onClick={() => setActiveFilterCategory(isOpen ? null : category)}
-                                    className="w-full flex items-center justify-between p-4 text-left active:bg-slate-50"
-                                >
-                                    <span className="text-sm font-bold text-slate-700">{category}</span>
-                                    <div className="flex items-center gap-3">
-                                        {activeCount > 0 && (
-                                            <span className="bg-[#ee3a5e] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                                {activeCount}
-                                            </span>
-                                        )}
-                                        {isOpen ? <ChevronDown size={16} className="text-slate-400" /> : <ChevronRight size={16} className="text-slate-400" />}
-                                    </div>
-                                </button>
-                                {isOpen && (
-                                    <div className="px-4 pb-4 pt-0 animate-in slide-in-from-top-2">
-                                        <div className="h-px bg-slate-50 mb-3" />
-                                        <div className="max-h-[200px] overflow-y-auto custom-scrollbar space-y-1">
-                                            {getOptionsForCategory(category).map(option => {
-                                                const isSelected = activeFilters.find(f => f.key === category)?.values.includes(option);
-                                                return (
-                                                    <label key={option} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer">
-                                                        <div className={`size-5 rounded-md border flex items-center justify-center transition-colors ${isSelected ? 'bg-[#ee3a5e] border-[#ee3a5e]' : 'bg-white border-slate-300'}`}>
-                                                            {isSelected && <Check size={12} className="text-white" strokeWidth={3} />}
-                                                        </div>
-                                                        <span className={`text-sm ${isSelected ? 'font-bold text-slate-900' : 'text-slate-600'}`}>{option}</span>
-                                                        <input 
-                                                            type="checkbox" 
-                                                            className="hidden"
-                                                            checked={isSelected || false}
-                                                            onChange={() => handleFilterToggle(category, option)}
-                                                        />
-                                                    </label>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    })}
-                 </div>
-                 <div className="p-4 bg-white border-t border-gray-100 flex gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-                    <button 
-                        onClick={() => {
-                            activeFilters.forEach((_, i) => onRemoveFilter(0));
-                            setGroupBy('None');
-                        }}
-                        className="flex-1 py-3 text-sm font-bold text-slate-500 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors"
-                    >
-                        Reset
-                    </button>
-                    <button 
-                        onClick={() => setIsFilterSheetOpen(false)}
-                        className="flex-[2] py-3 text-sm font-bold text-white bg-[#ee3a5e] hover:bg-[#d63453] rounded-xl shadow-lg shadow-rose-200 transition-colors"
-                    >
-                        Apply Filters
-                    </button>
+                    ))}
                 </div>
-            </div>
-         )}
-      </header>
+            )}
+         </div>
+      </div>
       
-      {/* Backdrop */}
+      {/* Backdrop for Group Menu */}
+      {isGroupMenuOpen && (
+          <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setIsGroupMenuOpen(false)} />
+      )}
+
+      {/* Filter Sheet */}
       {isFilterSheetOpen && (
-          <div 
-              className="fixed inset-0 z-40 bg-slate-900/20 backdrop-blur-sm animate-in fade-in duration-200"
-              onClick={() => setIsFilterSheetOpen(false)}
-          />
+        <>
+        <div 
+            className="fixed inset-0 z-40 bg-slate-900/20 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={() => setIsFilterSheetOpen(false)}
+        />
+        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.1)] border-t border-gray-100 z-50 animate-in slide-in-from-bottom duration-300 rounded-t-[32px] flex flex-col max-h-[75dvh]">
+             <div className="w-full flex justify-center pt-3 pb-1" onClick={() => setIsFilterSheetOpen(false)}>
+                <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+             </div>
+             
+             <div className="flex items-center justify-between px-6 py-3 border-b border-gray-100">
+                <h3 className="text-lg font-bold text-slate-900">Filters</h3>
+                {activeFilters.length > 0 && (
+                    <button 
+                        onClick={() => { activeFilters.forEach((_, i) => onRemoveFilter(0)); }}
+                        className="text-xs font-bold text-slate-500 hover:text-red-500 transition-colors"
+                    >
+                        Clear All
+                    </button>
+                )}
+             </div>
+
+             <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-slate-50/50">
+                {filterCategories.map(category => {
+                    const isOpen = activeFilterCategory === category;
+                    const activeCount = activeFilters.find(f => f.key === category)?.values.length || 0;
+                    return (
+                        <div key={category} className="bg-white border border-slate-200/60 rounded-xl overflow-hidden shadow-sm transition-all mb-3 last:mb-0">
+                            <button 
+                                onClick={() => setActiveFilterCategory(isOpen ? null : category)}
+                                className="w-full flex items-center justify-between p-4 text-left active:bg-slate-50 hover:bg-slate-50/50 transition-colors"
+                            >
+                                <span className="text-sm font-bold text-slate-700">{category}</span>
+                                <div className="flex items-center gap-3">
+                                    {activeCount > 0 && (
+                                        <span className="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+                                            {activeCount}
+                                        </span>
+                                    )}
+                                    {isOpen ? <ChevronDown size={16} className="text-slate-400" /> : <ChevronRight size={16} className="text-slate-400" />}
+                                </div>
+                            </button>
+                            {isOpen && (
+                                <div className="px-4 pb-4 pt-0 animate-in slide-in-from-top-2">
+                                    <div className="h-px bg-slate-100 mb-3" />
+                                    <div className="max-h-[200px] overflow-y-auto custom-scrollbar space-y-1">
+                                        {getOptionsForCategory(category).map(option => {
+                                            const isSelected = activeFilters.find(f => f.key === category)?.values.includes(option);
+                                            return (
+                                                <label key={option} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer group transition-colors">
+                                                    <div className={`size-5 rounded-md border flex items-center justify-center transition-colors ${isSelected ? 'bg-primary border-primary shadow-sm' : 'bg-white border-slate-300 group-hover:border-primary/50'}`}>
+                                                        {isSelected && <Check size={12} className="text-white" strokeWidth={3} />}
+                                                    </div>
+                                                    <span className={`text-sm ${isSelected ? 'font-bold text-slate-900' : 'text-slate-600'}`}>{option}</span>
+                                                    <input 
+                                                        type="checkbox" 
+                                                        className="hidden"
+                                                        checked={isSelected || false}
+                                                        onChange={() => handleFilterToggle(category, option)}
+                                                    />
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+             </div>
+             
+             <div className="p-4 bg-white border-t border-gray-100 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.02)]">
+                <button 
+                    onClick={() => setIsFilterSheetOpen(false)}
+                    className="w-full py-3.5 text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow-lg transition-colors active:scale-95"
+                >
+                    Apply Filters
+                </button>
+            </div>
+        </div>
+        </>
       )}
 
       {/* Main Content Area */}
       <main 
         ref={containerRef}
-        className="flex-1 overflow-y-auto relative flex flex-col w-full bg-[#F9FAFB] overscroll-contain"
+        className="flex-1 overflow-y-auto relative flex flex-col w-full bg-[#F5F2EB] overscroll-contain"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}

@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Resource, ViewState, ThemeSettings } from '../types';
 import { MONTHS } from '../constants';
-import { ChevronRight, ChevronDown, Plus, Briefcase, Folder, Users, User, ChevronLeft } from 'lucide-react';
+import { ChevronRight, ChevronDown, Plus, Briefcase, ChevronLeft } from 'lucide-react';
 
 interface MobileListViewProps {
   data: Resource[];
@@ -73,11 +73,11 @@ export const MobileListView: React.FC<MobileListViewProps> = ({
 
   const getStatusColor = (percentage: number) => {
     const t = themeSettings?.thresholds || { under: 50, balanced: 90, over: 100 };
-    if (percentage === 0) return 'bg-slate-100/60 text-slate-400 border-slate-200/50 backdrop-blur-sm';
-    if (percentage > t.over) return 'bg-rose-500/10 text-rose-600 border-rose-500/20 backdrop-blur-md shadow-[0_2px_8px_rgba(244,63,94,0.15)]';
-    if (percentage > t.balanced) return 'bg-amber-500/10 text-amber-600 border-amber-500/20 backdrop-blur-md shadow-[0_2px_8px_rgba(245,158,11,0.15)]';
-    if (percentage > t.under) return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 backdrop-blur-md shadow-[0_2px_8px_rgba(16,185,129,0.15)]';
-    return 'bg-slate-500/5 text-slate-500 border-slate-500/10 backdrop-blur-sm';
+    if (percentage === 0) return 'bg-white/40 text-slate-400 border-slate-200/50';
+    if (percentage > t.over) return 'bg-[#ef4444] text-white border-transparent shadow-[0_2px_8px_rgba(239,68,68,0.25)]';
+    if (percentage > t.balanced) return 'bg-[#f59e0b] text-white border-transparent shadow-[0_2px_8px_rgba(245,158,11,0.25)]';
+    if (percentage > t.under) return 'bg-[#10b981] text-white border-transparent shadow-[0_2px_8px_rgba(16,185,129,0.25)]';
+    return 'bg-slate-400 text-white border-transparent shadow-[0_2px_8px_rgba(148,163,184,0.25)]';
   };
 
   const renderResource = (resource: Resource, depth: number = 0) => {
@@ -95,13 +95,13 @@ export const MobileListView: React.FC<MobileListViewProps> = ({
                     onClick={(e) => toggleExpand(e, resource.id)}
                     className="flex items-center gap-3 w-full text-left px-2 py-2 group"
                 >
-                    <div className="size-7 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center transition-transform group-active:scale-95">
+                    <div className="size-7 rounded-full bg-white/60 border border-white/50 shadow-sm flex items-center justify-center transition-transform group-active:scale-95">
                          {isExpanded ? <ChevronDown size={14} className="text-slate-600" /> : <ChevronRight size={14} className="text-slate-600" />}
                     </div>
                     <div>
                         <span className="text-xs font-bold text-slate-600 uppercase tracking-wider block">{resource.name}</span>
                     </div>
-                    <span className="text-[10px] font-bold bg-slate-200/50 text-slate-500 px-2.5 py-1 rounded-full backdrop-blur-sm ml-auto">{resource.subtext}</span>
+                    <span className="text-[10px] font-bold bg-white/40 border border-white/50 text-slate-500 px-2.5 py-1 rounded-full backdrop-blur-sm ml-auto">{resource.subtext}</span>
                 </button>
                 
                 {isExpanded && (
@@ -118,7 +118,7 @@ export const MobileListView: React.FC<MobileListViewProps> = ({
             relative mb-5 rounded-[24px] border transition-all duration-300 ease-spring overflow-hidden
             ${isAssignment 
                 ? 'ml-4 mt-2 border-l-4 border-l-primary/30 bg-white/40 border-y-white/40 border-r-white/40 backdrop-blur-md shadow-none' 
-                : 'bg-white/80 border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-xl hover:shadow-[0_12px_40px_rgba(0,0,0,0.08)]'
+                : 'bg-[#FDFBF7]/60 border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.05)] backdrop-blur-xl hover:shadow-[0_12px_40px_rgba(0,0,0,0.08)]'
             }
         `}>
             {/* Header */}
@@ -128,7 +128,7 @@ export const MobileListView: React.FC<MobileListViewProps> = ({
             >
                 <div className="shrink-0">
                     {isEmployee ? (
-                        <div className="size-12 rounded-2xl bg-slate-100 overflow-hidden border border-white/50 shadow-sm ring-1 ring-black/5">
+                        <div className="size-12 rounded-2xl bg-white overflow-hidden border border-white shadow-sm ring-1 ring-black/5">
                              <img src={resource.avatar || `https://i.pravatar.cc/150?u=${resource.id}`} alt={resource.name} className="w-full h-full object-cover" />
                         </div>
                     ) : (
@@ -189,14 +189,14 @@ export const MobileListView: React.FC<MobileListViewProps> = ({
                              <button 
                                 key={month}
                                 onClick={(e) => { e.stopPropagation(); onCellClick(resource.id, month); }}
-                                className={`flex flex-col items-center justify-center py-3 px-2 rounded-2xl border transition-all duration-300 active:scale-95 hover:brightness-105 ${statusClass}`}
+                                className={`flex flex-col items-center justify-center py-3 px-2 rounded-xl border transition-all duration-300 active:scale-95 hover:brightness-105 ${statusClass}`}
                              >
-                                 <span className="text-[10px] font-bold uppercase opacity-60 mb-0.5 tracking-wide">{month}</span>
+                                 <span className="text-[9px] font-bold uppercase opacity-80 mb-0.5 tracking-wide">{month}</span>
                                  <div className="flex items-baseline gap-0.5">
                                     <span className="text-sm font-extrabold tracking-tight leading-none">
                                         {Number.isInteger(pt) ? pt : pt.toFixed(1)}
                                     </span>
-                                    {depth === 0 && <span className="text-[10px] font-semibold opacity-50">/{Number.isInteger(capacity) ? capacity : capacity.toFixed(0)}</span>}
+                                    {depth === 0 && <span className="text-[10px] font-semibold opacity-70">/{Number.isInteger(capacity) ? capacity : capacity.toFixed(0)}</span>}
                                  </div>
                              </button>
                          );
@@ -208,7 +208,7 @@ export const MobileListView: React.FC<MobileListViewProps> = ({
                 <div className="mx-5 mb-5 mt-1">
                      <button 
                         onClick={(e) => { e.stopPropagation(); onAddChild(resource.id); }}
-                        className="w-full py-3 flex items-center justify-center gap-2 text-xs font-bold text-rose-500 hover:text-rose-600 hover:bg-rose-50 rounded-2xl transition-all border border-dashed border-rose-200 bg-white/40 shadow-sm"
+                        className="w-full py-3 flex items-center justify-center gap-2 text-xs font-bold text-slate-500 hover:text-primary hover:bg-white rounded-xl transition-all border border-dashed border-slate-300 hover:border-primary/50 bg-white/20 shadow-sm"
                      >
                          <Plus size={16} strokeWidth={2.5} />
                          Add {viewMode === 'People' ? 'Project' : 'Employee'}
@@ -217,7 +217,7 @@ export const MobileListView: React.FC<MobileListViewProps> = ({
             )}
             
             {isExpanded && resource.children && (
-                <div className="border-t border-slate-200/40 bg-slate-50/30 p-4 space-y-4">
+                <div className="border-t border-white/20 bg-white/10 p-4 space-y-4">
                     {resource.children.map(child => renderResource(child, depth + 1))}
                 </div>
             )}
