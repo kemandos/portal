@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, FolderOpen, ChevronDown, Users } from 'lucide-react';
+import { X, FolderOpen, ChevronDown, Users, Tag } from 'lucide-react';
 import { Resource } from '../../types';
 import { useBulkAssignmentLogic } from '../../hooks/useBulkAssignmentLogic';
 import { BulkMonthSelector } from './bulk-assignment/BulkMonthSelector';
@@ -19,7 +19,8 @@ export const BulkAssignmentModal: React.FC<BulkAssignmentModalProps> = ({ onClos
   const { state, actions } = useBulkAssignmentLogic(isOpen, selectedIds, currentData, initialMonths);
   const { 
     activeMonths, allocations, searchTerm, isSearchOpen, isMonthPickerOpen, 
-    selectedEmployees, searchResults, availableMonths, visibleTotal, searchRef, monthPickerRef 
+    selectedEmployees, searchResults, availableMonths, visibleTotal, searchRef, monthPickerRef,
+    employeeRoles
   } = state;
 
   if (!isOpen) return null;
@@ -53,10 +54,10 @@ export const BulkAssignmentModal: React.FC<BulkAssignmentModalProps> = ({ onClos
 
         <div className="p-6 space-y-8 overflow-y-auto custom-scrollbar flex-1 min-h-0">
             
-            {/* Project Select */}
+            {/* Project Select - Full Width */}
             <div>
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3 block">Project</label>
-                <div className="relative group max-w-md">
+                <div className="relative group">
                     <FolderOpen className="absolute left-3 top-3 text-gray-400" size={18} />
                     <select className="w-full pl-10 pr-4 py-3 bg-white/50 border border-white/60 rounded-lg text-sm font-medium text-slate-900 shadow-sm focus:border-primary focus:ring-1 focus:ring-primary appearance-none cursor-pointer hover:bg-white/80 transition-colors outline-none backdrop-blur-sm">
                         <option>E-Commerce Platform Redesign</option>
@@ -90,8 +91,10 @@ export const BulkAssignmentModal: React.FC<BulkAssignmentModalProps> = ({ onClos
                         selectedEmployees={selectedEmployees}
                         activeMonths={activeMonths}
                         allocations={allocations}
+                        employeeRoles={employeeRoles}
                         handleAllocationChange={actions.handleAllocationChange}
                         handleRemoveEmployee={actions.handleRemoveEmployee}
+                        handleRoleChange={actions.handleRoleChange}
                     />
                     <BulkEmployeeSearch 
                         searchTerm={searchTerm}

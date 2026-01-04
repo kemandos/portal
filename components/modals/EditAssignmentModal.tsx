@@ -11,7 +11,7 @@ interface EditAssignmentModalProps {
   initialData?: { resourceId?: string; month?: string; months?: string[]; isAddMode?: boolean };
   viewMode: 'People' | 'Projects';
   currentData: Resource[];
-  onSave: (data: { mode: 'edit' | 'add', resourceId: string, parentId?: string, month: string, months?: string[], pt: number, newItem?: any, isCapacityEdit?: boolean, role?: string }) => void;
+  onSave: (data: { mode: 'edit' | 'add', resourceId: string, parentId?: string, month: string, months?: string[], pt: number, newItem?: any, isCapacityEdit?: boolean, role?: string, allocations?: Record<string, number> }) => void;
   onDelete: (resourceId: string, parentId?: string, month?: string, months?: string[]) => void;
 }
 
@@ -94,12 +94,18 @@ export const EditAssignmentModal: React.FC<EditAssignmentModalProps> = (props) =
                 setSelectedMonth={actions.setSelectedMonth}
                 isMultiMonth={isMultiMonth}
                 selectedMonths={selectedMonths}
+                addMonth={actions.addMonth}
+                removeMonth={actions.removeMonth}
                 selectedRole={state.selectedRole}
                 setSelectedRole={actions.setSelectedRole}
                 ptValue={state.ptValue}
                 setPtValue={actions.setPtValue}
+                allocations={state.allocations}
+                setAllocations={actions.setAllocations}
+                handleAllocationChange={actions.handleAllocationChange}
                 handleIncrement={actions.handleIncrement}
                 capacityStats={state.capacityStats}
+                capacityStatsByMonth={state.capacityStatsByMonth}
                 onClose={onClose}
                 onSave={actions.handleSaveClick}
                 onDelete={actions.handleDeleteClick}

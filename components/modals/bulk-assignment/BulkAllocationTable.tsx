@@ -6,23 +6,28 @@ interface BulkAllocationTableProps {
   selectedEmployees: Resource[];
   activeMonths: string[];
   allocations: Record<string, Record<string, number>>;
+  employeeRoles: Record<string, string>;
   handleAllocationChange: (empId: string, month: string, delta: number) => void;
   handleRemoveEmployee: (empId: string) => void;
+  handleRoleChange: (empId: string, role: string) => void;
 }
 
 export const BulkAllocationTable: React.FC<BulkAllocationTableProps> = ({
   selectedEmployees,
   activeMonths,
   allocations,
+  employeeRoles,
   handleAllocationChange,
-  handleRemoveEmployee
+  handleRemoveEmployee,
+  handleRoleChange
 }) => {
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto custom-scrollbar">
         <div className="min-w-max">
                 {/* Header Row */}
             <div className="flex items-center bg-slate-50 border-b border-gray-200 px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider sticky top-0 z-10">
-                <div className="w-[200px] shrink-0">Employee</div>
+                <div className="w-[180px] shrink-0">Employee</div>
+                <div className="w-[140px] shrink-0">Role</div>
                 {activeMonths.map(month => (
                     <div key={month} className="w-32 shrink-0 text-center">{month}</div>
                 ))}
@@ -37,7 +42,7 @@ export const BulkAllocationTable: React.FC<BulkAllocationTableProps> = ({
 
             {selectedEmployees.map((employee) => (
                 <div key={employee.id} className="flex items-center px-4 py-3 border-b border-gray-100 hover:bg-slate-50 transition-colors group">
-                    <div className="w-[200px] shrink-0 flex items-center gap-3">
+                    <div className="w-[180px] shrink-0 flex items-center gap-3">
                         <div className="size-9 rounded-full bg-white border border-gray-200 shrink-0 overflow-hidden shadow-sm">
                             <img src={employee.avatar || `https://i.pravatar.cc/150?u=${employee.id}`} alt={employee.name} className="w-full h-full object-cover" />
                         </div>
@@ -45,6 +50,21 @@ export const BulkAllocationTable: React.FC<BulkAllocationTableProps> = ({
                             <p className="text-sm font-bold text-slate-900 truncate">{employee.name}</p>
                             <p className="text-[11px] text-slate-500 truncate">{employee.subtext || 'Senior Dev'}</p>
                         </div>
+                    </div>
+
+                    <div className="w-[140px] shrink-0 pr-4">
+                        <select 
+                            value={employeeRoles[employee.id] || 'Engineer'}
+                            onChange={(e) => handleRoleChange(employee.id, e.target.value)}
+                            className="w-full px-2 py-1.5 text-xs font-medium text-slate-700 bg-white border border-gray-200 rounded-lg shadow-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none cursor-pointer"
+                        >
+                            <option value="Engineer">Engineer</option>
+                            <option value="Senior Engineer">Senior Engineer</option>
+                            <option value="Analyst">Analyst</option>
+                            <option value="Project Manager">Project Manager</option>
+                            <option value="Project Lead">Project Lead</option>
+                            <option value="Managing Consultant">Managing Consultant</option>
+                        </select>
                     </div>
                     
                     {activeMonths.map((month) => {

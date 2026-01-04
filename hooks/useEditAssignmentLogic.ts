@@ -1,7 +1,7 @@
 import { useState, useRef, useMemo, useEffect } from 'react';
-import { MONTHS, MOCK_PEOPLE, MOCK_PROJECTS } from '../constants';
-import { Resource } from '../types';
-import { getSearchableItems } from '../utils/resourceHelpers';
+import { MONTHS, MOCK_PEOPLE, MOCK_PROJECTS } from '../../../constants';
+import { Resource } from '../../../types';
+import { getSearchableItems } from '../../../utils/resourceHelpers';
 
 interface UseEditAssignmentLogicProps {
   isOpen: boolean;
@@ -32,6 +32,9 @@ export const useEditAssignmentLogic = ({
   const [selectedSearchResult, setSelectedSearchResult] = useState<any>(null);
   const [isCapacityEdit, setIsCapacityEdit] = useState(false);
   const [selectedRole, setSelectedRole] = useState<string>('Engineer');
+  
+  // Multi-Month State
+  const [allocations, setAllocations] = useState<Record<string, number>>({});
 
   // List View State
   const [internalMode, setInternalMode] = useState<'list' | 'form'>('form');
@@ -91,6 +94,7 @@ export const useEditAssignmentLogic = ({
         setParentResource(null);
         setSelectedItemType('Project');
         setSelectedRole('Engineer');
+        setAllocations({});
     }
   }, [isOpen]);
 
@@ -100,13 +104,13 @@ export const useEditAssignmentLogic = ({
         const dataset = currentData;
         const initialMonth = initialData.month || MONTHS[0];
         
+        let initialMonthsList = [initialMonth];
         if (initialData.months && initialData.months.length > 1) {
-            setSelectedMonths(initialData.months);
-            setSelectedMonth(initialData.months[0]);
-        } else {
-            setSelectedMonths([]);
-            setSelectedMonth(initialMonth);
+            initialMonthsList = initialData.months;
         }
+        
+        setSelectedMonths(initialMonthsList);
+        setSelectedMonth(initialMonthsList[0]);
 
         let foundResource: Resource | null = null;
         let foundParent: Resource | null = null;
@@ -136,6 +140,13 @@ export const useEditAssignmentLogic = ({
             setTargetResource(res);
             setParentResource(foundParent);
             
+            // Initialize Allocations Map
+            const newAllocations: Record<string, number> = {};
+            initialMonthsList.forEach(m => {
+                newAllocations[m] = res.allocations[m]?.pt || 0;
+            });
+            setAllocations(newAllocations);
+            
             const isMultiMonth = initialData.months && initialData.months.length > 1;
 
             // Logic to switch to List View if clicking a parent with existing assignments
@@ -155,6 +166,7 @@ export const useEditAssignmentLogic = ({
                      setTargetResource(null);
                      setSelectedItemType('Project');
                      setPtValue(0);
+                     setAllocations({});
                      setSearchTerm('');
                      setSelectedSearchResult(null);
                      return;
@@ -166,6 +178,13 @@ export const useEditAssignmentLogic = ({
                  setTargetResource(null);
                  setSelectedItemType('Project');
                  setPtValue(0);
+                 
+                 // If bulk editing an employee, we are adding assignments to them
+                 // Initialize allocations to 0
+                 const emptyAlloc: Record<string, number> = {};
+                 initialMonthsList.forEach(m => emptyAlloc[m] = 0);
+                 setAllocations(emptyAlloc);
+
                  setSearchTerm('');
                  setSelectedSearchResult(null);
                  return;
@@ -177,6 +196,11 @@ export const useEditAssignmentLogic = ({
                  setMode('add');
                  setSearchTerm('');
                  setPtValue(0);
+                 
+                 const emptyAlloc: Record<string, number> = {};
+                 initialMonthsList.forEach(m => emptyAlloc[m] = 0);
+                 setAllocations(emptyAlloc);
+
                  setSelectedSearchResult(null);
                  setIsCapacityEdit(false);
                  
@@ -195,6 +219,11 @@ export const useEditAssignmentLogic = ({
                  setSearchTerm(res.name);
                  const allocation = res.allocations[initialMonth];
                  setPtValue(allocation ? allocation.capacity : 0);
+                 // Sync allocations for capacity edit
+                 const capAlloc: Record<string, number> = {};
+                 initialMonthsList.forEach(m => capAlloc[m] = res.allocations[m]?.capacity || 0);
+                 setAllocations(capAlloc);
+
             } else if (foundDepth === 2 || (foundDepth === 1 && viewMode === 'People' && parentResource?.type === 'employee')) {
                 setMode('edit');
                 setIsCapacityEdit(false);
@@ -218,6 +247,7 @@ export const useEditAssignmentLogic = ({
                 setIsCapacityEdit(false);
                 setSearchTerm(''); 
                 setPtValue(0);
+                setAllocations({});
                 setSelectedSearchResult(null);
                 
                 if (viewMode === 'People') setSelectedItemType('Project');
@@ -262,14 +292,19 @@ export const useEditAssignmentLogic = ({
              setSelectedRole(existingChild.role);
         }
     } else if (mode === 'add') {
-        setPtValue(0);
+        // If we are adding and haven't selected a result, allocations should be 0 unless manually changed
+        // But if we selected a result and it already exists, we might want to populate. 
+        // For simplicity, add mode usually starts at 0.
+        if (selectedMonths.length === 1) {
+             setPtValue(allocations[selectedMonths[0]] || 0);
+        }
     }
     
     if (internalMode === 'list' && listEmployee) {
         const activeAssignments = listEmployee.children?.filter(c => (c.allocations[selectedMonth]?.pt || 0) > 0) || [];
         setListAssignments(activeAssignments);
     }
-  }, [selectedMonth, existingChild, isCapacityEdit, targetResource, mode, internalMode, listEmployee]);
+  }, [selectedMonth, existingChild, isCapacityEdit, targetResource, mode, internalMode, listEmployee, selectedMonths, allocations]);
 
   // Update default role when adding
   useEffect(() => {
@@ -298,21 +333,21 @@ export const useEditAssignmentLogic = ({
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const capacityStats = useMemo(() => {
+  const getCapacityStatsForMonth = (month: string, proposedPt: number) => {
       let cap = 20;
       let base = 0;
       
       if (viewMode === 'People') {
           const employee = parentResource || targetResource;
           if (employee) {
-              const alloc = employee.allocations[selectedMonth];
+              const alloc = employee.allocations[month];
               cap = alloc?.capacity || 20;
               const currentTotal = employee.children 
-                  ? employee.children.reduce((sum, child) => sum + (child.allocations[selectedMonth]?.pt || 0), 0)
+                  ? employee.children.reduce((sum, child) => sum + (child.allocations[month]?.pt || 0), 0)
                   : (alloc?.pt || 0);
               
               if (mode === 'edit' && targetResource && !isCapacityEdit) {
-                   const assignAlloc = targetResource.allocations[selectedMonth];
+                   const assignAlloc = targetResource.allocations[month];
                    base = Math.max(0, currentTotal - (assignAlloc?.pt || 0));
               } else {
                    base = currentTotal;
@@ -321,32 +356,113 @@ export const useEditAssignmentLogic = ({
       } else if (viewMode === 'Projects') {
           if (isCapacityEdit && targetResource) {
               const usage = targetResource.children 
-                  ? targetResource.children.reduce((sum, child) => sum + (child.allocations[selectedMonth]?.pt || 0), 0)
+                  ? targetResource.children.reduce((sum, child) => sum + (child.allocations[month]?.pt || 0), 0)
                   : 0;
               return {
-                  capacity: ptValue,
+                  capacity: proposedPt,
                   baseLoad: usage,
                   projectedTotal: usage,
-                  isOverCapacity: usage > ptValue 
+                  isOverCapacity: usage > proposedPt 
               };
-          } else if (parentResource) {
-             const projAlloc = parentResource.allocations[selectedMonth];
-             cap = projAlloc?.capacity || 0;
-             base = 0; 
+          } else {
+              // Calculate Employee Load for Assignments in Projects View
+              let employeeId = '';
+              if (mode === 'add' && selectedSearchResult && selectedItemType === 'Employee') {
+                   employeeId = selectedSearchResult.id;
+              } else if (mode === 'edit' && targetResource) {
+                   employeeId = targetResource.id.split('::')[0];
+              }
+
+              if (employeeId) {
+                  // Find employee in source of truth (MOCK_PEOPLE)
+                  const findEmployee = (nodes: Resource[]): Resource | null => {
+                     for (const node of nodes) {
+                         if (node.type === 'employee' && node.id === employeeId) return node;
+                         if (node.children) {
+                             const found = findEmployee(node.children);
+                             if (found) return found;
+                         }
+                     }
+                     return null;
+                  };
+
+                  const employeeNode = findEmployee(MOCK_PEOPLE);
+                  
+                  if (employeeNode) {
+                       const alloc = employeeNode.allocations[month];
+                       cap = alloc?.capacity || 20;
+                       const totalLoad = employeeNode.children 
+                          ? employeeNode.children.reduce((sum, c) => sum + (c.allocations[month]?.pt || 0), 0)
+                          : 0;
+                        
+                       if (mode === 'edit' && parentResource) {
+                           // Subtract current project assignment from load to get true base
+                           const projectId = parentResource.id;
+                           const projectChild = employeeNode.children?.find(c => c.id === projectId || c.id.startsWith(projectId + '::'));
+                           const currentVal = projectChild?.allocations[month]?.pt || 0;
+                           base = Math.max(0, totalLoad - currentVal);
+                       } else {
+                           base = totalLoad;
+                       }
+                  } else {
+                      base = 0;
+                  }
+              }
           }
       }
 
-      const total = base + (isCapacityEdit ? 0 : ptValue);
+      const total = base + (isCapacityEdit ? 0 : proposedPt);
       return { 
           capacity: cap, 
           baseLoad: base, 
           projectedTotal: total,
-          isOverCapacity: total > (isCapacityEdit ? ptValue : cap) 
+          isOverCapacity: total > (isCapacityEdit ? proposedPt : cap) 
       };
-  }, [viewMode, mode, targetResource, parentResource, selectedMonth, ptValue, isCapacityEdit]);
+  };
+
+  const capacityStats = useMemo(() => {
+      // For single month / current view
+      return getCapacityStatsForMonth(selectedMonth, ptValue);
+  }, [viewMode, mode, targetResource, parentResource, selectedMonth, ptValue, isCapacityEdit, selectedSearchResult, selectedItemType]);
+
+  const capacityStatsByMonth = useMemo(() => {
+      const stats: Record<string, any> = {};
+      selectedMonths.forEach(m => {
+          stats[m] = getCapacityStatsForMonth(m, allocations[m] || 0);
+      });
+      return stats;
+  }, [selectedMonths, allocations, viewMode, mode, targetResource, parentResource, isCapacityEdit, selectedSearchResult, selectedItemType]);
 
 
   // --- Actions ---
+
+  const addMonth = (month: string) => {
+      setSelectedMonths(prev => [...prev, month].sort((a, b) => MONTHS.indexOf(a) - MONTHS.indexOf(b)));
+      // Initialize new month allocation
+      setAllocations(prev => ({...prev, [month]: 0}));
+  };
+
+  const removeMonth = (month: string) => {
+      if (selectedMonths.length > 1) {
+          setSelectedMonths(prev => prev.filter(m => m !== month));
+          // cleanup allocation
+          setAllocations(prev => {
+              const next = {...prev};
+              delete next[month];
+              return next;
+          });
+      }
+  };
+
+  const handleAllocationChange = (month: string, val: number) => {
+      const newVal = Math.max(0, val);
+      setAllocations(prev => ({...prev, [month]: newVal}));
+      
+      // If single month, keep synced with ptValue
+      if (selectedMonths.length === 1 && month === selectedMonths[0]) {
+          setPtValue(newVal);
+      }
+  };
 
   const handleEditAssignment = (child: Resource) => {
       setTargetResource(child);
@@ -357,6 +473,7 @@ export const useEditAssignmentLogic = ({
       setSelectedItemType('Project');
       const allocation = child.allocations[selectedMonth];
       setPtValue(allocation ? allocation.pt : 0);
+      setAllocations({ [selectedMonth]: allocation ? allocation.pt : 0 });
       setIsCapacityEdit(false);
       if (child.role) {
           setSelectedRole(child.role);
@@ -376,6 +493,7 @@ export const useEditAssignmentLogic = ({
       setInternalMode('form');
       setSearchTerm('');
       setPtValue(0);
+      setAllocations({ [selectedMonth]: 0 });
       setSelectedItemType('Project');
       setIsCapacityEdit(false);
       setSelectedSearchResult(null);
@@ -399,9 +517,11 @@ export const useEditAssignmentLogic = ({
       if (viewMode === 'People') {
           if (capacityStats.baseLoad + nextVal <= capacityStats.capacity) {
               setPtValue(nextVal);
+              handleAllocationChange(selectedMonth, nextVal);
           }
       } else {
          setPtValue(nextVal);
+         handleAllocationChange(selectedMonth, nextVal);
       }
   };
 
@@ -409,17 +529,43 @@ export const useEditAssignmentLogic = ({
     if (!targetResource && mode === 'edit') return;
     if (mode === 'add' && !parentResource) return;
 
+    // Use allocations map for both single and multi modes
+    // Sync single ptValue to map if needed just in case
+    const finalAllocations = { ...allocations };
+    if (selectedMonths.length === 1) {
+        finalAllocations[selectedMonths[0]] = ptValue;
+    }
+
+    // Construct array of months to save
+    const monthsToSave = selectedMonths;
+
     if (mode === 'edit') {
-        onSave({
-            mode: 'edit',
-            resourceId: targetResource!.id,
-            parentId: parentResource?.id,
-            month: selectedMonth,
-            months: selectedMonths.length > 0 ? selectedMonths : undefined,
-            pt: ptValue,
-            isCapacityEdit,
-            role: selectedRole
+        // We iterate and save for each month
+        // Alternatively, pass allocations map to onSave?
+        // The current interface expects `pt` for single month or `months` array.
+        // Let's modify onSave signature if needed or call it iteratively? 
+        // Better: Pass everything to onSave and let useStaffingData handle it.
+        // But useStaffingData currently takes `pt` as single number. 
+        // We need to loop here or update useStaffingData. 
+        // Let's simply loop here for safety unless we update the hook.
+        
+        // Actually, let's update `onSave` to accept `allocations` map.
+        // But for now, let's just stick to the existing loop pattern in `useStaffingData` which takes `months` and `pt`.
+        // Wait, `useStaffingData` takes `pt` (single). If we have different PTs per month, we MUST call it individually or update it.
+        
+        // Let's call onSave iteratively for each month to support varying PTs
+        monthsToSave.forEach(m => {
+             onSave({
+                mode: 'edit',
+                resourceId: targetResource!.id,
+                parentId: parentResource?.id,
+                month: m,
+                pt: finalAllocations[m] || 0,
+                isCapacityEdit,
+                role: selectedRole
+            });
         });
+        
     } else {
         if (!selectedSearchResult && !searchTerm) return; 
         
@@ -432,15 +578,16 @@ export const useEditAssignmentLogic = ({
 
         const targetId = targetResource ? targetResource.id : parentResource!.id;
 
-        onSave({
-            mode: 'add',
-            resourceId: targetId,
-            parentId: targetId,
-            month: selectedMonth,
-            months: selectedMonths.length > 0 ? selectedMonths : undefined,
-            pt: ptValue,
-            newItem: itemToAdd,
-            role: selectedRole
+        monthsToSave.forEach(m => {
+            onSave({
+                mode: 'add',
+                resourceId: targetId,
+                parentId: targetId,
+                month: m,
+                pt: finalAllocations[m] || 0,
+                newItem: itemToAdd,
+                role: selectedRole
+            });
         });
     }
   };
@@ -462,13 +609,15 @@ export const useEditAssignmentLogic = ({
     state: {
       searchTerm, selectedItemType, isSearchOpen, ptValue, mode, selectedMonth, selectedMonths,
       targetResource, parentResource, selectedSearchResult, isCapacityEdit, selectedRole,
-      internalMode, listAssignments, listEmployee, searchRef, filteredItems, capacityStats
+      internalMode, listAssignments, listEmployee, searchRef, filteredItems, capacityStats,
+      allocations, capacityStatsByMonth
     },
     actions: {
       setSearchTerm, setSelectedItemType, setIsSearchOpen, setPtValue, setSelectedMonth, setSelectedRole,
-      setSelectedSearchResult,
+      setSelectedSearchResult, setAllocations,
       handleEditAssignment, handleListDelete, handleAddAssignment, handleBackToList,
-      handleIncrement, handleSaveClick, handleDeleteClick, handleUnassignClick
+      handleIncrement, handleSaveClick, handleDeleteClick, handleUnassignClick,
+      addMonth, removeMonth, handleAllocationChange
     }
   };
 };

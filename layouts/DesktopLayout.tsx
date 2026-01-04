@@ -141,22 +141,22 @@ export const DesktopLayout: React.FC<LayoutProps> = ({
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col min-h-0 relative">
-        <div className="flex-1 flex flex-col px-6 pt-2 pb-6 max-w-[1920px] w-full mx-auto overflow-hidden">
+        <div className="flex-1 flex flex-col px-6 pt-2 pb-6 max-w-[1920px] 3xl:max-w-none w-full mx-auto overflow-hidden">
             
             {/* Filter Bar */}
             <div className="flex-none flex flex-wrap items-center justify-between gap-4 mb-4">
                 <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-medium text-slate-500 mr-2 drop-shadow-sm">Filters:</span>
+                    <span className="text-sm font-medium text-slate-500 mr-2 drop-shadow-sm 3xl:text-base">Filters:</span>
                     
                     {activeFilters.map((filter, idx) => (
-                         <div key={idx} className="flex items-center gap-2 bg-white/60 backdrop-blur-xl border border-white/60 rounded-full px-3 py-1 text-xs font-medium shadow-sm animate-in fade-in zoom-in duration-300 hover:shadow-glow transition-shadow">
+                         <div key={idx} className="flex items-center gap-2 bg-white/60 backdrop-blur-xl border border-white/60 rounded-full px-3 py-1 text-xs font-medium shadow-sm animate-in fade-in zoom-in duration-300 hover:shadow-glow transition-shadow 3xl:text-sm 3xl:px-4 3xl:py-1.5">
                             <span className="text-slate-500">{filter.key}:</span>
                             <span className="text-slate-900 font-bold">{filter.values.join(', ')}</span>
                             <button 
                                 onClick={() => onRemoveFilter(idx)}
                                 className="p-0.5 hover:bg-black/5 rounded-full text-slate-400 hover:text-red-500 transition-colors ml-1 active:scale-90"
                             >
-                                <X size={14} />
+                                <X size={14} className="3xl:w-4 3xl:h-4" />
                             </button>
                         </div>
                     ))}
@@ -169,50 +169,50 @@ export const DesktopLayout: React.FC<LayoutProps> = ({
                             }}
                             className={`
                                 text-xs font-bold px-3 py-1 rounded-full border border-dashed flex items-center gap-1 transition-all duration-300
-                                hover:scale-105 active:scale-95
+                                hover:scale-105 active:scale-95 3xl:text-sm 3xl:px-4 3xl:py-1.5
                                 ${isFilterMenuOpen 
                                     ? 'bg-white text-primary border-primary shadow-glow' 
                                     : 'text-slate-500 hover:text-primary hover:bg-white/40 border-slate-300'
                                 }
                             `}
                         >
-                            <Plus size={14} /> Add Filter
+                            <Plus size={14} className="3xl:w-4 3xl:h-4" /> Add Filter
                         </button>
 
                         {/* Dropdown Menu */}
                         {isFilterMenuOpen && (
-                            <div className="absolute left-0 top-full mt-2 bg-white/80 backdrop-blur-2xl rounded-2xl shadow-[0_20px_40px_-10px_rgba(0,0,0,0.1)] border border-white/50 py-1 z-50 min-w-[200px] animate-in fade-in zoom-in-95 duration-200 flex flex-row h-[320px] ring-1 ring-white/80">
-                                <div className="flex flex-col py-1 min-w-[180px] border-r border-gray-100/30">
+                            <div className="absolute left-0 top-full mt-2 bg-white/80 backdrop-blur-2xl rounded-2xl shadow-[0_20px_40px_-10px_rgba(0,0,0,0.1)] border border-white/50 py-1 z-50 min-w-[200px] animate-in fade-in zoom-in-95 duration-200 flex flex-row h-[320px] ring-1 ring-white/80 3xl:h-[400px] 3xl:min-w-[250px]">
+                                <div className="flex flex-col py-1 min-w-[180px] border-r border-gray-100/30 3xl:min-w-[220px]">
                                     {filterCategories.map(category => (
                                         <button
                                             key={category}
                                             onClick={() => setActiveFilterCategory(category)}
-                                            className={`flex items-center justify-between px-4 py-2.5 text-xs font-medium text-left transition-colors ${activeFilterCategory === category ? 'bg-white/60 text-primary shadow-sm' : 'text-slate-700 hover:bg-white/40'}`}
+                                            className={`flex items-center justify-between px-4 py-2.5 text-xs font-medium text-left transition-colors 3xl:text-sm 3xl:py-3 ${activeFilterCategory === category ? 'bg-white/60 text-primary shadow-sm' : 'text-slate-700 hover:bg-white/40'}`}
                                         >
                                             <div className="flex items-center gap-2">
-                                                {category === 'Capacity' && <BarChart3 size={14} className="text-slate-400" />}
+                                                {category === 'Capacity' && <BarChart3 size={14} className="text-slate-400 3xl:w-4 3xl:h-4" />}
                                                 {category}
                                             </div>
-                                            <ChevronRight size={14} className={`text-slate-400 ${activeFilterCategory === category ? 'text-primary' : ''}`} />
+                                            <ChevronRight size={14} className={`text-slate-400 3xl:w-4 3xl:h-4 ${activeFilterCategory === category ? 'text-primary' : ''}`} />
                                         </button>
                                     ))}
                                 </div>
                                 {activeFilterCategory ? (
-                                    <div className="flex flex-col min-w-[240px] bg-transparent rounded-r-xl">
+                                    <div className="flex flex-col min-w-[240px] bg-transparent rounded-r-xl 3xl:min-w-[300px]">
                                         <div className="p-2 border-b border-gray-100/30">
-                                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 px-2">
+                                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 px-2 3xl:text-xs">
                                                 Select {activeFilterCategory}
                                             </div>
                                             {activeFilterCategory !== 'Capacity' && (
                                                 <div className="relative group/search">
-                                                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within/search:text-primary" size={14} />
+                                                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within/search:text-primary 3xl:w-4 3xl:h-4" size={14} />
                                                     <input 
                                                         ref={searchInputRef}
                                                         type="text" 
                                                         placeholder={`Search...`}
                                                         value={searchQuery}
                                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                                        className="w-full pl-8 pr-3 py-1.5 bg-white/40 border border-white/60 rounded-lg text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white/60 transition-all"
+                                                        className="w-full pl-8 pr-3 py-1.5 bg-white/40 border border-white/60 rounded-lg text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white/60 transition-all 3xl:text-sm 3xl:py-2 3xl:pl-10"
                                                     />
                                                 </div>
                                             )}
@@ -223,7 +223,7 @@ export const DesktopLayout: React.FC<LayoutProps> = ({
                                                 const filteredOptions = options.filter(opt => opt.toLowerCase().includes(searchQuery.toLowerCase()));
                                                 
                                                 if (filteredOptions.length === 0) {
-                                                     return <div className="px-4 py-3 text-xs text-slate-400 italic text-center mt-4">No results found</div>;
+                                                     return <div className="px-4 py-3 text-xs text-slate-400 italic text-center mt-4 3xl:text-sm">No results found</div>;
                                                 }
                                                 
                                                 return filteredOptions.map(option => {
@@ -239,9 +239,9 @@ export const DesktopLayout: React.FC<LayoutProps> = ({
                                                     }
 
                                                     return (
-                                                        <label key={option} className="flex items-center gap-2 px-3 py-2 hover:bg-white/50 rounded-lg cursor-pointer group transition-all active:scale-98">
-                                                            <div className={`size-4 rounded-md border flex items-center justify-center transition-all shrink-0 ${isSelected ? 'bg-primary border-primary shadow-sm' : colorClass} ${isSelected ? '' : 'group-hover:border-primary/50'}`}>
-                                                                {isSelected && <Check size={10} className="text-white" strokeWidth={3} />}
+                                                        <label key={option} className="flex items-center gap-2 px-3 py-2 hover:bg-white/50 rounded-lg cursor-pointer group transition-all active:scale-98 3xl:px-4 3xl:py-2.5">
+                                                            <div className={`size-4 rounded-md border flex items-center justify-center transition-all shrink-0 3xl:size-5 ${isSelected ? 'bg-primary border-primary shadow-sm' : colorClass} ${isSelected ? '' : 'group-hover:border-primary/50'}`}>
+                                                                {isSelected && <Check size={10} className="text-white 3xl:w-3 3xl:h-3" strokeWidth={3} />}
                                                             </div>
                                                             <input 
                                                                 type="checkbox" 
@@ -249,7 +249,7 @@ export const DesktopLayout: React.FC<LayoutProps> = ({
                                                                 checked={isSelected || false}
                                                                 onChange={() => handleFilterValueToggle(activeFilterCategory, option)}
                                                             />
-                                                            <span className={`text-xs ${isSelected ? 'font-bold text-slate-900' : 'text-slate-600'}`}>{option}</span>
+                                                            <span className={`text-xs ${isSelected ? 'font-bold text-slate-900' : 'text-slate-600'} 3xl:text-sm`}>{option}</span>
                                                         </label>
                                                     );
                                                 });
@@ -257,7 +257,7 @@ export const DesktopLayout: React.FC<LayoutProps> = ({
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="flex items-center justify-center flex-1 text-xs text-slate-400 italic px-6 text-center">
+                                    <div className="flex items-center justify-center flex-1 text-xs text-slate-400 italic px-6 text-center 3xl:text-sm">
                                         Select a category
                                     </div>
                                 )}
@@ -270,24 +270,24 @@ export const DesktopLayout: React.FC<LayoutProps> = ({
                     <div className="relative group z-20">
                         <button 
                             onClick={() => setIsGroupMenuOpen(!isGroupMenuOpen)}
-                            className="flex items-center gap-2 text-xs font-semibold text-slate-700 bg-white/40 backdrop-blur-xl border border-white/50 px-3 py-1.5 rounded-xl shadow-sm hover:bg-white/70 hover:shadow-glow transition-all active:scale-95 focus:ring-2 focus:ring-primary/20 outline-none min-w-[140px] justify-between"
+                            className="flex items-center gap-2 text-xs font-semibold text-slate-700 bg-white/40 backdrop-blur-xl border border-white/50 px-3 py-1.5 rounded-xl shadow-sm hover:bg-white/70 hover:shadow-glow transition-all active:scale-95 focus:ring-2 focus:ring-primary/20 outline-none min-w-[140px] justify-between 3xl:text-sm 3xl:px-4 3xl:py-2 3xl:min-w-[160px]"
                         >
                             <div className="flex items-center gap-2">
-                                 <Layers size={14} className="text-slate-500" />
+                                 <Layers size={14} className="text-slate-500 3xl:w-4 3xl:h-4" />
                                  <span className="truncate">Group: {groupBy}</span>
                             </div>
-                            <ChevronDown size={14} className="text-slate-400 group-hover:text-primary transition-colors" />
+                            <ChevronDown size={14} className="text-slate-400 group-hover:text-primary transition-colors 3xl:w-4 3xl:h-4" />
                         </button>
                         {isGroupMenuOpen && (
-                             <div className="absolute right-0 top-full mt-2 w-[180px] bg-white/80 backdrop-blur-2xl rounded-xl shadow-glass border border-white/50 py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                             <div className="absolute right-0 top-full mt-2 w-[180px] bg-white/80 backdrop-blur-2xl rounded-xl shadow-glass border border-white/50 py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200 3xl:w-[220px]">
                                 {groupOptions.map(opt => (
                                     <button 
                                         key={opt}
                                         onClick={() => { setGroupBy(opt); setIsGroupMenuOpen(false); }}
-                                        className="w-full flex items-center justify-between px-4 py-2 text-xs text-slate-700 hover:bg-white/50 transition-colors"
+                                        className="w-full flex items-center justify-between px-4 py-2 text-xs text-slate-700 hover:bg-white/50 transition-colors 3xl:text-sm 3xl:py-3"
                                     >
                                         {opt}
-                                        {groupBy === opt && <Check size={14} className="text-primary" />}
+                                        {groupBy === opt && <Check size={14} className="text-primary 3xl:w-4 3xl:h-4" />}
                                     </button>
                                 ))}
                             </div>
@@ -296,19 +296,41 @@ export const DesktopLayout: React.FC<LayoutProps> = ({
                     
                     <button
                         onClick={() => setDensity(density === 'comfortable' ? 'compact' : 'comfortable')}
-                        className="relative size-8 flex items-center justify-center bg-white/40 backdrop-blur-xl border border-white/50 rounded-xl shadow-sm hover:bg-white/70 hover:shadow-glow transition-all active:scale-90 focus:ring-2 focus:ring-primary/20 outline-none group overflow-hidden"
+                        className="relative size-8 flex items-center justify-center bg-white/40 backdrop-blur-xl border border-white/50 rounded-xl shadow-sm hover:bg-white/70 hover:shadow-glow transition-all active:scale-90 focus:ring-2 focus:ring-primary/20 outline-none group overflow-hidden 3xl:size-10"
                         title={density === 'comfortable' ? "Switch to Compact View" : "Switch to Comfortable View"}
                     >
                         <div className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ease-out transform ${density === 'comfortable' ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-90 scale-50'}`}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-slate-600 group-hover:text-slate-800"><path d="M4 4h4v4H4V4zm6 0h4v4h-4V4zm6 0h4v4h-4V4zM4 10h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4zM4 16h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4z"></path></svg>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-slate-600 group-hover:text-slate-800 3xl:w-5 3xl:h-5"><path d="M4 4h4v4H4V4zm6 0h4v4h-4V4zm6 0h4v4h-4V4zM4 10h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4zM4 16h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4z"></path></svg>
                         </div>
                         
                         <div className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ease-out transform ${density === 'compact' ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 rotate-90 scale-50'}`}>
-                             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-slate-600 group-hover:text-slate-800"><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"></path></svg>
+                             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-slate-600 group-hover:text-slate-800 3xl:w-5 3xl:h-5"><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"></path></svg>
                         </div>
                     </button>
                 </div>
             </div>
+
+            {viewState.mode === 'Projects' && (
+              <div className="px-6 py-2 text-xs text-slate-500 3xl:text-sm">
+                {viewState.selectedIds.length > 0 && (
+                  <span>
+                    💡 {viewState.selectedIds.length} project{viewState.selectedIds.length > 1 ? 's' : ''} selected. 
+                    Click "Assign" to add employees to {viewState.selectedIds.length > 1 ? 'these projects' : 'this project'}.
+                  </span>
+                )}
+                {selectedMonthIndices && selectedMonthIndices.length > 0 && (
+                  <span>
+                    💡 {selectedMonthIndices.length} month{selectedMonthIndices.length > 1 ? 's' : ''} selected. 
+                    Click cells to view/edit allocations across {selectedMonthIndices.length > 1 ? 'these months' : 'this month'}.
+                  </span>
+                )}
+                {viewState.selectedIds.length === 0 && (!selectedMonthIndices || selectedMonthIndices.length === 0) && (
+                  <span className="text-slate-400">
+                    💡 Select projects to bulk assign employees, or select months to view time periods.
+                  </span>
+                )}
+              </div>
+            )}
 
             {/* Heatmap Container */}
             <div className="flex-1 min-h-0 flex flex-col relative z-10 transition-all duration-500 ease-out">

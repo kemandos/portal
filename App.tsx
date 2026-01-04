@@ -71,6 +71,13 @@ function App() {
       document.documentElement.classList.remove('dark');
     }
   }, [currentThemeSettings.mode]);
+
+  // Clear row selection when switching to Projects view
+  useEffect(() => {
+    if (viewState.mode === 'Projects') {
+      setViewState(prev => ({ ...prev, selectedIds: [] }));
+    }
+  }, [viewState.mode]);
   
   const [selectionRange, setSelectionRange] = useState<SelectionRange | null>(null);
   const [selectedMonthIndices, setSelectedMonthIndices] = useState<number[]>([]);
@@ -360,6 +367,14 @@ function App() {
         const colDiff = Math.abs(selectionRange.end.monthIndex - selectionRange.start.monthIndex) + 1;
         return rowDiff * colDiff;
     }
+    // For Projects view, strict count based on what's active
+    if (viewState.mode === 'Projects') {
+        if (viewState.selectedIds.length > 0) return viewState.selectedIds.length;
+        if (selectedMonthIndices.length > 0) return selectedMonthIndices.length;
+    }
+    
+    // For People view, sum is fine or prioritize rows
+    if (viewState.selectedIds.length > 0 && selectedMonthIndices.length > 0) return viewState.selectedIds.length + selectedMonthIndices.length;
     if (viewState.selectedIds.length > 0) return viewState.selectedIds.length;
     if (selectedMonthIndices.length > 0) return selectedMonthIndices.length;
     return 0;
@@ -421,12 +436,32 @@ function App() {
     selectionRange.start.rowIndex === selectionRange.end.rowIndex && 
     selectionRange.start.monthIndex === selectionRange.end.monthIndex;
 
-  const hasSelection = viewState.selectedIds.length > 0 || (selectionRange !== null && !isSingleCellRange) || selectedMonthIndices.length > 0;
-  
+  // Show selection bar ONLY if there is a selection.
+  // In Projects view, ONLY show if months are selected (row selection is disabled).
+  const showSelectionBar = viewState.mode === 'People' 
+      ? (viewState.selectedIds.length > 0 || (selectionRange !== null && !isSingleCellRange) || selectedMonthIndices.length > 0)
+      : (selectedMonthIndices.length > 0 || (selectionRange !== null && !isSingleCellRange));
+
+  // Selection Label Logic
   let selectionLabel = 'Selection Active';
-  if (viewState.selectedIds.length > 0) selectionLabel = viewState.mode === 'People' ? 'Employees selected' : 'Projects selected';
-  else if (selectionRange && !isSingleCellRange) selectionLabel = 'Cells selected';
-  else if (selectedMonthIndices.length > 0) selectionLabel = 'Months selected';
+  if (viewState.mode === 'People') {
+      if (viewState.selectedIds.length > 0 && selectedMonthIndices.length > 0) {
+          selectionLabel = `${viewState.selectedIds.length} employees, ${selectedMonthIndices.length} months`;
+      } else if (viewState.selectedIds.length > 0) {
+          selectionLabel = `${viewState.selectedIds.length} employees selected`;
+      } else if (selectedMonthIndices.length > 0) {
+          selectionLabel = `${selectedMonthIndices.length} months selected`;
+      } else if (selectionRange && !isSingleCellRange) {
+          selectionLabel = 'Cells selected';
+      }
+  } else if (viewState.mode === 'Projects') {
+      // In Projects view, we only care about Month selection or Cell selection
+      if (selectedMonthIndices.length > 0) {
+          selectionLabel = `${selectedMonthIndices.length} months selected`;
+      } else if (selectionRange && !isSingleCellRange) {
+          selectionLabel = 'Cells selected';
+      }
+  }
 
   const isMobile = windowWidth < 768;
 
@@ -440,7 +475,7 @@ function App() {
           <DesktopLayout {...commonProps} />
       )}
 
-      {hasSelection && !isMobile && (
+      {showSelectionBar && !isMobile && (
         <div className="fixed bottom-[calc(2rem+env(safe-area-inset-bottom))] left-1/2 transform -translate-x-1/2 z-50 flex items-center justify-center w-full px-4 pointer-events-none">
             <div className="bg-[#1e293b] text-white rounded-2xl shadow-[0_8px_40px_-12px_rgba(0,0,0,0.5)] p-2 pr-4 flex items-center gap-6 animate-in slide-in-from-bottom-5 fade-in duration-300 border border-white/10 ring-1 ring-black/20 pointer-events-auto backdrop-blur-xl">
                 <div className="flex items-center gap-4 pl-2">
@@ -465,7 +500,7 @@ function App() {
                         className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white transition-all text-xs font-bold active:scale-95 border border-white/5 hover:border-white/20 hover:shadow-lg shadow-black/20"
                     >
                         <ClipboardList size={16} className="text-slate-300" />
-                        Assign
+                        {viewState.mode === 'Projects' && selectedMonthIndices.length > 0 ? 'View Time Periods' : 'Assign'}
                     </button>
                     
                     <button 

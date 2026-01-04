@@ -11,6 +11,7 @@ export const useBulkAssignmentLogic = (
   const [activeMonths, setActiveMonths] = useState<string[]>([]);
   const [localSelectedIds, setLocalSelectedIds] = useState<string[]>([]);
   const [allocations, setAllocations] = useState<Record<string, Record<string, number>>>({});
+  const [employeeRoles, setEmployeeRoles] = useState<Record<string, string>>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
@@ -23,6 +24,7 @@ export const useBulkAssignmentLogic = (
         setLocalSelectedIds(selectedIds);
         setActiveMonths(initialMonths && initialMonths.length > 0 ? initialMonths : [MONTHS[0], MONTHS[1]]);
         setSearchTerm('');
+        setEmployeeRoles({});
     }
   }, [isOpen, selectedIds, initialMonths]);
 
@@ -69,7 +71,7 @@ export const useBulkAssignmentLogic = (
       );
   }, [allEmployees, localSelectedIds, searchTerm]);
 
-  // Initialize allocations for selected employees and months
+  // Initialize allocations and roles for selected employees
   useEffect(() => {
       setAllocations(prev => {
           const newAllocations = { ...prev };
@@ -82,6 +84,32 @@ export const useBulkAssignmentLogic = (
               });
           });
           return newAllocations;
+      });
+
+      setEmployeeRoles(prev => {
+          const next = { ...prev };
+          let changed = false;
+          selectedEmployees.forEach(emp => {
+              if (!next[emp.id]) {
+                  const title = (emp.subtext || '').toLowerCase();
+                  const dept = emp.department || '';
+                  let role = 'Engineer';
+
+                  // Smart Role Assignment Logic
+                  if (title.includes('senior')) role = 'Senior Engineer';
+                  else if (title.includes('managing consultant')) role = 'Managing Consultant';
+                  else if (title.includes('project manager')) role = 'Project Manager';
+                  else if (title.includes('lead')) role = 'Project Lead';
+                  else if (title.includes('analyst')) role = 'Analyst';
+                  else if (dept === 'Reporting') role = 'Analyst';
+                  else if (dept === 'Project Management') role = 'Project Manager';
+                  else if (dept === 'Management') role = 'Managing Consultant';
+                  
+                  next[emp.id] = role;
+                  changed = true;
+              }
+          });
+          return changed ? next : prev;
       });
   }, [selectedEmployees, activeMonths]);
 
@@ -99,6 +127,10 @@ export const useBulkAssignmentLogic = (
               }
           };
       });
+  };
+
+  const handleRoleChange = (empId: string, role: string) => {
+      setEmployeeRoles(prev => ({ ...prev, [empId]: role }));
   };
 
   const removeMonth = (month: string) => {
@@ -141,6 +173,7 @@ export const useBulkAssignmentLogic = (
         activeMonths,
         localSelectedIds,
         allocations,
+        employeeRoles,
         searchTerm,
         isSearchOpen,
         isMonthPickerOpen,
@@ -156,6 +189,7 @@ export const useBulkAssignmentLogic = (
         setIsSearchOpen,
         setIsMonthPickerOpen,
         handleAllocationChange,
+        handleRoleChange,
         removeMonth,
         addMonth,
         handleAddEmployee,

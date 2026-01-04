@@ -152,7 +152,7 @@ export const MobileLayout: React.FC<LayoutProps> = ({
       />
       
       {/* Controls Bar - Sticky below header */}
-      <div className="sticky top-[112px] z-30 px-3 pb-2 transition-all duration-300">
+      <div className={`sticky top-[112px] px-3 pb-2 transition-all duration-300 ${isGroupMenuOpen ? 'z-50' : 'z-30'}`}>
          <div className="bg-[#FDFBF7]/60 backdrop-blur-xl border border-white/40 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.05)] p-2">
             
             <div className="flex items-center gap-2 justify-between">
@@ -160,41 +160,42 @@ export const MobileLayout: React.FC<LayoutProps> = ({
                 <button 
                     onClick={() => setIsFilterSheetOpen(!isFilterSheetOpen)}
                     className={`
-                        flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border transition-all active:scale-95
-                        ${activeFilters.length > 0 || isFilterSheetOpen 
-                            ? 'bg-white shadow-sm text-primary border-transparent ring-1 ring-black/5' 
-                            : 'bg-transparent border-transparent text-slate-500 hover:bg-white/40'}
+                        flex-1 flex items-center justify-center gap-2 px-3 py-3 rounded-xl text-sm font-bold shadow-sm border transition-all duration-200 active:scale-95
+                        bg-white border-gray-200 text-slate-900 hover:bg-slate-50 min-w-0
                     `}
                 >
-                    <div className="relative">
-                        <FilterIcon size={14} />
+                    <div className="relative shrink-0">
+                        <FilterIcon size={16} className="text-slate-600" />
                         {activeFilters.length > 0 && (
                             <span className="absolute -top-1.5 -right-1.5 size-3 bg-primary text-white text-[8px] flex items-center justify-center rounded-full shadow-sm ring-1 ring-white">
                                 {activeFilters.length}
                             </span>
                         )}
                     </div>
-                    <span>Filters</span>
+                    <span className="truncate">Filters</span>
                 </button>
 
-                <div className="w-px h-6 bg-gray-300/50" />
+                <div className="w-px h-6 bg-gray-300/50 shrink-0" />
 
                 {/* Group Dropdown Trigger */}
-                <div className="flex-[1.5] relative">
+                <div className="flex-[2] relative min-w-0">
                     <button 
                         onClick={() => setIsGroupMenuOpen(!isGroupMenuOpen)}
                         className={`
-                            w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs font-bold border transition-all active:scale-95
-                            ${groupBy !== 'None'
-                                ? 'bg-white shadow-sm text-primary border-transparent ring-1 ring-black/5' 
-                                : 'bg-transparent border-transparent text-slate-500 hover:bg-white/40'}
+                            w-full flex items-center justify-between gap-2 px-3 py-3 rounded-xl text-sm font-bold shadow-sm border transition-all duration-200 active:scale-95
+                            bg-white border-gray-200 text-slate-900 hover:bg-slate-50
                         `}
                     >
-                        <div className="flex items-center gap-2 truncate">
-                            <Layers size={14} />
+                        <div className="flex items-center gap-2 min-w-0">
+                            <Layers size={16} className="text-slate-600 shrink-0" />
                             <span className="truncate">Group: {groupBy}</span>
+                            {groupBy !== 'None' && (
+                                <span className="bg-primary text-white text-[10px] px-2 py-0.5 rounded-full ml-1 shrink-0">
+                                    Active
+                                </span>
+                            )}
                         </div>
-                        <ChevronDown size={14} className="opacity-50" />
+                        <ChevronDown size={14} className="opacity-50 shrink-0" />
                     </button>
 
                     {/* Group Dropdown Menu */}

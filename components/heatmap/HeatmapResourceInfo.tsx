@@ -15,6 +15,7 @@ interface HeatmapResourceInfoProps {
   themeSettings: any;
   colSpan?: number;
   className?: string;
+  setTooltipState?: (state: any) => void;
 }
 
 export const HeatmapResourceInfo: React.FC<HeatmapResourceInfoProps> = ({
@@ -29,13 +30,14 @@ export const HeatmapResourceInfo: React.FC<HeatmapResourceInfoProps> = ({
   visibleMonths,
   themeSettings,
   colSpan,
-  className
+  className,
+  setTooltipState
 }) => {
   
   const renderIcon = (resource: Resource) => {
       const hasChildren = resource.children && resource.children.length > 0;
-      const sizeClass = isCompact ? "w-8 h-8" : "w-10 h-10";
-      const iconSizeClass = isCompact ? "size-8" : "size-10";
+      const sizeClass = isCompact ? "w-8 h-8" : "w-10 h-10 3xl:w-12 3xl:h-12 4xl:w-14 4xl:h-14";
+      const iconSizeClass = isCompact ? "size-8" : "size-10 3xl:size-12 4xl:size-14";
       
       if (resource.type === 'project' && resource.avatar) {
           return (
@@ -78,7 +80,7 @@ export const HeatmapResourceInfo: React.FC<HeatmapResourceInfoProps> = ({
                 </div>
                 
                 {/* Availability Badge */}
-                <div className={`absolute bottom-0 right-0 size-3 rounded-full border-2 border-white z-20 ${statusColor} shadow-sm`}></div>
+                <div className={`absolute bottom-0 right-0 size-3 3xl:size-4 rounded-full border-2 border-white z-20 ${statusColor} shadow-sm`}></div>
                 
                 {/* SVG Heatmap Ring */}
                 <svg className="absolute -inset-[6px] w-[calc(100%+12px)] h-[calc(100%+12px)] z-0 rotate-[-90deg]" viewBox="0 0 52 52">
@@ -128,13 +130,37 @@ export const HeatmapResourceInfo: React.FC<HeatmapResourceInfoProps> = ({
       const ringClass = hasChildren ? "ring-2 ring-primary ring-offset-2 ring-offset-white/80" : "";
       return (
         <div className={`${iconSizeClass} rounded-full ${resource.color ? 'bg-white text-primary' : 'bg-white/80 text-primary'} flex items-center justify-center shadow-sm border border-white/50 backdrop-blur-sm ${ringClass} transition-transform duration-300 ease-spring hover:scale-110 hover:bg-white hover:shadow-glow`}>
-            <Icon size={isCompact ? 14 : 18} strokeWidth={2.5} />
+            <Icon size={isCompact ? 14 : 18} strokeWidth={2.5} className="3xl:w-6 3xl:h-6 4xl:w-8 4xl:h-8" />
         </div>
       );
   };
 
+  const handleSkillHover = (e: React.MouseEvent, skills: string[]) => {
+      e.stopPropagation();
+      if (!setTooltipState) return;
+      const rect = e.currentTarget.getBoundingClientRect();
+      setTooltipState({
+          content: (
+              <div className="flex flex-col gap-1">
+                  <span className="font-bold text-white mb-1 text-xs">More Skills</span>
+                  <div className="flex flex-wrap gap-1">
+                      {skills.map(s => (
+                          <span key={s} className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded-full">{s}</span>
+                      ))}
+                  </div>
+              </div>
+          ),
+          position: { x: rect.left + rect.width / 2, y: rect.bottom }
+      });
+  };
+
+  const handleMouseLeave = () => {
+      if (setTooltipState) setTooltipState(null);
+  };
+
   const isSelectedRow = selectedIds.includes(resource.id);
-  const defaultClass = `sticky left-[48px] z-20 ${isSelectedRow ? 'bg-primary/5' : 'bg-white/20'} backdrop-blur-md group-hover:bg-white/40 ${paddingClass} transition-colors shadow-[2px_0_5px_-2px_rgba(0,0,0,0.02)] cursor-pointer align-middle border-r border-slate-200`;
+  // Use bg-white to ensure opacity for sticky column
+  const defaultClass = `sticky left-[48px] z-20 ${isSelectedRow ? 'bg-rose-50' : 'bg-white'} shadow-[4px_0_8px_-2px_rgba(0,0,0,0.1)] ${paddingClass} transition-colors cursor-pointer align-middle border-r border-slate-200`;
 
   return (
     <td 
@@ -143,33 +169,41 @@ export const HeatmapResourceInfo: React.FC<HeatmapResourceInfoProps> = ({
         onClick={(e) => handleResourceClick(e, resource)}
     >
         <div className="flex items-center">
-            <div style={{ width: depth * 24 }} className="shrink-0 transition-all" />
-            <div className="flex items-center gap-3 min-w-0 flex-1 group/item">
+            <div style={{ width: depth * 24 }} className="shrink-0 transition-all 3xl:w-[calc(var(--depth)*32px)]" />
+            <div className="flex items-center gap-3 min-w-0 flex-1 group/item 3xl:gap-4">
                 
                 {resource.type !== 'group' && renderIcon(resource)}
                 
                 <div className="min-w-0 flex-1 transition-transform duration-300 ease-spring group-hover/item:translate-x-1">
                     {resource.type === 'group' ? (
-                        <div className="flex flex-col justify-center pl-2 border-l-2 border-primary/20">
-                            <span className="text-sm font-bold text-slate-900 leading-tight">{resource.name}</span>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">{resource.subtext}</span>
+                        <div className="flex flex-col justify-center pl-2 border-l-2 border-primary/20 3xl:gap-1">
+                            <span className="text-sm font-bold text-slate-900 leading-tight 3xl:text-base">{resource.name}</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mt-0.5 3xl:text-xs">{resource.subtext}</span>
                         </div>
                     ) : resource.type === 'employee' ? (
                         <div className="flex flex-col justify-center">
-                            <span className={`${isCompact ? 'text-xs' : 'text-sm'} font-bold truncate text-slate-900 ${selectedIds.includes(resource.id) ? 'text-primary' : ''}`}>
+                            <span className={`${isCompact ? 'text-xs 3xl:text-sm' : 'text-sm 3xl:text-base'} font-bold truncate text-slate-900 ${selectedIds.includes(resource.id) ? 'text-primary' : ''}`}>
                                 {resource.name}
                             </span>
                             {!isCompact && (
                                 <div className="flex flex-col">
-                                    <span className="text-[11px] text-slate-500 truncate leading-tight">
+                                    <span className="text-[11px] text-slate-500 truncate leading-tight 3xl:text-xs">
                                         {resource.subtext ? resource.subtext.split('•')[0].trim() : ''}
                                     </span>
                                     {resource.skills && resource.skills.length > 0 && (
-                                        <div className="flex flex-wrap gap-1 mt-1">
+                                        <div className="flex flex-wrap gap-1 mt-1 cursor-default" onClick={(e) => e.stopPropagation()}>
                                             {resource.skills.slice(0, 2).map(skill => (
-                                                <span key={skill} className="text-[9px] font-medium bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full border border-slate-200/50">{skill}</span>
+                                                <span key={skill} className="text-[9px] font-medium bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200/50 cursor-default 3xl:text-[10px] 3xl:px-2 3xl:py-1">{skill}</span>
                                             ))}
-                                            {resource.skills.length > 2 && <span className="text-[9px] text-slate-400">+{resource.skills.length - 2}</span>}
+                                            {resource.skills.length > 2 && (
+                                                <span 
+                                                    className="text-[9px] text-slate-400 hover:text-primary transition-colors cursor-default 3xl:text-[10px]"
+                                                    onMouseEnter={(e) => handleSkillHover(e, resource.skills!.slice(2))}
+                                                    onMouseLeave={handleMouseLeave}
+                                                >
+                                                    +{resource.skills.length - 2}
+                                                </span>
+                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -178,11 +212,11 @@ export const HeatmapResourceInfo: React.FC<HeatmapResourceInfoProps> = ({
                     ) : (
                         <>
                              <div className="flex items-center gap-2">
-                                <span className={`${depth > 0 ? 'text-xs font-semibold text-slate-700' : 'text-sm font-bold truncate text-slate-900'} ${selectedIds.includes(resource.id) ? 'text-primary' : ''}`}>
+                                <span className={`${depth > 0 ? 'text-xs 3xl:text-sm font-semibold text-slate-700' : 'text-sm 3xl:text-base font-bold truncate text-slate-900'} ${selectedIds.includes(resource.id) ? 'text-primary' : ''}`}>
                                     {resource.name}
                                 </span>
                             </div>
-                            {depth === 0 && <div className="text-xs text-slate-500 font-medium truncate">{resource.subtext}</div>}
+                            {depth === 0 && <div className="text-xs text-slate-500 font-medium truncate 3xl:text-sm">{resource.subtext}</div>}
                         </>
                     )}
                 </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, ArrowLeft, Check } from 'lucide-react';
+import { X, ArrowLeft, Check, Trash2, UserMinus } from 'lucide-react';
 import { Resource } from '../../types';
 import { useEditAssignmentLogic } from '../../hooks/useEditAssignmentLogic';
 import { AssignmentList } from './edit-assignment/AssignmentList';
@@ -35,6 +35,10 @@ export const MobileEditAssignmentModal: React.FC<EditAssignmentModalProps> = (pr
       if (mode === 'add') return `Add ${dynamicLabel}`;
       return 'Edit Assignment';
   };
+  
+  const anyMonthOverCapacity = isMultiMonth 
+    ? selectedMonths.some(m => state.capacityStatsByMonth[m]?.isOverCapacity) 
+    : state.capacityStats.isOverCapacity;
 
   return (
     <>
@@ -47,7 +51,7 @@ export const MobileEditAssignmentModal: React.FC<EditAssignmentModalProps> = (pr
         </div>
 
         {/* Mobile Header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-white sticky top-0 z-10 rounded-t-[32px]">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-white sticky top-0 z-10 rounded-t-[32px] shrink-0">
           <div className="flex items-center gap-3">
              {internalMode === 'form' && listEmployee ? (
                  <button onClick={actions.handleBackToList} className="p-2 -ml-2 rounded-full hover:bg-slate-50 text-slate-900 transition-colors">
@@ -65,20 +69,10 @@ export const MobileEditAssignmentModal: React.FC<EditAssignmentModalProps> = (pr
                 )}
             </div>
           </div>
-          
-          {internalMode === 'form' && (
-              <button 
-                onClick={actions.handleSaveClick}
-                disabled={props.viewMode === 'People' && state.capacityStats.isOverCapacity}
-                className="bg-primary text-white px-5 py-2 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 disabled:opacity-50 disabled:shadow-none active:scale-95 transition-all"
-              >
-                  Save
-              </button>
-          )}
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto bg-slate-50/30 pb-safe custom-scrollbar">
+        <div className="flex-1 overflow-y-auto bg-slate-50/30 custom-scrollbar">
             {internalMode === 'list' && (
                 <AssignmentList 
                     assignments={listAssignments}
@@ -108,20 +102,73 @@ export const MobileEditAssignmentModal: React.FC<EditAssignmentModalProps> = (pr
                         setSelectedMonth={actions.setSelectedMonth}
                         isMultiMonth={isMultiMonth}
                         selectedMonths={selectedMonths}
+                        addMonth={actions.addMonth}
+                        removeMonth={actions.removeMonth}
                         selectedRole={state.selectedRole}
                         setSelectedRole={actions.setSelectedRole}
                         ptValue={state.ptValue}
                         setPtValue={actions.setPtValue}
+                        allocations={state.allocations}
+                        setAllocations={actions.setAllocations}
+                        handleAllocationChange={actions.handleAllocationChange}
                         handleIncrement={actions.handleIncrement}
                         capacityStats={state.capacityStats}
+                        capacityStatsByMonth={state.capacityStatsByMonth}
                         onClose={onClose}
                         onSave={actions.handleSaveClick}
                         onDelete={actions.handleDeleteClick}
                         onUnassign={actions.handleUnassignClick}
+                        hideFooter={true}
+                        compactMode={true}
                     />
                 </div>
             )}
         </div>
+
+        {/* Sticky Footer for Form Actions */}
+        {internalMode === 'form' && (
+            <div className="px-4 py-3 bg-slate-50 border-t border-gray-200 flex items-center justify-between shrink-0 pb-safe z-20">
+                    <div className="flex items-center gap-2">
+                        {mode === 'edit' && !isCapacityEdit && (
+                            <>
+                                <button 
+                                    onClick={actions.handleDeleteClick}
+                                    className="p-3 rounded-xl bg-white border border-gray-200 text-slate-400 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition-all shadow-sm active:scale-95"
+                                    title={isMultiMonth ? "Clear value for selected months" : "Clear value for this month"}
+                                >
+                                    <Trash2 size={20} />
+                                </button>
+                                
+                                <button 
+                                    onClick={actions.handleUnassignClick}
+                                    className="p-3 rounded-xl bg-white border border-gray-200 text-slate-400 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition-all shadow-sm active:scale-95"
+                                    title="Unassign / Remove Assignment Permanently"
+                                >
+                                    <UserMinus size={20} />
+                                </button>
+                            </>
+                        )}
+                    </div>
+
+                    <div className={`flex gap-3 ${mode === 'add' || (mode === 'edit' && isCapacityEdit) ? 'w-full justify-end' : ''}`}>
+                        <button 
+                            onClick={onClose}
+                            className="p-3 rounded-xl bg-white border border-gray-200 text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all shadow-sm active:scale-95"
+                            title="Cancel"
+                        >
+                            <X size={20} />
+                        </button>
+                        <button 
+                            onClick={actions.handleSaveClick}
+                            disabled={anyMonthOverCapacity}
+                            className="px-6 py-3 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/30 hover:bg-primary-hover transition-all active:scale-95 disabled:opacity-50 disabled:shadow-none disabled:cursor-not-allowed flex items-center gap-2"
+                        >
+                            <Check size={20} />
+                            {mode === 'add' ? 'Add' : 'Save'}
+                        </button>
+                    </div>
+            </div>
+        )}
     </div>
     </>
   );

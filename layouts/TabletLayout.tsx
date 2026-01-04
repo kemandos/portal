@@ -37,8 +37,17 @@ export const TabletLayout: React.FC<LayoutProps> = ({
     selectedMonthIndices, onMonthSelectionChange, onAddChild, onInlineSave
 }) => {
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
-  
-  // Ensure we default to 3M view on tablet if not already set, but respect user choice
+  const [isPortrait, setIsPortrait] = useState(typeof window !== 'undefined' ? window.innerHeight > window.innerWidth : false);
+
+  useEffect(() => {
+    const handleResize = () => {
+        setIsPortrait(window.innerHeight > window.innerWidth);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Ensure we default to 3M view on tablet if not already set
   useEffect(() => {
      if (viewState.timeRange !== '3M') {
          // setViewState(prev => ({...prev, timeRange: '3M'}));
@@ -89,13 +98,20 @@ export const TabletLayout: React.FC<LayoutProps> = ({
       }
   };
 
+  // Responsive Styles
+  const headerRow1Padding = isPortrait ? 'px-4 py-2' : 'px-6 py-3';
+  const headerRow2Padding = isPortrait ? 'px-4 py-1.5' : 'px-6 py-2';
+  const toggleTextSize = isPortrait ? 'text-[11px]' : 'text-xs';
+  const iconSize = isPortrait ? 16 : 18;
+  const controlsHeight = isPortrait ? 'min-h-[40px]' : 'min-h-[44px]';
+
   return (
     <div className="bg-[#F5F2EB] text-[#1b0d10] font-sans antialiased h-screen flex flex-col overflow-hidden selection:bg-primary/20">
         
         {/* Header - 2 Rows */}
         <header className="flex-none bg-[#FDFBF7]/80 backdrop-blur-xl border-b border-white/50 z-40 relative shadow-sm transition-all">
             {/* Row 1: Logo, Toggle, Range, Settings */}
-            <div className="px-6 py-3 flex items-center justify-between gap-4 border-b border-gray-100/50">
+            <div className={`${headerRow1Padding} flex items-center justify-between gap-4 border-b border-gray-100/50`}>
                 <div className="flex items-center gap-4">
                      <div className="size-9 bg-white rounded-xl flex items-center justify-center text-primary shadow-sm ring-1 ring-black/5">
                         <Users size={20} />
@@ -104,13 +120,13 @@ export const TabletLayout: React.FC<LayoutProps> = ({
                     <div className="flex bg-gray-200/50 p-1 rounded-lg">
                         <button 
                             onClick={() => setViewState(v => ({...v, mode: 'People'}))}
-                            className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${viewState.mode === 'People' ? 'bg-white shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700'}`}
+                            className={`px-4 py-1.5 rounded-md ${toggleTextSize} font-bold transition-all ${viewState.mode === 'People' ? 'bg-white shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700'}`}
                         >
                             People
                         </button>
                         <button 
                             onClick={() => setViewState(v => ({...v, mode: 'Projects'}))}
-                            className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${viewState.mode === 'Projects' ? 'bg-white shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700'}`}
+                            className={`px-4 py-1.5 rounded-md ${toggleTextSize} font-bold transition-all ${viewState.mode === 'Projects' ? 'bg-white shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700'}`}
                         >
                             Projects
                         </button>
@@ -123,7 +139,7 @@ export const TabletLayout: React.FC<LayoutProps> = ({
                             <button 
                                 key={r}
                                 onClick={() => setViewState(v => ({...v, timeRange: r as any}))}
-                                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${viewState.timeRange === r ? 'bg-white shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700'}`}
+                                className={`px-3 py-1.5 rounded-md ${toggleTextSize} font-bold transition-all ${viewState.timeRange === r ? 'bg-white shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700'}`}
                             >
                                 {r}
                             </button>
@@ -136,14 +152,22 @@ export const TabletLayout: React.FC<LayoutProps> = ({
             </div>
 
             {/* Row 2: Controls & Filters */}
-            <div className="px-6 py-2 flex items-center justify-between gap-4">
+            <div className={`${headerRow2Padding} ${controlsHeight} flex items-center justify-between gap-4`}>
                 <div className="flex items-center gap-3">
                      <div className="relative group">
                         <button 
-                            className="flex items-center gap-2 text-xs font-bold text-slate-600 bg-white/50 px-3 py-2 rounded-lg border border-transparent hover:border-gray-200 hover:bg-white transition-all"
+                            className={`
+                                flex items-center gap-2 px-4 py-3 rounded-xl ${toggleTextSize} font-bold shadow-sm border transition-all duration-200
+                                bg-white border-gray-200 text-slate-900 hover:bg-slate-50
+                            `}
                         >
-                            <Layers size={14} />
+                            <Layers size={14} className="text-slate-600" />
                             <span>Group: {groupBy}</span>
+                            {groupBy !== 'None' && (
+                                <span className="bg-primary text-white text-[10px] px-2 py-0.5 rounded-full ml-1">
+                                    Active
+                                </span>
+                            )}
                             <ChevronDown size={14} className="opacity-50" />
                         </button>
                         {/* Simple Hover Dropdown for Tablet */}
@@ -152,7 +176,7 @@ export const TabletLayout: React.FC<LayoutProps> = ({
                                 <button
                                     key={opt}
                                     onClick={() => setGroupBy(opt)}
-                                    className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-between hover:bg-slate-50 ${groupBy === opt ? 'text-primary bg-primary/5' : 'text-slate-600'}`}
+                                    className={`w-full text-left px-3 py-2 rounded-lg ${toggleTextSize} font-medium flex items-center justify-between hover:bg-slate-50 ${groupBy === opt ? 'text-primary bg-primary/5' : 'text-slate-600'}`}
                                 >
                                     {opt}
                                     {groupBy === opt && <Check size={14} />}
@@ -165,11 +189,11 @@ export const TabletLayout: React.FC<LayoutProps> = ({
 
                      {/* Active Filters Summary */}
                      <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar max-w-[400px]">
-                         {activeFilters.length === 0 && <span className="text-xs text-slate-400 italic">No filters active</span>}
+                         {activeFilters.length === 0 && <span className={`${toggleTextSize} text-slate-400 italic`}>No filters active</span>}
                          {activeFilters.map((f, i) => (
-                             <div key={i} className="flex items-center gap-1 bg-white border border-gray-200 px-2 py-1 rounded-md shadow-sm">
-                                 <span className="text-[10px] font-bold text-slate-500 uppercase">{f.key}:</span>
-                                 <span className="text-[10px] font-bold text-slate-900">{f.values[0]}{f.values.length > 1 && ` +${f.values.length-1}`}</span>
+                             <div key={i} className={`flex items-center gap-1 bg-white border border-gray-200 ${isPortrait ? 'px-2 py-0.5' : 'px-2 py-1'} rounded-md shadow-sm`}>
+                                 <span className={`${isPortrait ? 'text-[9px]' : 'text-[10px]'} font-bold text-slate-500 uppercase`}>{f.key}:</span>
+                                 <span className={`${isPortrait ? 'text-[9px]' : 'text-[10px]'} font-bold text-slate-900`}>{f.values[0]}{f.values.length > 1 && ` +${f.values.length-1}`}</span>
                                  <button onClick={() => onRemoveFilter(i)} className="ml-1 text-slate-400 hover:text-red-500"><X size={12}/></button>
                              </div>
                          ))}
@@ -178,13 +202,16 @@ export const TabletLayout: React.FC<LayoutProps> = ({
 
                 <button 
                     onClick={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
-                    className={`relative flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold border transition-all ${isFilterPanelOpen ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' : 'bg-white border-gray-200 text-slate-600 hover:bg-gray-50'}`}
+                    className={`
+                        relative flex items-center gap-2 px-4 py-3 rounded-xl ${toggleTextSize} font-bold shadow-sm border transition-all duration-200
+                        bg-white border-gray-200 text-slate-900 hover:bg-slate-50
+                    `}
                 >
-                    <FilterIcon size={14} />
+                    <FilterIcon size={14} className="text-slate-600" />
                     Filters
                     {/* Badge for Closed State */}
                     {!isFilterPanelOpen && activeFilters.length > 0 && (
-                        <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[20px] h-5 px-1 bg-[#ee3a5e] text-white text-[10px] font-bold rounded-full shadow-sm ring-2 ring-white animate-in zoom-in-50 duration-200">
+                        <span className={`absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[20px] h-5 ${isPortrait ? 'px-1.5 text-[9px]' : 'px-1 text-[10px]'} bg-[#ee3a5e] text-white font-bold rounded-full shadow-sm ring-2 ring-white animate-in zoom-in-50 duration-200`}>
                             {activeFilters.length}
                         </span>
                     )}
@@ -202,7 +229,7 @@ export const TabletLayout: React.FC<LayoutProps> = ({
             {isFilterPanelOpen && (
                 <div className="absolute top-full left-0 right-0 bg-white/95 backdrop-blur-xl border-b border-gray-200 shadow-xl z-50 animate-in slide-in-from-top-2 p-6">
                     <div className="max-w-4xl mx-auto">
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                        <div className={`grid ${isPortrait ? 'grid-cols-2 gap-4' : 'grid-cols-4 gap-6'}`}>
                             {filterCategories.map(cat => (
                                 <div key={cat} className="space-y-3">
                                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{cat}</h3>
@@ -270,6 +297,7 @@ export const TabletLayout: React.FC<LayoutProps> = ({
                         onMonthSelectionChange={onMonthSelectionChange}
                         onAddChild={onAddChild}
                         onInlineSave={onInlineSave}
+                        isPortraitTablet={isPortrait}
                     />
                 </div>
             </div>

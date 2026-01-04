@@ -92,11 +92,11 @@ export const HeatmapCell: React.FC<HeatmapCellProps> = ({
         };
     }
     
-    // Logic matches specification:
-    // > 100: Red (Critical/Over)
-    // 90-100: Amber (Warning)
-    // 50-90: Emerald (Balanced)
-    // <= 50: Slate (Under)
+    // Updated Logic:
+    // Over > 100% -> Red
+    // Warning > 90% -> Amber
+    // Balanced > 50% -> Green
+    // Under <= 50% -> Gray/Blue
     
     if (percentage > thresholds.over) return { backgroundColor: applyOpacity(colors.over), color: '#ffffff', boxShadow: '0 4px 14px rgba(239, 68, 68, 0.25)' }; 
     if (percentage > thresholds.balanced) return { backgroundColor: applyOpacity(colors.optimal), color: '#ffffff', boxShadow: '0 4px 14px rgba(245, 158, 11, 0.25)' }; 
@@ -164,7 +164,7 @@ export const HeatmapCell: React.FC<HeatmapCellProps> = ({
                   
                   <div className="flex justify-between items-center font-bold text-sm">
                       <span className="text-white/80">Total</span>
-                      <span className={`${percentage > 100 ? 'text-red-300' : (percentage > 90 ? 'text-amber-300' : 'text-emerald-300')}`}>
+                      <span className={`${percentage > 100 ? 'text-red-300' : 'text-emerald-300'}`}>
                           {ptAllocated.toFixed(1)} <span className="text-[10px] font-normal opacity-70">/ {ptCapacity} ({percentage.toFixed(0)}%)</span>
                       </span>
                   </div>
@@ -192,7 +192,7 @@ export const HeatmapCell: React.FC<HeatmapCellProps> = ({
         onMouseLeave={handleMouseLeaveCell}
         onMouseUp={() => onMouseUp(displayValue)}
     >
-        <div className={`w-full ${cellHeight} rounded-lg flex items-center justify-center text-xs font-bold transition-all duration-300 relative group/cell 
+        <div className={`w-full ${cellHeight} rounded-xl flex items-center justify-center text-xs font-bold transition-all duration-300 relative group/cell overflow-hidden 3xl:text-sm 3xl:rounded-2xl
             ${isSelected ? 'scale-100 ring-1 ring-primary/20' : 'hover:scale-105 hover:brightness-110 hover:shadow-liquid hover:-translate-y-0.5'}
             ${isEditing ? 'bg-white ring-2 ring-primary shadow-lg z-50 scale-105' : ''}
             active:scale-95 active:duration-100 ease-spring
@@ -214,18 +214,18 @@ export const HeatmapCell: React.FC<HeatmapCellProps> = ({
                 hasAllocation || isProjectRoot ? (
                     <div className="flex flex-col items-center justify-center leading-none gap-0.5">
                         {isCompactMode ? (
-                            <span className="text-[10px] tracking-tighter">
+                            <span className="text-[10px] tracking-tighter 3xl:text-xs">
                                 {Number.isInteger(ptAllocated) ? ptAllocated : ptAllocated.toFixed(1)}
                                 {!isProjectChild && `/${Number.isInteger(ptCapacity) ? ptCapacity : ptCapacity.toFixed(1)}`}
                             </span>
                         ) : (
                             <div className="flex flex-col items-center">
-                                <span className="text-[11px]">
+                                <span className="text-[11px] 3xl:text-[13px]">
                                     {Number.isInteger(ptAllocated) ? ptAllocated : ptAllocated.toFixed(1)} 
                                     {!isProjectChild && <span className="opacity-70 font-normal"> / {Number.isInteger(ptCapacity) ? ptCapacity : ptCapacity.toFixed(1)}</span>}
                                 </span>
                                 {!isProjectChild && !shouldRemoveBackground && percentage > 0 && (
-                                    <span className="text-[9px] opacity-80 font-medium">
+                                    <span className="text-[9px] opacity-80 font-medium 3xl:text-[11px]">
                                         {percentage.toFixed(0)}%
                                     </span>
                                 )}
