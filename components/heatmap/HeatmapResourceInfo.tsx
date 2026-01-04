@@ -159,8 +159,9 @@ export const HeatmapResourceInfo: React.FC<HeatmapResourceInfoProps> = ({
   };
 
   const isSelectedRow = selectedIds.includes(resource.id);
-  // Use bg-white to ensure opacity for sticky column
-  const defaultClass = `sticky left-[48px] z-20 ${isSelectedRow ? 'bg-rose-50' : 'bg-white'} shadow-[4px_0_8px_-2px_rgba(0,0,0,0.1)] ${paddingClass} transition-colors cursor-pointer align-middle border-r border-slate-200`;
+  
+  // FIXED: Opaque background and proper shadow/z-index for sticky columns
+  const defaultClass = `sticky left-[48px] z-20 ${isSelectedRow ? 'bg-rose-50' : 'bg-[#FDFBF7]'} shadow-[4px_0_8px_-2px_rgba(0,0,0,0.1)] ${paddingClass} transition-colors cursor-pointer align-middle border-r border-slate-200`;
 
   return (
     <td 

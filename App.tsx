@@ -72,11 +72,11 @@ function App() {
     }
   }, [currentThemeSettings.mode]);
 
-  // Clear row selection when switching to Projects view
+  // Clear selections when switching modes
   useEffect(() => {
-    if (viewState.mode === 'Projects') {
-      setViewState(prev => ({ ...prev, selectedIds: [] }));
-    }
+    setViewState(prev => ({ ...prev, selectedIds: [] }));
+    setSelectionRange(null);
+    setSelectedMonthIndices([]);
   }, [viewState.mode]);
   
   const [selectionRange, setSelectionRange] = useState<SelectionRange | null>(null);
@@ -91,7 +91,14 @@ function App() {
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   
-  const [editContext, setEditContext] = useState<{resourceId?: string, month?: string, months?: string[], isAddMode?: boolean}>({});
+  const [editContext, setEditContext] = useState<{
+      resourceId?: string, 
+      month?: string, 
+      months?: string[], 
+      isAddMode?: boolean,
+      intent?: 'budget' | 'assignments'
+  }>({});
+  
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   useEffect(() => {
@@ -313,11 +320,13 @@ function App() {
     return rows;
   }, [processedData, expandedRows]);
 
-  const handleCellClick = (resourceId: string, month: string) => {
+  const handleCellClick = (resourceId: string, month: string, specificMonths?: string[], intent?: 'budget' | 'assignments') => {
       const visibleMonths = MONTHS.slice(0, viewState.timeRange === '3M' ? 3 : viewState.timeRange === '6M' ? 6 : 9);
       let targetMonths = [month];
 
-      if (selectedMonthIndices.length > 0) {
+      if (specificMonths && specificMonths.length > 0) {
+          targetMonths = specificMonths;
+      } else if (selectedMonthIndices.length > 0) {
           targetMonths = selectedMonthIndices.map(i => visibleMonths[i]).filter(Boolean);
       } else if (selectionRange) {
           const start = Math.min(selectionRange.start.monthIndex, selectionRange.end.monthIndex);
@@ -330,7 +339,7 @@ function App() {
           }
       }
 
-      setEditContext({ resourceId, month, months: targetMonths, isAddMode: false });
+      setEditContext({ resourceId, month, months: targetMonths, isAddMode: false, intent });
       setIsEditModalOpen(true);
   };
 
@@ -409,7 +418,10 @@ function App() {
   const commonProps = {
     viewState, setViewState, currentData: processedData,
     handleSelectionChange,
-    handleItemClick: (id: string) => { setEditContext({resourceId: id}); setIsEditModalOpen(true); },
+    handleItemClick: (id: string, intent?: 'budget' | 'assignments') => { 
+        setEditContext({resourceId: id, intent}); 
+        setIsEditModalOpen(true); 
+    },
     onOpenSettings: () => setIsSettingsModalOpen(true),
     themeSettings: currentThemeSettings, groupBy, setGroupBy, activeFilters,
     onAddFilter: (f: Filter) => setActiveFilters(prev => {

@@ -5,7 +5,7 @@ import { getSearchableItems } from '../../../utils/resourceHelpers';
 
 interface UseEditAssignmentLogicProps {
   isOpen: boolean;
-  initialData?: { resourceId?: string; month?: string; months?: string[]; isAddMode?: boolean };
+  initialData?: { resourceId?: string; month?: string; months?: string[]; isAddMode?: boolean; intent?: 'budget' | 'assignments' };
   viewMode: 'People' | 'Projects';
   currentData: Resource[];
   onSave: (data: any) => void;
@@ -106,7 +106,8 @@ export const useEditAssignmentLogic = ({
         
         let initialMonthsList = [initialMonth];
         if (initialData.months && initialData.months.length > 1) {
-            initialMonthsList = initialData.months;
+            // Ensure months are sorted chronologically
+            initialMonthsList = [...initialData.months].sort((a, b) => MONTHS.indexOf(a) - MONTHS.indexOf(b));
         }
         
         setSelectedMonths(initialMonthsList);
@@ -150,7 +151,34 @@ export const useEditAssignmentLogic = ({
             const isMultiMonth = initialData.months && initialData.months.length > 1;
 
             // Logic to switch to List View if clicking a parent with existing assignments
-            if (!isMultiMonth && viewMode === 'People' && res.type === 'employee' && !initialData.isAddMode) {
+            if (viewMode === 'Projects' && res.type === 'project') {
+                 // Check if user wants to manage assignments (list view)
+                 if (initialData.intent === 'assignments') {
+                     const monthsToCheck = initialMonthsList.length > 0 ? initialMonthsList : [initialMonth];
+                     const activeAssignments = res.children?.filter(c => 
+                        monthsToCheck.some(m => (c.allocations[m]?.pt || 0) > 0)
+                     ) || [];
+                     setInternalMode('list');
+                     setListAssignments(activeAssignments);
+                     setListEmployee(res);
+                     setMode('edit'); 
+                     setSearchTerm('');
+                     setIsCapacityEdit(false);
+                     return;
+                 }
+                 
+                 // Default to Budget Edit or if intent === 'budget'
+                 if (foundDepth > 0 || true) { // Always true for actual projects
+                     setMode('edit');
+                     setIsCapacityEdit(true);
+                     setSearchTerm(res.name);
+                     const allocation = res.allocations[initialMonth];
+                     setPtValue(allocation ? allocation.capacity : 0);
+                     const capAlloc: Record<string, number> = {};
+                     initialMonthsList.forEach(m => capAlloc[m] = res.allocations[m]?.capacity || 0);
+                     setAllocations(capAlloc);
+                 }
+            } else if (!isMultiMonth && viewMode === 'People' && res.type === 'employee' && !initialData.isAddMode) {
                  const activeAssignments = res.children?.filter(c => (c.allocations[initialMonth]?.pt || 0) > 0) || [];
                  if (activeAssignments.length > 0) {
                      setInternalMode('list');
@@ -179,8 +207,6 @@ export const useEditAssignmentLogic = ({
                  setSelectedItemType('Project');
                  setPtValue(0);
                  
-                 // If bulk editing an employee, we are adding assignments to them
-                 // Initialize allocations to 0
                  const emptyAlloc: Record<string, number> = {};
                  initialMonthsList.forEach(m => emptyAlloc[m] = 0);
                  setAllocations(emptyAlloc);
@@ -213,17 +239,11 @@ export const useEditAssignmentLogic = ({
                  return;
             }
 
-            if (viewMode === 'Projects' && res.type === 'project' && foundDepth > 0) {
+            // Fallback edit for deep clicked items (assignments)
+            if ((viewMode === 'Projects' && res.type === 'project' && foundDepth > 0 && !initialData.intent) || (foundDepth > 0 && viewMode === 'Projects' && initialData.intent === 'budget')) {
+                 // Already handled above but kept for safety if logic falls through
                  setMode('edit');
                  setIsCapacityEdit(true);
-                 setSearchTerm(res.name);
-                 const allocation = res.allocations[initialMonth];
-                 setPtValue(allocation ? allocation.capacity : 0);
-                 // Sync allocations for capacity edit
-                 const capAlloc: Record<string, number> = {};
-                 initialMonthsList.forEach(m => capAlloc[m] = res.allocations[m]?.capacity || 0);
-                 setAllocations(capAlloc);
-
             } else if (foundDepth === 2 || (foundDepth === 1 && viewMode === 'People' && parentResource?.type === 'employee')) {
                 setMode('edit');
                 setIsCapacityEdit(false);
@@ -292,16 +312,16 @@ export const useEditAssignmentLogic = ({
              setSelectedRole(existingChild.role);
         }
     } else if (mode === 'add') {
-        // If we are adding and haven't selected a result, allocations should be 0 unless manually changed
-        // But if we selected a result and it already exists, we might want to populate. 
-        // For simplicity, add mode usually starts at 0.
         if (selectedMonths.length === 1) {
              setPtValue(allocations[selectedMonths[0]] || 0);
         }
     }
     
     if (internalMode === 'list' && listEmployee) {
-        const activeAssignments = listEmployee.children?.filter(c => (c.allocations[selectedMonth]?.pt || 0) > 0) || [];
+        const monthsToCheck = selectedMonths.length > 0 ? selectedMonths : [selectedMonth];
+        const activeAssignments = listEmployee.children?.filter(c => 
+            monthsToCheck.some(m => (c.allocations[m]?.pt || 0) > 0)
+        ) || [];
         setListAssignments(activeAssignments);
     }
   }, [selectedMonth, existingChild, isCapacityEdit, targetResource, mode, internalMode, listEmployee, selectedMonths, allocations]);
@@ -470,10 +490,28 @@ export const useEditAssignmentLogic = ({
       setMode('edit');
       setInternalMode('form');
       setSearchTerm(child.name);
-      setSelectedItemType('Project');
-      const allocation = child.allocations[selectedMonth];
-      setPtValue(allocation ? allocation.pt : 0);
-      setAllocations({ [selectedMonth]: allocation ? allocation.pt : 0 });
+      
+      // Determine correct item type for the form icon/context
+      if (viewMode === 'Projects') {
+          setSelectedItemType('Employee');
+      } else {
+          setSelectedItemType('Project');
+      }
+
+      // LOAD ALLOCATIONS FOR ALL SELECTED MONTHS
+      const newAllocations: Record<string, number> = {};
+      // If selectedMonths is empty (single select), use selectedMonth
+      const monthsToLoad = selectedMonths.length > 0 ? selectedMonths : [selectedMonth];
+      
+      monthsToLoad.forEach(m => {
+          newAllocations[m] = child.allocations[m]?.pt || 0;
+      });
+      setAllocations(newAllocations);
+      
+      // Fallback for single month view sync
+      const currentMonthVal = newAllocations[selectedMonth] !== undefined ? newAllocations[selectedMonth] : (newAllocations[monthsToLoad[0]] || 0);
+      setPtValue(currentMonthVal);
+
       setIsCapacityEdit(false);
       if (child.role) {
           setSelectedRole(child.role);
@@ -482,7 +520,8 @@ export const useEditAssignmentLogic = ({
   
   const handleListDelete = (child: Resource) => {
       if (listEmployee) {
-          onDelete(child.id, listEmployee.id, selectedMonth);
+          // Pass all selected months to delete
+          onDelete(child.id, listEmployee.id, selectedMonth, selectedMonths.length > 0 ? selectedMonths : undefined);
       }
   };
 
@@ -493,8 +532,17 @@ export const useEditAssignmentLogic = ({
       setInternalMode('form');
       setSearchTerm('');
       setPtValue(0);
-      setAllocations({ [selectedMonth]: 0 });
-      setSelectedItemType('Project');
+      
+      // Initialize allocations for all selected months
+      const initialAllocations: Record<string, number> = {};
+      if (selectedMonths.length > 0) {
+          selectedMonths.forEach(m => initialAllocations[m] = 0);
+      } else {
+          initialAllocations[selectedMonth] = 0;
+      }
+      setAllocations(initialAllocations);
+
+      setSelectedItemType(viewMode === 'People' ? 'Project' : 'Employee');
       setIsCapacityEdit(false);
       setSelectedSearchResult(null);
   };
@@ -502,7 +550,10 @@ export const useEditAssignmentLogic = ({
   const handleBackToList = () => {
       setInternalMode('list');
       if (listEmployee) {
-           const activeAssignments = listEmployee.children?.filter(c => (c.allocations[selectedMonth]?.pt || 0) > 0) || [];
+           const monthsToCheck = selectedMonths.length > 0 ? selectedMonths : [selectedMonth];
+           const activeAssignments = listEmployee.children?.filter(c => 
+                monthsToCheck.some(m => (c.allocations[m]?.pt || 0) > 0)
+           ) || [];
            setListAssignments(activeAssignments);
       }
   };
@@ -530,30 +581,14 @@ export const useEditAssignmentLogic = ({
     if (mode === 'add' && !parentResource) return;
 
     // Use allocations map for both single and multi modes
-    // Sync single ptValue to map if needed just in case
     const finalAllocations = { ...allocations };
     if (selectedMonths.length === 1) {
         finalAllocations[selectedMonths[0]] = ptValue;
     }
 
-    // Construct array of months to save
-    const monthsToSave = selectedMonths;
+    const monthsToSave = selectedMonths.length > 0 ? selectedMonths : [selectedMonth];
 
     if (mode === 'edit') {
-        // We iterate and save for each month
-        // Alternatively, pass allocations map to onSave?
-        // The current interface expects `pt` for single month or `months` array.
-        // Let's modify onSave signature if needed or call it iteratively? 
-        // Better: Pass everything to onSave and let useStaffingData handle it.
-        // But useStaffingData currently takes `pt` as single number. 
-        // We need to loop here or update useStaffingData. 
-        // Let's simply loop here for safety unless we update the hook.
-        
-        // Actually, let's update `onSave` to accept `allocations` map.
-        // But for now, let's just stick to the existing loop pattern in `useStaffingData` which takes `months` and `pt`.
-        // Wait, `useStaffingData` takes `pt` (single). If we have different PTs per month, we MUST call it individually or update it.
-        
-        // Let's call onSave iteratively for each month to support varying PTs
         monthsToSave.forEach(m => {
              onSave({
                 mode: 'edit',
@@ -572,7 +607,7 @@ export const useEditAssignmentLogic = ({
         const itemToAdd = selectedSearchResult || {
              id: `temp_${Date.now()}`,
              name: searchTerm,
-             type: selectedItemType === 'Project' ? 'project' : 'employee',
+             type: selectedItemType === 'Project' ? 'project' : 'employee', // Keep this lowercase for resourceHelpers match
              subtext: 'New Assignment'
         };
 

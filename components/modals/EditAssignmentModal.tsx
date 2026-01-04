@@ -29,7 +29,10 @@ export const EditAssignmentModal: React.FC<EditAssignmentModalProps> = (props) =
   const isMultiMonth = selectedMonths.length > 1;
 
   const getTitle = () => {
-      if (internalMode === 'list') return `Assignments: ${state.selectedMonth}`;
+      if (internalMode === 'list') {
+          if (selectedMonths.length > 0) return `${selectedMonths.length} Months Selected`;
+          return `Assignments: ${state.selectedMonth}`;
+      }
       if (isMultiMonth) return `Bulk Edit: ${selectedMonths.length} Months`;
       if (isCapacityEdit) return 'Edit Monthly Budget';
       if (mode === 'add') return `Add ${dynamicLabel}`;
@@ -70,9 +73,11 @@ export const EditAssignmentModal: React.FC<EditAssignmentModalProps> = (props) =
             <AssignmentList 
                 assignments={listAssignments}
                 selectedMonth={state.selectedMonth}
+                selectedMonths={selectedMonths}
                 onDelete={actions.handleListDelete}
                 onEdit={actions.handleEditAssignment}
                 onAdd={actions.handleAddAssignment}
+                viewMode={props.viewMode}
             />
         )}
 

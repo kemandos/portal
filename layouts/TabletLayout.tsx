@@ -9,7 +9,7 @@ interface LayoutProps {
   setViewState: React.Dispatch<React.SetStateAction<ViewState>>;
   currentData: Resource[];
   handleSelectionChange: (ids: string[]) => void;
-  handleItemClick: (id: string) => void;
+  handleItemClick: (id: string, intent?: 'budget' | 'assignments') => void;
   onOpenSettings: () => void;
   themeSettings?: ThemeSettings;
   groupBy: string;

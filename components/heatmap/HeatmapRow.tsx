@@ -131,7 +131,7 @@ export const HeatmapRow: React.FC<HeatmapRowProps> = ({
                 </td>
             )}
             <td 
-                className={`sticky ${stickyLeftClass} z-20 bg-white shadow-[4px_0_8px_-2px_rgba(0,0,0,0.1)] ${paddingClass} border-r border-slate-200 cursor-pointer relative ring-2 ring-blue-400/0 z-30`}
+                className={`sticky ${stickyLeftClass} z-20 bg-[#FDFBF7] shadow-[4px_0_8px_-2px_rgba(0,0,0,0.1)] ${paddingClass} border-r border-slate-200 cursor-pointer relative ring-2 ring-blue-400/0 z-30`}
             >
                 <div className="flex items-center h-full">
                     <div style={{ width: row.depth * 24 }} className="shrink-0" />
@@ -187,11 +187,10 @@ export const HeatmapRow: React.FC<HeatmapRowProps> = ({
       }
   };
   
-  // Use bg-white for opaque sticky header
-  // Removed z-25 (invalid) and replaced with z-30 to match checkbox
-  const groupHeaderClass = `sticky ${stickyLeftClass} ${topOffsetClass} z-30 bg-white shadow-[4px_0_8px_-2px_rgba(0,0,0,0.1)] ${paddingClass} cursor-pointer align-middle border-t border-b border-slate-200`;
+  // FIXED: Opaque background for sticky headers
+  const groupHeaderClass = `sticky ${stickyLeftClass} ${topOffsetClass} z-30 bg-[#FDFBF7] shadow-[4px_0_8px_-2px_rgba(0,0,0,0.1)] ${paddingClass} cursor-pointer align-middle border-t border-b border-slate-200`;
   
-  const resourceInfoClass = `sticky ${stickyLeftClass} z-20 ${isSelectedRow ? 'bg-rose-50' : 'bg-white'} shadow-[4px_0_8px_-2px_rgba(0,0,0,0.1)] ${paddingClass} transition-colors cursor-pointer align-middle border-r border-slate-200`;
+  const resourceInfoClass = `sticky ${stickyLeftClass} z-20 ${isSelectedRow ? 'bg-rose-50' : 'bg-[#FDFBF7]'} shadow-[4px_0_8px_-2px_rgba(0,0,0,0.1)] ${paddingClass} transition-colors cursor-pointer align-middle border-r border-slate-200`;
 
   // Zebra striping and hover logic
   const rowBackgroundClass = row.isGroupHeader 
@@ -202,7 +201,7 @@ export const HeatmapRow: React.FC<HeatmapRowProps> = ({
 
   return (
     <tr className={`${rowMinHeight} group transition-all duration-300 ${rowBackgroundClass}`}>
-        {/* Checkbox - Sticky horizontally (left-0). For Group Headers, also sticky vertically (top). */}
+        {/* Checkbox - Only show in People View */}
         {viewMode === 'People' && (
             <td className={`sticky left-0 ${row.isGroupHeader ? `${topOffsetClass} z-30 border-t border-b border-slate-200` : 'z-20'} ${isSelectedRow ? 'bg-rose-50' : 'bg-white'} ${paddingClass} text-center transition-colors align-middle border-r border-slate-200/50`}>
                 {!row.isGroupHeader && isRowSelectable && (
@@ -236,7 +235,6 @@ export const HeatmapRow: React.FC<HeatmapRowProps> = ({
         {/* Data Cells OR Empty Header Cells */}
         {row.isGroupHeader ? (
              // Render empty sticky-top cells for the rest of the row to maintain background/borders
-             // Added border-l to maintain the vertical grid lines
              visibleMonths.map(month => (
                  <td 
                     key={month} 

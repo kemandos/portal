@@ -1,7 +1,7 @@
-import React, { useRef, useState } from 'react';
+import React from 'react';
 import { Resource, ViewState, ThemeSettings } from '../types';
-import { MONTHS } from '../constants';
-import { ChevronRight, ChevronDown, Plus, Briefcase, ChevronLeft } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
+import { Briefcase } from 'lucide-react';
 
 interface MobileListViewProps {
   data: Resource[];
@@ -19,57 +19,18 @@ interface MobileListViewProps {
   groupBy?: string;
   expandedRows?: Record<string, boolean>;
   setExpandedRows?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  visibleMonths: string[];
+  onCardTap: (item: Resource) => void;
 }
 
 export const MobileListView: React.FC<MobileListViewProps> = ({
   data,
+  visibleMonths,
   viewMode,
-  onItemClick,
-  onCellClick,
-  onAddChild,
+  onCardTap,
   themeSettings,
-  className,
-  expandedRows,
-  setExpandedRows
+  className
 }) => {
-  // Mobile View Swipe Logic for Months
-  const [startMonthIndex, setStartMonthIndex] = useState(0);
-  const touchStartX = useRef(0);
-  const [swipeOffset, setSwipeOffset] = useState(0);
-
-  const visibleMonths = MONTHS.slice(startMonthIndex, startMonthIndex + 3);
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-      touchStartX.current = e.touches[0].clientX;
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-      const diff = e.touches[0].clientX - touchStartX.current;
-      setSwipeOffset(diff);
-  };
-
-  const handleTouchEnd = () => {
-      if (swipeOffset < -50) {
-          // Next
-          if (startMonthIndex + 3 < MONTHS.length) {
-              setStartMonthIndex(prev => prev + 1);
-          }
-      } else if (swipeOffset > 50) {
-          // Prev
-          if (startMonthIndex > 0) {
-              setStartMonthIndex(prev => prev - 1);
-          }
-      }
-      setSwipeOffset(0);
-      touchStartX.current = 0;
-  };
-
-  const toggleExpand = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    if (setExpandedRows && expandedRows) {
-      setExpandedRows(prev => ({ ...prev, [id]: !prev[id] }));
-    }
-  };
 
   const getStatusColor = (percentage: number) => {
     const t = themeSettings?.thresholds || { under: 50, balanced: 90, over: 100 };
@@ -80,154 +41,80 @@ export const MobileListView: React.FC<MobileListViewProps> = ({
     return 'bg-slate-400 text-white border-transparent shadow-[0_2px_8px_rgba(148,163,184,0.25)]';
   };
 
-  const renderResource = (resource: Resource, depth: number = 0) => {
-    const isExpanded = expandedRows ? expandedRows[resource.id] : false;
-    const hasChildren = resource.children && resource.children.length > 0;
+  const renderResource = (resource: Resource) => {
     const isGroup = resource.type === 'group';
     const isProject = resource.type === 'project';
     const isEmployee = resource.type === 'employee';
-    const isAssignment = depth > 0;
     
     if (isGroup) {
+        // Flatten groups on mobile - just render children
         return (
-            <div key={resource.id} className="mb-4 mt-4 first:mt-2">
-                <button 
-                    onClick={(e) => toggleExpand(e, resource.id)}
-                    className="flex items-center gap-3 w-full text-left px-2 py-2 group"
-                >
-                    <div className="size-7 rounded-full bg-white/60 border border-white/50 shadow-sm flex items-center justify-center transition-transform group-active:scale-95">
-                         {isExpanded ? <ChevronDown size={14} className="text-slate-600" /> : <ChevronRight size={14} className="text-slate-600" />}
-                    </div>
-                    <div>
-                        <span className="text-xs font-bold text-slate-600 uppercase tracking-wider block">{resource.name}</span>
-                    </div>
-                    <span className="text-[10px] font-bold bg-white/40 border border-white/50 text-slate-500 px-2.5 py-1 rounded-full backdrop-blur-sm ml-auto">{resource.subtext}</span>
-                </button>
-                
-                {isExpanded && (
-                    <div className="space-y-4 mt-3">
-                        {resource.children?.map(child => renderResource(child, depth + 1))}
-                    </div>
-                )}
-            </div>
+            <React.Fragment key={resource.id}>
+                {resource.children?.map(child => renderResource(child))}
+            </React.Fragment>
         );
     }
     
     return (
-        <div key={resource.id} className={`
-            relative mb-5 rounded-[24px] border transition-all duration-300 ease-spring overflow-hidden
-            ${isAssignment 
-                ? 'ml-4 mt-2 border-l-4 border-l-primary/30 bg-white/40 border-y-white/40 border-r-white/40 backdrop-blur-md shadow-none' 
-                : 'bg-[#FDFBF7]/60 border-white/40 shadow-[0_8px_32px_rgba(0,0,0,0.05)] backdrop-blur-xl hover:shadow-[0_12px_40px_rgba(0,0,0,0.08)]'
-            }
-        `}>
+        <div 
+            key={resource.id} 
+            onClick={() => onCardTap(resource)}
+            className="relative bg-white rounded-2xl p-4 shadow-sm border border-gray-100 active:scale-[0.98] transition-all"
+        >
             {/* Header */}
-            <div 
-                className={`p-5 flex items-center gap-4 ${hasChildren ? 'cursor-pointer' : ''}`}
-                onClick={(e) => hasChildren ? toggleExpand(e, resource.id) : onItemClick(resource.id)}
-            >
+            <div className="flex items-center gap-3 mb-4">
                 <div className="shrink-0">
                     {isEmployee ? (
-                        <div className="size-12 rounded-2xl bg-white overflow-hidden border border-white shadow-sm ring-1 ring-black/5">
+                        <div className="size-10 rounded-full bg-white overflow-hidden border border-gray-100 shadow-sm">
                              <img src={resource.avatar || `https://i.pravatar.cc/150?u=${resource.id}`} alt={resource.name} className="w-full h-full object-cover" />
                         </div>
                     ) : (
-                        <div className={`size-12 rounded-2xl flex items-center justify-center border shadow-sm ${isProject ? 'bg-white border-white/60' : 'bg-primary/5 border-primary/10 text-primary'}`}>
+                        <div className={`size-10 rounded-xl flex items-center justify-center border shadow-sm ${isProject ? 'bg-white border-gray-100' : 'bg-primary/5 border-primary/10 text-primary'}`}>
                             {isProject && resource.avatar ? (
-                                <img src={resource.avatar} alt="icon" className="w-7 h-7 object-contain" />
+                                <img src={resource.avatar} alt="icon" className="w-6 h-6 object-contain" />
                             ) : (
-                                <Briefcase size={22} className="text-slate-400" />
+                                <Briefcase size={18} className="text-slate-400" />
                             )}
                         </div>
                     )}
                 </div>
 
                 <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                         <h3 className="text-[15px] font-bold text-slate-900 truncate leading-tight">{resource.name}</h3>
-                         {hasChildren && (
-                             <div className="text-slate-400 bg-white/50 p-1.5 rounded-full border border-white/50 shadow-sm">
-                                 {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                             </div>
-                         )}
-                    </div>
-                    <p className="text-xs font-medium text-slate-500 truncate">{resource.subtext}</p>
+                    <h3 className="text-sm font-bold text-slate-900 truncate">{resource.name}</h3>
+                    <p className="text-xs text-slate-500 truncate">{resource.subtext}</p>
                 </div>
+                <ChevronRight size={18} className="text-slate-300" />
             </div>
 
-            {/* Allocation Grid with Swipe Support */}
-            <div 
-                className="px-5 pb-5 overflow-hidden"
-                onTouchStart={handleTouchStart}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-            >
-                 {/* Visual Month Navigator Indicators */}
-                 <div className="flex justify-between items-center mb-2 px-1">
-                      <ChevronLeft size={14} className={`text-slate-400 ${startMonthIndex === 0 ? 'opacity-20' : ''}`} />
-                      <div className="flex gap-1">
-                          {MONTHS.map((_, idx) => (
-                              <div key={idx} className={`h-1 rounded-full transition-all ${idx >= startMonthIndex && idx < startMonthIndex + 3 ? 'w-4 bg-primary' : 'w-1 bg-slate-200'}`} />
-                          ))}
-                      </div>
-                      <ChevronRight size={14} className={`text-slate-400 ${startMonthIndex + 3 >= MONTHS.length ? 'opacity-20' : ''}`} />
-                 </div>
-
-                 <div 
-                    className="grid grid-cols-3 gap-3 transition-transform duration-300 ease-out"
-                    style={{ transform: `translateX(${swipeOffset}px)` }}
-                 >
-                     {visibleMonths.map((month) => {
-                         const alloc = resource.allocations[month];
-                         const pt = alloc ? alloc.pt : 0;
-                         const capacity = alloc ? alloc.capacity : 20;
-                         
-                         const percentage = capacity > 0 ? (pt / capacity) * 100 : 0;
-                         const statusClass = getStatusColor(percentage);
-                         
-                         return (
-                             <button 
-                                key={month}
-                                onClick={(e) => { e.stopPropagation(); onCellClick(resource.id, month); }}
-                                className={`flex flex-col items-center justify-center py-3 px-2 rounded-xl border transition-all duration-300 active:scale-95 hover:brightness-105 ${statusClass}`}
-                             >
-                                 <span className="text-[9px] font-bold uppercase opacity-80 mb-0.5 tracking-wide">{month}</span>
-                                 <div className="flex items-baseline gap-0.5">
-                                    <span className="text-sm font-extrabold tracking-tight leading-none">
-                                        {Number.isInteger(pt) ? pt : pt.toFixed(1)}
-                                    </span>
-                                    {depth === 0 && <span className="text-[10px] font-semibold opacity-70">/{Number.isInteger(capacity) ? capacity : capacity.toFixed(0)}</span>}
-                                 </div>
-                             </button>
-                         );
-                     })}
-                 </div>
+            {/* Allocation Grid (3 Months) */}
+            <div className="grid grid-cols-3 gap-2">
+                {visibleMonths.map((month) => {
+                    const alloc = resource.allocations[month];
+                    const pt = alloc ? alloc.pt : 0;
+                    const capacity = alloc ? alloc.capacity : 20;
+                    
+                    const percentage = capacity > 0 ? (pt / capacity) * 100 : 0;
+                    const statusClass = getStatusColor(percentage);
+                    
+                    return (
+                        <div key={month} className={`flex flex-col items-center justify-center py-2 px-1 rounded-lg ${statusClass}`}>
+                            <div className="flex items-baseline gap-0.5">
+                                <span className="text-xs font-extrabold leading-none">
+                                    {Number.isInteger(pt) ? pt : pt.toFixed(1)}
+                                </span>
+                                <span className="text-[9px] font-medium opacity-70">/{Number.isInteger(capacity) ? capacity : capacity.toFixed(0)}</span>
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
-
-            {isExpanded && !isAssignment && onAddChild && (
-                <div className="mx-5 mb-5 mt-1">
-                     <button 
-                        onClick={(e) => { e.stopPropagation(); onAddChild(resource.id); }}
-                        className="w-full py-3 flex items-center justify-center gap-2 text-xs font-bold text-slate-500 hover:text-primary hover:bg-white rounded-xl transition-all border border-dashed border-slate-300 hover:border-primary/50 bg-white/20 shadow-sm"
-                     >
-                         <Plus size={16} strokeWidth={2.5} />
-                         Add {viewMode === 'People' ? 'Project' : 'Employee'}
-                     </button>
-                </div>
-            )}
-            
-            {isExpanded && resource.children && (
-                <div className="border-t border-white/20 bg-white/10 p-4 space-y-4">
-                    {resource.children.map(child => renderResource(child, depth + 1))}
-                </div>
-            )}
         </div>
     );
   };
 
   return (
-    <div className={`overflow-y-auto pb-32 ${className}`}>
-        <div className="px-5 pt-2 pb-10">
+    <div className={`pb-32 ${className}`}>
+        <div className="px-4 pt-4 space-y-6">
             {data.map(node => renderResource(node))}
         </div>
     </div>

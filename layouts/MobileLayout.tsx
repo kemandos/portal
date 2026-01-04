@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ViewState, ThemeSettings, Filter, Resource, SelectionRange } from '../types';
 import { MobileListView } from '../components/MobileListView';
-import { Header } from '../components/Header';
-import { X, Filter as FilterIcon, ChevronDown, Check, ChevronRight, Layers, Plus, RefreshCw } from 'lucide-react';
-import { MOCK_PEOPLE, MOCK_PROJECTS } from '../constants';
+import { X, Filter as FilterIcon, Settings, RefreshCw, Plus, ChevronDown, ChevronRight, Check } from 'lucide-react';
+import { MOCK_PEOPLE, MOCK_PROJECTS, MONTHS } from '../constants';
+import { DetailSheet } from '../components/mobile/DetailSheet';
 
 interface LayoutProps {
   viewState: ViewState;
   setViewState: React.Dispatch<React.SetStateAction<ViewState>>;
   currentData: Resource[];
   handleSelectionChange: (ids: string[]) => void;
-  handleItemClick: (id: string) => void;
+  handleItemClick: (id: string, intent?: 'budget' | 'assignments') => void;
   onOpenSettings: () => void;
   themeSettings?: ThemeSettings;
   groupBy: string;
@@ -22,7 +22,7 @@ interface LayoutProps {
   setDensity: (density: 'comfortable' | 'compact') => void;
   selectionRange: SelectionRange | null;
   onSelectionRangeChange: (range: SelectionRange | null) => void;
-  onCellClick: (resourceId: string, month: string) => void;
+  onCellClick: (resourceId: string, month: string, specificMonths?: string[], intent?: 'budget' | 'assignments') => void;
   expandedRows: Record<string, boolean>;
   setExpandedRows: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   selectedMonthIndices?: number[];
@@ -40,14 +40,18 @@ export const MobileLayout: React.FC<LayoutProps> = ({
   
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [activeFilterCategory, setActiveFilterCategory] = useState<string | null>(null);
-  const [isSelectionMode] = useState(true);
-  const [isGroupMenuOpen, setIsGroupMenuOpen] = useState(false);
+  
+  // Detail Sheet State
+  const [detailSheetOpen, setDetailSheetOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<Resource | null>(null);
   
   // Pull to Refresh State
   const [pullY, setPullY] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const touchStartY = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const visibleMonths = MONTHS.slice(0, 3); // Always show first 3 months
 
   const handleTouchStart = (e: React.TouchEvent) => {
       if (containerRef.current?.scrollTop === 0) {
@@ -79,15 +83,26 @@ export const MobileLayout: React.FC<LayoutProps> = ({
       }
   };
 
+  const handleCardTap = (item: Resource) => {
+      setSelectedItem(item);
+      setDetailSheetOpen(true);
+  };
+
+  const handleEditMonth = (resourceId: string, month: string | string[], intent?: 'budget' | 'assignments') => {
+      if (Array.isArray(month)) {
+          // Bulk edit
+          if (onCellClick) onCellClick(resourceId, month[0], month, intent);
+      } else {
+          // Single edit
+          if (onCellClick) onCellClick(resourceId, month, undefined, intent);
+      }
+  };
+
   // --- Dynamic Filter Logic ---
   const filterCategories = viewState.mode === 'People' 
     ? ['Managing Consultant', 'Department', 'Employee', 'Skill', 'Status']
     : ['Project Lead', 'Managing Consultant', 'Dealfolder', 'Deal', 'Employee', 'Status'];
     
-  const groupOptions = viewState.mode === 'People' 
-    ? ['None', 'Department', 'Managing Consultant'] 
-    : ['None', 'Dealfolder'];
-
   const getOptionsForCategory = (category: string) => {
       const rawData = viewState.mode === 'Projects' ? MOCK_PROJECTS : MOCK_PEOPLE;
       const values = new Set<string>();
@@ -143,103 +158,156 @@ export const MobileLayout: React.FC<LayoutProps> = ({
   return (
     <div className="flex flex-col h-[100dvh] bg-[#F5F2EB] text-slate-900 font-sans w-full overflow-hidden">
       
-      {/* Header */}
-      <Header 
-        viewState={viewState}
-        setViewState={setViewState}
-        onOpenSettings={onOpenSettings}
-        isDesktop={false}
-      />
-      
-      {/* Controls Bar - Sticky below header */}
-      <div className={`sticky top-[112px] px-3 pb-2 transition-all duration-300 ${isGroupMenuOpen ? 'z-50' : 'z-30'}`}>
-         <div className="bg-[#FDFBF7]/60 backdrop-blur-xl border border-white/40 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.05)] p-2">
-            
-            <div className="flex items-center gap-2 justify-between">
-                {/* Filter Button */}
+      {/* Fixed Header - Simplified */}
+      <div className="bg-[#FDFBF7] border-b border-gray-200/50 shadow-sm flex-none z-30">
+          <div className="flex items-center justify-between px-4 py-3">
+              {/* View Toggle */}
+              <div className="bg-white/60 backdrop-blur-xl rounded-xl p-1 border border-white/40 shadow-sm flex gap-1">
+                  <button
+                      onClick={() => setViewState(prev => ({ ...prev, mode: 'People' }))}
+                      className={`
+                          px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200
+                          ${viewState.mode === 'People'
+                              ? 'bg-white text-primary shadow-sm'
+                              : 'text-slate-500 hover:text-slate-700'
+                          }
+                      `}
+                  >
+                      People
+                  </button>
+                  <button
+                      onClick={() => setViewState(prev => ({ ...prev, mode: 'Projects' }))}
+                      className={`
+                          px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200
+                          ${viewState.mode === 'Projects'
+                              ? 'bg-white text-primary shadow-sm'
+                              : 'text-slate-500 hover:text-slate-700'
+                          }
+                      `}
+                  >
+                      Projects
+                  </button>
+              </div>
+
+              {/* Settings Button */}
+              <button
+                  onClick={onOpenSettings}
+                  className="p-2.5 rounded-xl bg-white/60 backdrop-blur-xl border border-white/40 shadow-sm text-slate-600 hover:text-slate-900 transition-colors"
+              >
+                  <Settings size={20} />
+              </button>
+          </div>
+      </div>
+
+      {/* Main Content Area */}
+      <main 
+        ref={containerRef}
+        className="flex-1 overflow-y-auto bg-[#F5F2EB] overscroll-contain relative"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+         
+         {/* Pull Refresh Indicator */}
+         <div 
+            className="w-full flex justify-center overflow-hidden transition-all duration-300" 
+            style={{ height: pullY, opacity: Math.min(1, pullY / 40) }}
+         >
+             <div className="flex items-center justify-center size-8 rounded-full bg-white shadow-md border border-gray-100 mt-2">
+                 <RefreshCw size={16} className={`text-primary ${isRefreshing ? 'animate-spin' : ''}`} style={{ transform: `rotate(${pullY * 2}deg)` }} />
+             </div>
+         </div>
+
+         {/* Controls Bar - Sticky at top of scroll */}
+         <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-xl border-b border-gray-200/50 px-3 py-3 shadow-sm">
+            <div className="bg-white/60 backdrop-blur-xl border border-white/40 rounded-2xl shadow-sm p-2 space-y-2">
+                
+                {/* Filter Button - Full Width */}
                 <button 
                     onClick={() => setIsFilterSheetOpen(!isFilterSheetOpen)}
-                    className={`
-                        flex-1 flex items-center justify-center gap-2 px-3 py-3 rounded-xl text-sm font-bold shadow-sm border transition-all duration-200 active:scale-95
-                        bg-white border-gray-200 text-slate-900 hover:bg-slate-50 min-w-0
-                    `}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold shadow-sm border transition-all duration-200 active:scale-95 bg-white border-gray-200 text-slate-900 hover:bg-slate-50"
                 >
                     <div className="relative shrink-0">
-                        <FilterIcon size={16} className="text-slate-600" />
+                        <FilterIcon size={18} className="text-slate-600" />
                         {activeFilters.length > 0 && (
-                            <span className="absolute -top-1.5 -right-1.5 size-3 bg-primary text-white text-[8px] flex items-center justify-center rounded-full shadow-sm ring-1 ring-white">
+                            <span className="absolute -top-1.5 -right-1.5 size-4 bg-primary text-white text-[9px] font-bold flex items-center justify-center rounded-full shadow-sm ring-2 ring-white">
                                 {activeFilters.length}
                             </span>
                         )}
                     </div>
-                    <span className="truncate">Filters</span>
+                    <span>Filters</span>
                 </button>
 
-                <div className="w-px h-6 bg-gray-300/50 shrink-0" />
-
-                {/* Group Dropdown Trigger */}
-                <div className="flex-[2] relative min-w-0">
-                    <button 
-                        onClick={() => setIsGroupMenuOpen(!isGroupMenuOpen)}
-                        className={`
-                            w-full flex items-center justify-between gap-2 px-3 py-3 rounded-xl text-sm font-bold shadow-sm border transition-all duration-200 active:scale-95
-                            bg-white border-gray-200 text-slate-900 hover:bg-slate-50
-                        `}
-                    >
-                        <div className="flex items-center gap-2 min-w-0">
-                            <Layers size={16} className="text-slate-600 shrink-0" />
-                            <span className="truncate">Group: {groupBy}</span>
-                            {groupBy !== 'None' && (
-                                <span className="bg-primary text-white text-[10px] px-2 py-0.5 rounded-full ml-1 shrink-0">
-                                    Active
-                                </span>
-                            )}
-                        </div>
-                        <ChevronDown size={14} className="opacity-50 shrink-0" />
-                    </button>
-
-                    {/* Group Dropdown Menu */}
-                    {isGroupMenuOpen && (
-                         <div className="absolute top-full right-0 mt-2 w-56 bg-white/90 backdrop-blur-xl rounded-xl shadow-glass border border-white/50 py-1 z-50 animate-in fade-in slide-in-from-top-2">
-                            {groupOptions.map(opt => (
+                {/* Active Filters Row */}
+                {activeFilters.length > 0 && (
+                    <div className="flex gap-2 overflow-x-auto hide-scrollbar">
+                        {activeFilters.map((filter, idx) => (
+                            <div key={idx} className="flex items-center gap-1.5 bg-white border border-gray-200/50 px-3 py-1.5 rounded-lg shadow-sm whitespace-nowrap">
+                                <span className="text-[10px] font-bold text-slate-500 uppercase">{filter.key}:</span>
+                                <span className="text-[10px] font-bold text-primary">{filter.values[0]}{filter.values.length > 1 ? ` +${filter.values.length - 1}` : ''}</span>
                                 <button 
-                                    key={opt}
-                                    onClick={() => { setGroupBy(opt); setIsGroupMenuOpen(false); }}
-                                    className="w-full flex items-center justify-between px-4 py-3 text-xs font-medium text-slate-700 hover:bg-slate-50/50 transition-colors border-b border-gray-100/50 last:border-0"
+                                    onClick={(e) => { e.stopPropagation(); onRemoveFilter(idx); }}
+                                    className="ml-0.5 p-0.5 rounded-full hover:bg-slate-100 text-slate-400"
                                 >
-                                    {opt}
-                                    {groupBy === opt && <Check size={14} className="text-primary" />}
+                                    <X size={12} />
                                 </button>
-                            ))}
-                        </div>
-                    )}
-                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
-
-            {/* Active Filters Row */}
-            {activeFilters.length > 0 && (
-                <div className="flex gap-2 overflow-x-auto hide-scrollbar mt-2 pt-2 border-t border-gray-200/50">
-                    {activeFilters.map((filter, idx) => (
-                         <div key={idx} className="flex items-center gap-1 bg-white border border-gray-200/50 px-2 py-1 rounded-lg shadow-sm whitespace-nowrap">
-                             <span className="text-[10px] font-bold text-slate-500 uppercase">{filter.key}:</span>
-                             <span className="text-[10px] font-bold text-primary">{filter.values[0]}{filter.values.length > 1 ? ` +${filter.values.length - 1}` : ''}</span>
-                             <button 
-                                onClick={(e) => { e.stopPropagation(); onRemoveFilter(idx); }}
-                                className="ml-1 p-0.5 rounded-full hover:bg-slate-100 text-slate-400"
-                             >
-                                 <X size={12} />
-                             </button>
-                         </div>
-                    ))}
-                </div>
-            )}
          </div>
-      </div>
-      
-      {/* Backdrop for Group Menu */}
-      {isGroupMenuOpen && (
-          <div className="fixed inset-0 z-40 bg-transparent" onClick={() => setIsGroupMenuOpen(false)} />
-      )}
+
+         {/* Cards List */}
+         <MobileListView 
+            data={currentData}
+            visibleMonths={visibleMonths}
+            viewMode={viewState.mode}
+            timeRange={viewState.timeRange}
+            selectedIds={viewState.selectedIds}
+            onSelectionChange={handleSelectionChange}
+            onItemClick={handleItemClick}
+            onCellClick={onCellClick}
+            onAddChild={onAddChild}
+            themeSettings={themeSettings}
+            className=""
+            isSelectionMode={false}
+            selectedMonthIndices={selectedMonthIndices}
+            groupBy={groupBy}
+            expandedRows={expandedRows}
+            setExpandedRows={setExpandedRows}
+            onCardTap={handleCardTap}
+         />
+      </main>
+
+      {/* Detail Sheet */}
+      <DetailSheet 
+        isOpen={detailSheetOpen}
+        onClose={() => setDetailSheetOpen(false)}
+        employee={viewState.mode === 'People' ? selectedItem : undefined}
+        project={viewState.mode === 'Projects' ? selectedItem : undefined}
+        viewMode={viewState.mode}
+        onEditAllocations={() => {
+            setDetailSheetOpen(false);
+            if (selectedItem) {
+                if (viewState.mode === 'Projects') {
+                    // Force assignments intent
+                    handleItemClick(selectedItem.id, 'assignments');
+                } else {
+                    handleItemClick(selectedItem.id);
+                }
+            }
+        }}
+        onEditBudget={(projectId) => {
+            setDetailSheetOpen(false);
+            handleItemClick(projectId, 'budget');
+        }}
+        onAddChild={() => {
+            setDetailSheetOpen(false);
+            if (selectedItem && onAddChild) onAddChild(selectedItem.id);
+        }}
+        onEditMonth={handleEditMonth}
+      />
 
       {/* Filter Sheet */}
       {isFilterSheetOpen && (
@@ -325,52 +393,6 @@ export const MobileLayout: React.FC<LayoutProps> = ({
         </div>
         </>
       )}
-
-      {/* Main Content Area */}
-      <main 
-        ref={containerRef}
-        className="flex-1 overflow-y-auto relative flex flex-col w-full bg-[#F5F2EB] overscroll-contain"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-         
-         {/* Pull Refresh Indicator */}
-         <div 
-            className="w-full flex justify-center overflow-hidden transition-all duration-300" 
-            style={{ height: pullY, opacity: Math.min(1, pullY / 40) }}
-         >
-             <div className="flex items-center justify-center size-8 rounded-full bg-white shadow-md border border-gray-100 mt-2">
-                 <RefreshCw size={16} className={`text-primary ${isRefreshing ? 'animate-spin' : ''}`} style={{ transform: `rotate(${pullY * 2}deg)` }} />
-             </div>
-         </div>
-
-         <MobileListView 
-            data={currentData}
-            viewMode={viewState.mode}
-            timeRange={viewState.timeRange}
-            selectedIds={viewState.selectedIds}
-            onSelectionChange={handleSelectionChange}
-            onItemClick={handleItemClick}
-            onCellClick={onCellClick}
-            onAddChild={onAddChild}
-            themeSettings={themeSettings}
-            className="hide-scrollbar"
-            isSelectionMode={isSelectionMode}
-            selectedMonthIndices={selectedMonthIndices}
-            groupBy={groupBy}
-            expandedRows={expandedRows}
-            setExpandedRows={setExpandedRows}
-         />
-      </main>
-
-      {/* FAB - Floating Action Button */}
-      <button 
-        onClick={() => onAddChild && onAddChild('')}
-        className="fixed bottom-6 right-6 size-14 bg-primary text-white rounded-full shadow-lg shadow-primary/30 flex items-center justify-center z-40 active:scale-95 transition-transform hover:scale-105"
-      >
-          <Plus size={28} strokeWidth={2.5} />
-      </button>
 
     </div>
   );

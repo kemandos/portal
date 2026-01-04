@@ -10,7 +10,7 @@ interface LayoutProps {
   setViewState: React.Dispatch<React.SetStateAction<ViewState>>;
   currentData: Resource[];
   handleSelectionChange: (ids: string[]) => void;
-  handleItemClick: (id: string) => void;
+  handleItemClick: (id: string, intent?: 'budget' | 'assignments') => void;
   onOpenSettings: () => void;
   themeSettings?: ThemeSettings;
   groupBy: string;
@@ -22,7 +22,7 @@ interface LayoutProps {
   setDensity: (density: 'comfortable' | 'compact') => void;
   selectionRange: SelectionRange | null;
   onSelectionRangeChange: (range: SelectionRange | null) => void;
-  onCellClick: (resourceId: string, month: string) => void;
+  onCellClick: (resourceId: string, month: string, specificMonths?: string[], intent?: 'budget' | 'assignments') => void;
   expandedRows: Record<string, boolean>;
   setExpandedRows: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   selectedMonthIndices?: number[];

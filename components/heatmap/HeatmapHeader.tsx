@@ -92,7 +92,7 @@ export const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
                     />
                 </th>
             )}
-            <th className={`sticky ${stickyLeftClass} z-40 bg-white ${headerPaddingClass} text-sm font-bold text-slate-800 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.1)] align-middle border-r border-slate-200 3xl:text-base`}>
+            <th className={`sticky ${stickyLeftClass} z-40 bg-[#FDFBF7] ${headerPaddingClass} text-sm font-bold text-slate-800 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.1)] align-middle border-r border-slate-200 3xl:text-base`}>
                 <div className="flex items-center h-full">
                     {viewMode === 'People' ? 'Employee' : 'Project'}
                 </div>
