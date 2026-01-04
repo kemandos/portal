@@ -27,14 +27,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [thresholdColors, setThresholdColors] = useState({
       under: '#f1f5f9',
       balanced: '#10b981',
-      optimal: '#f43f5e',
+      optimal: '#f59e0b',
       over: '#dc2626'
   });
 
   const [thresholds, setThresholds] = useState({
       under: 50,
       balanced: 90,
-      over: 110
+      over: 100
   });
 
   const [opacity, setOpacity] = useState(1);
@@ -48,13 +48,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         setThresholdColors({
             under: currentSettings.thresholdColors?.under || '#f1f5f9',
             balanced: currentSettings.thresholdColors?.balanced || '#10b981',
-            optimal: currentSettings.thresholdColors?.optimal || '#f43f5e',
+            optimal: currentSettings.thresholdColors?.optimal || '#f59e0b',
             over: currentSettings.thresholdColors?.over || '#dc2626'
         });
         setThresholds({
             under: currentSettings.thresholds?.under || 50,
             balanced: currentSettings.thresholds?.balanced || 90,
-            over: currentSettings.thresholds?.over || 110
+            over: currentSettings.thresholds?.over || 100
         });
         setOpacity(currentSettings.heatmapOpacity !== undefined ? currentSettings.heatmapOpacity : 1);
     }
@@ -245,7 +245,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                     <div className="size-4 rounded-full" style={{ backgroundColor: thresholdColors.optimal }}></div>
                                 </div>
                                 <div className="flex flex-col">
-                                    <span className="text-xs font-bold text-slate-700">Full / Warning</span>
+                                    <span className="text-xs font-bold text-slate-700">Warning</span>
                                     <span className="text-[10px] text-slate-400">{thresholds.balanced}% - {thresholds.over}%</span>
                                 </div>
                             </div>
@@ -276,7 +276,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             max="150" 
                             value={thresholds.over} 
                             onChange={(e) => handleThresholdValueChange('over', e.target.value)}
-                            className="w-full h-1.5 bg-gray-200/50 rounded-lg appearance-none cursor-pointer accent-rose-500" 
+                            className="w-full h-1.5 bg-gray-200/50 rounded-lg appearance-none cursor-pointer accent-amber-500" 
                         />
                     </div>
 

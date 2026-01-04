@@ -92,6 +92,12 @@ export const HeatmapCell: React.FC<HeatmapCellProps> = ({
         };
     }
     
+    // Logic matches specification:
+    // > 100: Red (Critical/Over)
+    // 90-100: Amber (Warning)
+    // 50-90: Emerald (Balanced)
+    // <= 50: Slate (Under)
+    
     if (percentage > thresholds.over) return { backgroundColor: applyOpacity(colors.over), color: '#ffffff', boxShadow: '0 4px 14px rgba(239, 68, 68, 0.25)' }; 
     if (percentage > thresholds.balanced) return { backgroundColor: applyOpacity(colors.optimal), color: '#ffffff', boxShadow: '0 4px 14px rgba(245, 158, 11, 0.25)' }; 
     if (percentage > thresholds.under) return { backgroundColor: applyOpacity(colors.balanced), color: '#ffffff', boxShadow: '0 4px 14px rgba(16, 185, 129, 0.25)' }; 
@@ -158,7 +164,7 @@ export const HeatmapCell: React.FC<HeatmapCellProps> = ({
                   
                   <div className="flex justify-between items-center font-bold text-sm">
                       <span className="text-white/80">Total</span>
-                      <span className={`${percentage > 100 ? 'text-red-300' : 'text-emerald-300'}`}>
+                      <span className={`${percentage > 100 ? 'text-red-300' : (percentage > 90 ? 'text-amber-300' : 'text-emerald-300')}`}>
                           {ptAllocated.toFixed(1)} <span className="text-[10px] font-normal opacity-70">/ {ptCapacity} ({percentage.toFixed(0)}%)</span>
                       </span>
                   </div>

@@ -133,8 +133,12 @@ export const HeatmapRow: React.FC<HeatmapRowProps> = ({
   
   const groupHeaderClass = "sticky left-[48px] z-20 bg-[#ebe9e4] bg-opacity-60 backdrop-blur-md px-4 py-3 cursor-pointer align-middle border-t border-b border-white/50";
   
-  // Zebra striping for readability
-  const rowBackgroundClass = row.isGroupHeader ? '' : 'even:bg-slate-50/40 hover:bg-white/60';
+  // Zebra striping and hover logic
+  const rowBackgroundClass = row.isGroupHeader 
+    ? '' 
+    : rowIndex % 2 === 0 
+        ? 'bg-white/40 hover:bg-white/90' 
+        : 'bg-slate-50/40 hover:bg-white/90';
 
   return (
     <tr className={`${rowMinHeight} group transition-all duration-300 ${rowBackgroundClass}`}>

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ViewState, ThemeSettings, Filter, Resource, SelectionRange } from '../types';
 import { MobileListView } from '../components/MobileListView';
-import { Users, X, Filter as FilterIcon, ChevronDown, Check, ChevronRight, Briefcase, ChevronUp, Layers } from 'lucide-react';
+import { Users, X, Filter as FilterIcon, ChevronDown, Check, ChevronRight, Briefcase, ChevronUp, Layers, Plus, RefreshCw } from 'lucide-react';
 import { MOCK_PEOPLE, MOCK_PROJECTS } from '../constants';
 
 interface LayoutProps {
@@ -40,6 +40,12 @@ export const MobileLayout: React.FC<LayoutProps> = ({
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [activeFilterCategory, setActiveFilterCategory] = useState<string | null>(null);
   const [isSelectionMode] = useState(true);
+  
+  // Pull to Refresh State
+  const [pullY, setPullY] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const touchStartY = useRef(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Enforce 3M view on mobile mount
   useEffect(() => {
@@ -50,6 +56,36 @@ export const MobileLayout: React.FC<LayoutProps> = ({
         return prev;
     });
   }, [setViewState]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+      if (containerRef.current?.scrollTop === 0) {
+          touchStartY.current = e.touches[0].clientY;
+      }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+      if (touchStartY.current > 0 && !isRefreshing) {
+          const deltaY = e.touches[0].clientY - touchStartY.current;
+          if (deltaY > 0) {
+              setPullY(deltaY * 0.5); // Resistance
+          }
+      }
+  };
+
+  const handleTouchEnd = () => {
+      if (pullY > 60) {
+          setIsRefreshing(true);
+          setPullY(60); // Snap to refresh
+          setTimeout(() => {
+              setIsRefreshing(false);
+              setPullY(0);
+              touchStartY.current = 0;
+          }, 1500);
+      } else {
+          setPullY(0);
+          touchStartY.current = 0;
+      }
+  };
 
   // --- Dynamic Filter Logic ---
   const filterCategories = viewState.mode === 'People' 
@@ -115,7 +151,7 @@ export const MobileLayout: React.FC<LayoutProps> = ({
   return (
     <div className="flex flex-col h-[100dvh] bg-[#F9FAFB] text-slate-900 font-sans w-full overflow-hidden">
       
-      {/* Header with Liquid Glass Effect */}
+      {/* Header */}
       <header className="flex-none sticky top-0 z-50 transition-all duration-300">
          <div className="absolute inset-0 bg-white/80 backdrop-blur-xl border-b border-white/50 shadow-[0_4px_30px_rgba(0,0,0,0.03)]" />
          
@@ -144,7 +180,7 @@ export const MobileLayout: React.FC<LayoutProps> = ({
                  </div>
              </div>
 
-             {/* Row 2: Filter Button (Full Width) */}
+             {/* Row 2: Filter Button */}
              <div className="px-5 pb-5">
                  <button 
                     onClick={() => setIsFilterSheetOpen(!isFilterSheetOpen)}
@@ -170,7 +206,7 @@ export const MobileLayout: React.FC<LayoutProps> = ({
                  </button>
              </div>
 
-             {/* Row 3: Active Filters (Only if sheet is closed) */}
+             {/* Row 3: Active Filters */}
              {activeFilters.length > 0 && !isFilterSheetOpen && (
                  <div className="flex gap-2 overflow-x-auto px-5 pb-5 hide-scrollbar">
                      {activeFilters.map((filter, idx) => (
@@ -193,8 +229,6 @@ export const MobileLayout: React.FC<LayoutProps> = ({
          {isFilterSheetOpen && (
             <div className="absolute top-full left-0 right-0 bg-white shadow-[0_20px_40px_-10px_rgba(0,0,0,0.1)] border-t border-gray-100 z-[60] animate-in slide-in-from-top-5 duration-200 max-h-[70vh] flex flex-col">
                  <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-slate-50/50">
-                    
-                    {/* Grouping Section */}
                     <div className="mb-4 bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
                         <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2 bg-slate-50/50">
                             <Layers size={14} className="text-slate-400" />
@@ -213,15 +247,10 @@ export const MobileLayout: React.FC<LayoutProps> = ({
                             ))}
                         </div>
                     </div>
-
-                    <div className="px-1 mb-2">
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wide">Filters</span>
-                    </div>
-
+                    {/* ... Filter Logic ... */}
                     {filterCategories.map(category => {
                         const isOpen = activeFilterCategory === category;
                         const activeCount = activeFilters.find(f => f.key === category)?.values.length || 0;
-                        
                         return (
                             <div key={category} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm transition-all mb-3 last:mb-0">
                                 <button 
@@ -238,7 +267,6 @@ export const MobileLayout: React.FC<LayoutProps> = ({
                                         {isOpen ? <ChevronDown size={16} className="text-slate-400" /> : <ChevronRight size={16} className="text-slate-400" />}
                                     </div>
                                 </button>
-                                
                                 {isOpen && (
                                     <div className="px-4 pb-4 pt-0 animate-in slide-in-from-top-2">
                                         <div className="h-px bg-slate-50 mb-3" />
@@ -260,9 +288,6 @@ export const MobileLayout: React.FC<LayoutProps> = ({
                                                     </label>
                                                 );
                                             })}
-                                            {getOptionsForCategory(category).length === 0 && (
-                                                <p className="text-xs text-slate-400 italic text-center py-2">No options found</p>
-                                            )}
                                         </div>
                                     </div>
                                 )}
@@ -289,10 +314,9 @@ export const MobileLayout: React.FC<LayoutProps> = ({
                 </div>
             </div>
          )}
-
       </header>
-
-      {/* Backdrop for Filter Menu */}
+      
+      {/* Backdrop */}
       {isFilterSheetOpen && (
           <div 
               className="fixed inset-0 z-40 bg-slate-900/20 backdrop-blur-sm animate-in fade-in duration-200"
@@ -301,7 +325,24 @@ export const MobileLayout: React.FC<LayoutProps> = ({
       )}
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-hidden relative flex flex-col w-full bg-[#F9FAFB]">
+      <main 
+        ref={containerRef}
+        className="flex-1 overflow-y-auto relative flex flex-col w-full bg-[#F9FAFB] overscroll-contain"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+         
+         {/* Pull Refresh Indicator */}
+         <div 
+            className="w-full flex justify-center overflow-hidden transition-all duration-300" 
+            style={{ height: pullY, opacity: Math.min(1, pullY / 40) }}
+         >
+             <div className="flex items-center justify-center size-8 rounded-full bg-white shadow-md border border-gray-100 mt-2">
+                 <RefreshCw size={16} className={`text-primary ${isRefreshing ? 'animate-spin' : ''}`} style={{ transform: `rotate(${pullY * 2}deg)` }} />
+             </div>
+         </div>
+
          <MobileListView 
             data={currentData}
             viewMode={viewState.mode}
@@ -320,6 +361,15 @@ export const MobileLayout: React.FC<LayoutProps> = ({
             setExpandedRows={setExpandedRows}
          />
       </main>
+
+      {/* FAB - Floating Action Button */}
+      <button 
+        onClick={() => onAddChild && onAddChild('')}
+        className="fixed bottom-6 right-6 size-14 bg-primary text-white rounded-full shadow-lg shadow-primary/30 flex items-center justify-center z-40 active:scale-95 transition-transform hover:scale-105"
+      >
+          <Plus size={28} strokeWidth={2.5} />
+      </button>
+
     </div>
   );
 };

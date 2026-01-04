@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { Resource, ViewState, ThemeSettings } from '../types';
 import { MONTHS } from '../constants';
-import { ChevronRight, ChevronDown, Plus, Briefcase, Folder, Users, User } from 'lucide-react';
+import { ChevronRight, ChevronDown, Plus, Briefcase, Folder, Users, User, ChevronLeft } from 'lucide-react';
 
 interface MobileListViewProps {
   data: Resource[];
@@ -24,19 +24,45 @@ interface MobileListViewProps {
 export const MobileListView: React.FC<MobileListViewProps> = ({
   data,
   viewMode,
-  timeRange,
-  selectedIds,
-  onSelectionChange,
   onItemClick,
   onCellClick,
   onAddChild,
   themeSettings,
   className,
-  isSelectionMode,
   expandedRows,
   setExpandedRows
 }) => {
-  const visibleMonths = MONTHS.slice(0, timeRange === '3M' ? 3 : timeRange === '6M' ? 6 : 9);
+  // Mobile View Swipe Logic for Months
+  const [startMonthIndex, setStartMonthIndex] = useState(0);
+  const touchStartX = useRef(0);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+
+  const visibleMonths = MONTHS.slice(startMonthIndex, startMonthIndex + 3);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+      touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+      const diff = e.touches[0].clientX - touchStartX.current;
+      setSwipeOffset(diff);
+  };
+
+  const handleTouchEnd = () => {
+      if (swipeOffset < -50) {
+          // Next
+          if (startMonthIndex + 3 < MONTHS.length) {
+              setStartMonthIndex(prev => prev + 1);
+          }
+      } else if (swipeOffset > 50) {
+          // Prev
+          if (startMonthIndex > 0) {
+              setStartMonthIndex(prev => prev - 1);
+          }
+      }
+      setSwipeOffset(0);
+      touchStartX.current = 0;
+  };
 
   const toggleExpand = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -46,21 +72,11 @@ export const MobileListView: React.FC<MobileListViewProps> = ({
   };
 
   const getStatusColor = (percentage: number) => {
-    const t = themeSettings?.thresholds || { under: 50, balanced: 90, over: 110 };
-    // Modern Glassmorphism styles for pills
+    const t = themeSettings?.thresholds || { under: 50, balanced: 90, over: 100 };
     if (percentage === 0) return 'bg-slate-100/60 text-slate-400 border-slate-200/50 backdrop-blur-sm';
     if (percentage > t.over) return 'bg-rose-500/10 text-rose-600 border-rose-500/20 backdrop-blur-md shadow-[0_2px_8px_rgba(244,63,94,0.15)]';
-    if (percentage > t.balanced) return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 backdrop-blur-md shadow-[0_2px_8px_rgba(16,185,129,0.15)]'; // Balanced -> Green usually
-    if (percentage > t.under) return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 backdrop-blur-md shadow-[0_2px_8px_rgba(16,185,129,0.15)]'; // This logic might need check, assuming balanced/under logic from heatmap. Let's stick to standard heatmap logic: > balanced = Optimal/Green, > over = Red.
-    // Actually, usually > under (e.g. 50%) is OK, > balanced (e.g. 90%) is Great/Green, > over (110%) is Red.
-    // Adjusting based on standard heatmap colors in app:
-    // percentage <= under: Gray/Blue (Under)
-    // percentage > under && <= over: Green/Primary (Optimal)
-    // percentage > over: Red (Over)
-    
-    // Using simple logic relative to the helper for now, ensuring visual pop
-    if (percentage > t.over) return 'bg-rose-500/10 text-rose-600 border-rose-500/20 backdrop-blur-md shadow-[0_2px_8px_rgba(244,63,94,0.15)]';
-    if (percentage >= t.under) return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 backdrop-blur-md shadow-[0_2px_8px_rgba(16,185,129,0.15)]';
+    if (percentage > t.balanced) return 'bg-amber-500/10 text-amber-600 border-amber-500/20 backdrop-blur-md shadow-[0_2px_8px_rgba(245,158,11,0.15)]';
+    if (percentage > t.under) return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 backdrop-blur-md shadow-[0_2px_8px_rgba(16,185,129,0.15)]';
     return 'bg-slate-500/5 text-slate-500 border-slate-500/10 backdrop-blur-sm';
   };
 
@@ -70,8 +86,8 @@ export const MobileListView: React.FC<MobileListViewProps> = ({
     const isGroup = resource.type === 'group';
     const isProject = resource.type === 'project';
     const isEmployee = resource.type === 'employee';
-
-    // Groups (Department, Folder, etc.)
+    const isAssignment = depth > 0;
+    
     if (isGroup) {
         return (
             <div key={resource.id} className="mb-4 mt-4 first:mt-2">
@@ -96,11 +112,6 @@ export const MobileListView: React.FC<MobileListViewProps> = ({
             </div>
         );
     }
-
-    // Leaf Nodes (Employee or Project Cards)
-    // In People view: Level 0 = Employee, Level 1 = Project Assignment
-    // In Project view: Level 0 = Project, Level 1 = Employee Assignment
-    const isAssignment = depth > 0;
     
     return (
         <div key={resource.id} className={`
@@ -115,7 +126,6 @@ export const MobileListView: React.FC<MobileListViewProps> = ({
                 className={`p-5 flex items-center gap-4 ${hasChildren ? 'cursor-pointer' : ''}`}
                 onClick={(e) => hasChildren ? toggleExpand(e, resource.id) : onItemClick(resource.id)}
             >
-                {/* Icon/Avatar */}
                 <div className="shrink-0">
                     {isEmployee ? (
                         <div className="size-12 rounded-2xl bg-slate-100 overflow-hidden border border-white/50 shadow-sm ring-1 ring-black/5">
@@ -132,7 +142,6 @@ export const MobileListView: React.FC<MobileListViewProps> = ({
                     )}
                 </div>
 
-                {/* Info */}
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
                          <h3 className="text-[15px] font-bold text-slate-900 truncate leading-tight">{resource.name}</h3>
@@ -146,9 +155,28 @@ export const MobileListView: React.FC<MobileListViewProps> = ({
                 </div>
             </div>
 
-            {/* Allocation Grid */}
-            <div className="px-5 pb-5">
-                 <div className="grid grid-cols-3 gap-3">
+            {/* Allocation Grid with Swipe Support */}
+            <div 
+                className="px-5 pb-5 overflow-hidden"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+            >
+                 {/* Visual Month Navigator Indicators */}
+                 <div className="flex justify-between items-center mb-2 px-1">
+                      <ChevronLeft size={14} className={`text-slate-400 ${startMonthIndex === 0 ? 'opacity-20' : ''}`} />
+                      <div className="flex gap-1">
+                          {MONTHS.map((_, idx) => (
+                              <div key={idx} className={`h-1 rounded-full transition-all ${idx >= startMonthIndex && idx < startMonthIndex + 3 ? 'w-4 bg-primary' : 'w-1 bg-slate-200'}`} />
+                          ))}
+                      </div>
+                      <ChevronRight size={14} className={`text-slate-400 ${startMonthIndex + 3 >= MONTHS.length ? 'opacity-20' : ''}`} />
+                 </div>
+
+                 <div 
+                    className="grid grid-cols-3 gap-3 transition-transform duration-300 ease-out"
+                    style={{ transform: `translateX(${swipeOffset}px)` }}
+                 >
                      {visibleMonths.map((month) => {
                          const alloc = resource.allocations[month];
                          const pt = alloc ? alloc.pt : 0;
@@ -176,7 +204,6 @@ export const MobileListView: React.FC<MobileListViewProps> = ({
                  </div>
             </div>
 
-            {/* Action Footer (Add Assignment) */}
             {isExpanded && !isAssignment && onAddChild && (
                 <div className="mx-5 mb-5 mt-1">
                      <button 
@@ -189,7 +216,6 @@ export const MobileListView: React.FC<MobileListViewProps> = ({
                 </div>
             )}
             
-            {/* Children Render */}
             {isExpanded && resource.children && (
                 <div className="border-t border-slate-200/40 bg-slate-50/30 p-4 space-y-4">
                     {resource.children.map(child => renderResource(child, depth + 1))}

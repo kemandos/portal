@@ -132,6 +132,11 @@ function App() {
                 });
                 const avgUtil = monthCount > 0 ? totalPct / monthCount : 0;
                 
+                // Logic adjusted to:
+                // Available: <= 90% (includes under and balanced)
+                // Warning: 90% - 100%
+                // Overbooked: > 100%
+                
                 const isOverbooked = avgUtil > settings.thresholds!.over; // > 100
                 const isWarning = avgUtil > settings.thresholds!.balanced && avgUtil <= settings.thresholds!.over; // 90-100
                 const isAvailable = avgUtil <= settings.thresholds!.balanced; // < 90
@@ -143,7 +148,6 @@ function App() {
             }
 
             if (filter.key === 'Utilization') {
-                // ... kept for backward compatibility or different filter logic
                 return true; 
             }
 

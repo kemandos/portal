@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ViewState, ThemeSettings, Filter, Resource, SelectionRange } from '../types';
 import { Heatmap } from '../components/Heatmap';
-import { Users } from 'lucide-react';
+import { Users, Settings, Filter as FilterIcon, ChevronDown, ChevronUp, Layers, Check, X } from 'lucide-react';
+import { MOCK_PEOPLE, MOCK_PROJECTS } from '../constants';
 
 interface LayoutProps {
   viewState: ViewState;
@@ -35,43 +36,222 @@ export const TabletLayout: React.FC<LayoutProps> = ({
     selectionRange, onSelectionRangeChange, onCellClick, expandedRows, setExpandedRows,
     selectedMonthIndices, onMonthSelectionChange, onAddChild, onInlineSave
 }) => {
+  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+  
+  // Ensure we default to 3M view on tablet if not already set, but respect user choice
+  useEffect(() => {
+     if (viewState.timeRange !== '3M') {
+         // setViewState(prev => ({...prev, timeRange: '3M'}));
+     }
+  }, []);
+
+  const filterCategories = viewState.mode === 'People' 
+    ? ['Capacity', 'Managing Consultant', 'Department', 'Employee', 'Status']
+    : ['Capacity', 'Project Lead', 'Dealfolder', 'Status'];
+    
+  const groupOptions = viewState.mode === 'People' 
+    ? ['None', 'Department', 'Managing Consultant'] 
+    : ['None', 'Dealfolder'];
+
+  const getOptionsForCategory = (category: string) => {
+      if (category === 'Capacity') return ['Available', 'Warning', 'Overbooked'];
+      const rawData = viewState.mode === 'Projects' ? MOCK_PROJECTS : MOCK_PEOPLE;
+      const values = new Set<string>();
+      
+      const process = (nodes: Resource[]) => {
+          nodes.forEach(n => {
+              if (category === 'Status') values.add(n.status || 'Active');
+              if (category === 'Department' && n.department) values.add(n.department);
+              if (category === 'Managing Consultant' && n.manager) values.add(n.manager);
+              if (category === 'Project Lead' && n.manager) values.add(n.manager);
+              if (category === 'Dealfolder' && n.type === 'project' && n.children && n.children.length > 0) values.add(n.name);
+              if (n.children) process(n.children);
+          });
+      };
+      process(rawData);
+      return Array.from(values).sort();
+  };
+
+  const handleFilterToggle = (category: string, value: string) => {
+      const existingFilter = activeFilters.find(f => f.key === category);
+      let newValues: string[] = [];
+      if (existingFilter) {
+          if (existingFilter.values.includes(value)) newValues = existingFilter.values.filter(v => v !== value);
+          else newValues = [...existingFilter.values, value];
+      } else {
+          newValues = [value];
+      }
+      if (newValues.length === 0) {
+          const idx = activeFilters.findIndex(f => f.key === category);
+          if (idx !== -1) onRemoveFilter(idx);
+      } else {
+          onAddFilter({ key: category, values: newValues });
+      }
+  };
+
   return (
-    <div className="bg-background text-[#1b0d10] font-sans antialiased h-screen flex flex-col overflow-hidden selection:bg-primary/20">
-        <header className="flex-none bg-white border-b border-[#f3e7ea] px-6 py-4 z-30 relative shadow-sm">
-            <div className="flex items-center justify-between w-full max-w-[1400px] mx-auto">
-                <div className="flex items-center gap-3 w-[240px]">
-                    <div className="text-primary flex items-center justify-center">
-                        <Users size={28} />
+    <div className="bg-[#F5F2EB] text-[#1b0d10] font-sans antialiased h-screen flex flex-col overflow-hidden selection:bg-primary/20">
+        
+        {/* Header - 2 Rows */}
+        <header className="flex-none bg-[#FDFBF7]/80 backdrop-blur-xl border-b border-white/50 z-40 relative shadow-sm transition-all">
+            {/* Row 1: Logo, Toggle, Range, Settings */}
+            <div className="px-6 py-3 flex items-center justify-between gap-4 border-b border-gray-100/50">
+                <div className="flex items-center gap-4">
+                     <div className="size-9 bg-white rounded-xl flex items-center justify-center text-primary shadow-sm ring-1 ring-black/5">
+                        <Users size={20} />
                     </div>
-                    <h1 className="text-[#1b0d10] text-xl font-bold tracking-tight">Staffing</h1>
-                </div>
-                <div className="flex-1 flex justify-center">
-                    <div className="bg-[#f3e7ea] p-1 rounded-xl flex items-center">
+                    
+                    <div className="flex bg-gray-200/50 p-1 rounded-lg">
                         <button 
                             onClick={() => setViewState(v => ({...v, mode: 'People'}))}
-                            className={`relative flex items-center justify-center px-6 py-2 rounded-lg transition-all duration-200 text-sm font-semibold ${viewState.mode === 'People' ? 'bg-white shadow-sm text-primary' : 'text-[#9a4c5b] hover:bg-white/50'}`}
+                            className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${viewState.mode === 'People' ? 'bg-white shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700'}`}
                         >
                             People
                         </button>
                         <button 
                             onClick={() => setViewState(v => ({...v, mode: 'Projects'}))}
-                            className={`relative flex items-center justify-center px-6 py-2 rounded-lg transition-all duration-200 text-sm font-semibold ${viewState.mode === 'Projects' ? 'bg-white shadow-sm text-primary' : 'text-[#9a4c5b] hover:bg-white/50'}`}
+                            className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${viewState.mode === 'Projects' ? 'bg-white shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700'}`}
                         >
                             Projects
                         </button>
                     </div>
                 </div>
-                <div className="flex items-center justify-end gap-3 w-[240px]">
-                    <button onClick={onOpenSettings} className="flex items-center justify-center w-10 h-10 rounded-full bg-[#f3e7ea] hover:bg-[#ebdce0] text-[#1b0d10] transition-colors">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+
+                <div className="flex items-center gap-3">
+                     <div className="flex bg-gray-200/50 p-1 rounded-lg">
+                        {['3M', '6M', '9M'].map(r => (
+                            <button 
+                                key={r}
+                                onClick={() => setViewState(v => ({...v, timeRange: r as any}))}
+                                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${viewState.timeRange === r ? 'bg-white shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700'}`}
+                            >
+                                {r}
+                            </button>
+                        ))}
+                    </div>
+                    <button onClick={onOpenSettings} className="size-9 flex items-center justify-center rounded-lg hover:bg-white/50 text-slate-500 hover:text-slate-900 transition-colors">
+                        <Settings size={20} />
                     </button>
                 </div>
             </div>
-        </header>
 
-        <main className="flex-1 overflow-hidden relative bg-[#fcf8f9]">
-            <div className="h-full w-full p-6 pb-24 overflow-auto hide-scrollbar">
-                <div className="max-w-[1400px] mx-auto">
+            {/* Row 2: Controls & Filters */}
+            <div className="px-6 py-2 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                     <div className="relative group">
+                        <button 
+                            className="flex items-center gap-2 text-xs font-bold text-slate-600 bg-white/50 px-3 py-2 rounded-lg border border-transparent hover:border-gray-200 hover:bg-white transition-all"
+                        >
+                            <Layers size={14} />
+                            <span>Group: {groupBy}</span>
+                            <ChevronDown size={14} className="opacity-50" />
+                        </button>
+                        {/* Simple Hover Dropdown for Tablet */}
+                        <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 p-1 hidden group-hover:block animate-in fade-in slide-in-from-top-1">
+                            {groupOptions.map(opt => (
+                                <button
+                                    key={opt}
+                                    onClick={() => setGroupBy(opt)}
+                                    className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-between hover:bg-slate-50 ${groupBy === opt ? 'text-primary bg-primary/5' : 'text-slate-600'}`}
+                                >
+                                    {opt}
+                                    {groupBy === opt && <Check size={14} />}
+                                </button>
+                            ))}
+                        </div>
+                     </div>
+
+                     <div className="h-6 w-px bg-gray-300/50 mx-1" />
+
+                     {/* Active Filters Summary */}
+                     <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar max-w-[400px]">
+                         {activeFilters.length === 0 && <span className="text-xs text-slate-400 italic">No filters active</span>}
+                         {activeFilters.map((f, i) => (
+                             <div key={i} className="flex items-center gap-1 bg-white border border-gray-200 px-2 py-1 rounded-md shadow-sm">
+                                 <span className="text-[10px] font-bold text-slate-500 uppercase">{f.key}:</span>
+                                 <span className="text-[10px] font-bold text-slate-900">{f.values[0]}{f.values.length > 1 && ` +${f.values.length-1}`}</span>
+                                 <button onClick={() => onRemoveFilter(i)} className="ml-1 text-slate-400 hover:text-red-500"><X size={12}/></button>
+                             </div>
+                         ))}
+                     </div>
+                </div>
+
+                <button 
+                    onClick={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
+                    className={`relative flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold border transition-all ${isFilterPanelOpen ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20' : 'bg-white border-gray-200 text-slate-600 hover:bg-gray-50'}`}
+                >
+                    <FilterIcon size={14} />
+                    Filters
+                    {/* Badge for Closed State */}
+                    {!isFilterPanelOpen && activeFilters.length > 0 && (
+                        <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[20px] h-5 px-1 bg-[#ee3a5e] text-white text-[10px] font-bold rounded-full shadow-sm ring-2 ring-white animate-in zoom-in-50 duration-200">
+                            {activeFilters.length}
+                        </span>
+                    )}
+
+                    {/* Inline count if open */}
+                    {isFilterPanelOpen && activeFilters.length > 0 && (
+                        <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px]">{activeFilters.length}</span>
+                    )}
+
+                    {isFilterPanelOpen ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}
+                </button>
+            </div>
+
+            {/* Collapsible Filter Panel */}
+            {isFilterPanelOpen && (
+                <div className="absolute top-full left-0 right-0 bg-white/95 backdrop-blur-xl border-b border-gray-200 shadow-xl z-50 animate-in slide-in-from-top-2 p-6">
+                    <div className="max-w-4xl mx-auto">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                            {filterCategories.map(cat => (
+                                <div key={cat} className="space-y-3">
+                                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{cat}</h3>
+                                    <div className="space-y-1">
+                                        {getOptionsForCategory(cat).map(opt => {
+                                            const isSelected = activeFilters.find(f => f.key === cat)?.values.includes(opt);
+                                            return (
+                                                <button
+                                                    key={opt}
+                                                    onClick={() => handleFilterToggle(cat, opt)}
+                                                    className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-between group ${isSelected ? 'bg-primary/10 text-primary' : 'hover:bg-slate-50 text-slate-600'}`}
+                                                >
+                                                    {opt}
+                                                    {isSelected && <Check size={14} />}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-gray-100">
+                             <button 
+                                onClick={() => { activeFilters.forEach((_, i) => onRemoveFilter(0)); }}
+                                className="px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"
+                             >
+                                 Clear All
+                             </button>
+                             <button 
+                                onClick={() => setIsFilterPanelOpen(false)}
+                                className="px-6 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-lg transition-colors"
+                             >
+                                 Apply & Close
+                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </header>
+        
+        {/* Backdrop when filter panel is open */}
+        {isFilterPanelOpen && (
+            <div className="absolute inset-0 z-30 bg-slate-900/10 backdrop-blur-[1px]" onClick={() => setIsFilterPanelOpen(false)} />
+        )}
+
+        <main className="flex-1 overflow-hidden relative bg-[#F5F2EB]">
+            <div className="h-full w-full p-4 overflow-auto hide-scrollbar">
+                 <div className="h-full flex flex-col relative z-10">
+                    {/* Heatmap Wrapper with horizontal scroll and sticky column */}
                     <Heatmap 
                         data={currentData} 
                         viewMode={viewState.mode} 
@@ -80,7 +260,7 @@ export const TabletLayout: React.FC<LayoutProps> = ({
                         onSelectionChange={handleSelectionChange}
                         onItemClick={handleItemClick}
                         themeSettings={themeSettings}
-                        density={density}
+                        density={density} // Pass through, but tablet might enforce one
                         selectionRange={selectionRange}
                         onSelectionRangeChange={onSelectionRangeChange}
                         onCellClick={onCellClick}

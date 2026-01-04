@@ -37,11 +37,18 @@ export const MobileEditAssignmentModal: React.FC<EditAssignmentModalProps> = (pr
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col bg-white animate-in slide-in-from-bottom duration-300">
+    <>
+    <div className="fixed inset-0 z-[90] bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300" onClick={onClose} />
+    <div className="fixed inset-x-0 bottom-0 z-[100] flex flex-col bg-white rounded-t-[32px] animate-in slide-in-from-bottom duration-300 max-h-[90dvh] shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
         
+        {/* Drag Handle */}
+        <div className="w-full flex justify-center pt-3 pb-1" onClick={onClose}>
+            <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+        </div>
+
         {/* Mobile Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-white sticky top-0 z-10">
-          <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-white sticky top-0 z-10 rounded-t-[32px]">
+          <div className="flex items-center gap-3">
              {internalMode === 'form' && listEmployee ? (
                  <button onClick={actions.handleBackToList} className="p-2 -ml-2 rounded-full hover:bg-slate-50 text-slate-900 transition-colors">
                      <ArrowLeft size={22} />
@@ -71,7 +78,7 @@ export const MobileEditAssignmentModal: React.FC<EditAssignmentModalProps> = (pr
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto bg-slate-50/30 pb-safe">
+        <div className="flex-1 overflow-y-auto bg-slate-50/30 pb-safe custom-scrollbar">
             {internalMode === 'list' && (
                 <AssignmentList 
                     assignments={listAssignments}
@@ -116,5 +123,6 @@ export const MobileEditAssignmentModal: React.FC<EditAssignmentModalProps> = (pr
             )}
         </div>
     </div>
+    </>
   );
 };
