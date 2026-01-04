@@ -56,11 +56,29 @@ export const HeatmapResourceInfo: React.FC<HeatmapResourceInfoProps> = ({
           const circumference = 2 * Math.PI * radius;
           const strokeWidth = 3;
           
+          // Calculate Availability Status for Badge
+          const monthsToCheck = visibleMonths.slice(0, 3);
+          let totalPct = 0;
+          monthsToCheck.forEach(m => {
+              const alloc = resource.allocations[m];
+              if (alloc && alloc.capacity > 0) totalPct += (alloc.pt / alloc.capacity);
+          });
+          const avgUtil = totalPct / monthsToCheck.length;
+          
+          let statusColor = 'bg-slate-400'; // Available
+          if (avgUtil > 1.0) statusColor = 'bg-red-500'; // Over
+          else if (avgUtil > 0.9) statusColor = 'bg-amber-500'; // Warning
+          else if (avgUtil > 0.5) statusColor = 'bg-emerald-500'; // Balanced
+          else if (avgUtil > 0) statusColor = 'bg-slate-400'; // Under
+
           return (
             <div className={`relative ${sizeClass} rounded-full bg-gray-100 flex-shrink-0 border-2 border-white shadow-sm transition-transform duration-300 ease-spring hover:scale-110 hover:shadow-glow group/avatar`}>
                 <div className="w-full h-full rounded-full overflow-hidden relative z-10">
                     <img src={resource.avatar || `https://i.pravatar.cc/150?u=${resource.id}`} alt={resource.name} className="w-full h-full object-cover" />
                 </div>
+                
+                {/* Availability Badge */}
+                <div className={`absolute bottom-0 right-0 size-3 rounded-full border-2 border-white z-20 ${statusColor} shadow-sm`}></div>
                 
                 {/* SVG Heatmap Ring */}
                 <svg className="absolute -inset-[6px] w-[calc(100%+12px)] h-[calc(100%+12px)] z-0 rotate-[-90deg]" viewBox="0 0 52 52">
@@ -71,15 +89,16 @@ export const HeatmapResourceInfo: React.FC<HeatmapResourceInfoProps> = ({
                        const pct = cap > 0 ? (pt / cap) * 100 : 0;
                        
                        let color = '#e2e8f0'; // slate-200 (empty/default)
-                       const thresholds = themeSettings.thresholds || { under: 50, balanced: 90, over: 110 };
-                       
+                       const thresholds = themeSettings.thresholds || { under: 50, balanced: 90, over: 100 };
+                       const colors = themeSettings.thresholdColors || { under: '#94a3b8', balanced: '#10b981', optimal: '#f59e0b', over: '#ef4444' };
+
                        if (pt > 0) {
-                           if (pct > thresholds.over) color = '#be123c'; // red
-                           else if (pct > thresholds.under) color = '#ee3a5e'; // primary
-                           else color = '#cbd5e1'; // gray/blue
+                           if (pct > thresholds.over) color = colors.over; 
+                           else if (pct > thresholds.balanced) color = colors.optimal; 
+                           else if (pct > thresholds.under) color = colors.balanced; 
+                           else color = colors.under; 
                        }
                        
-                       // Calculate stroke-dasharray to create segments
                        const gap = 3;
                        const effectiveLength = (circumference / visibleMonths.length) - gap;
                        const offset = -index * (circumference / visibleMonths.length);
@@ -141,14 +160,19 @@ export const HeatmapResourceInfo: React.FC<HeatmapResourceInfoProps> = ({
                                 {resource.name}
                             </span>
                             {!isCompact && (
-                                <>
+                                <div className="flex flex-col">
                                     <span className="text-[11px] text-slate-500 truncate leading-tight">
                                         {resource.subtext ? resource.subtext.split('•')[0].trim() : ''}
                                     </span>
-                                    {resource.manager && (
-                                        <span className="text-[10px] text-slate-400 truncate mt-0.5">MC: {resource.manager}</span>
+                                    {resource.skills && resource.skills.length > 0 && (
+                                        <div className="flex flex-wrap gap-1 mt-1">
+                                            {resource.skills.slice(0, 2).map(skill => (
+                                                <span key={skill} className="text-[9px] font-medium bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full border border-slate-200/50">{skill}</span>
+                                            ))}
+                                            {resource.skills.length > 2 && <span className="text-[9px] text-slate-400">+{resource.skills.length - 2}</span>}
+                                        </div>
                                     )}
-                                </>
+                                </div>
                             )}
                         </div>
                     ) : (

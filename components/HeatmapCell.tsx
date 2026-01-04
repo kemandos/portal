@@ -92,6 +92,12 @@ export const HeatmapCell: React.FC<HeatmapCellProps> = ({
         };
     }
     
+    // Updated Logic:
+    // Over > 100% -> Red
+    // Warning > 90% -> Amber
+    // Balanced > 50% -> Green
+    // Under <= 50% -> Gray/Blue
+    
     if (percentage > thresholds.over) return { backgroundColor: applyOpacity(colors.over), color: '#ffffff', boxShadow: '0 4px 14px rgba(239, 68, 68, 0.25)' }; 
     if (percentage > thresholds.balanced) return { backgroundColor: applyOpacity(colors.optimal), color: '#ffffff', boxShadow: '0 4px 14px rgba(245, 158, 11, 0.25)' }; 
     if (percentage > thresholds.under) return { backgroundColor: applyOpacity(colors.balanced), color: '#ffffff', boxShadow: '0 4px 14px rgba(16, 185, 129, 0.25)' }; 

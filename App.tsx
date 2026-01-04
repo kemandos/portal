@@ -13,32 +13,45 @@ import { useStaffingData } from './hooks/useStaffingData';
 
 function App() {
   const [viewState, setViewState] = useState<ViewState>({
-    mode: 'People', // Updated default to People
+    mode: 'People',
     timeRange: '6M',
     selectedIds: []
   });
 
-  // Separate Settings for People View
+  // Updated Theme Settings for new Color System
+  // Under (0-50%): Slate/Gray
+  // Balanced (50-90%): Emerald
+  // Warning (90-100%): Amber
+  // Over (>100%): Red
   const [peopleThemeSettings, setPeopleThemeSettings] = useState<ThemeSettings>({
     mode: 'light',
-    colorTheme: 'emerald', // Different default to distinguish
+    colorTheme: 'emerald',
     cellStyle: 'modern',
-    thresholds: { under: 50, balanced: 90, over: 110 }
+    thresholdColors: {
+        under: '#94a3b8',   // Slate 400
+        balanced: '#10b981', // Emerald 500
+        optimal: '#f59e0b',  // Amber 500 (Warning zone)
+        over: '#ef4444'      // Red 500
+    },
+    thresholds: { under: 50, balanced: 90, over: 100 }
   });
 
-  // Separate Settings for Projects View
   const [projectThemeSettings, setProjectThemeSettings] = useState<ThemeSettings>({
     mode: 'light',
     colorTheme: 'rose',
     cellStyle: 'modern',
-    thresholds: { under: 50, balanced: 90, over: 110 }
+    thresholdColors: {
+        under: '#94a3b8',
+        balanced: '#10b981',
+        optimal: '#f59e0b',
+        over: '#ef4444'
+    },
+    thresholds: { under: 50, balanced: 90, over: 100 }
   });
 
-  // Derived state to get current settings based on mode
   const currentThemeSettings = viewState.mode === 'People' ? peopleThemeSettings : projectThemeSettings;
   const setCurrentThemeSettings = viewState.mode === 'People' ? setPeopleThemeSettings : setProjectThemeSettings;
 
-  // Custom Hook managing data state and business logic
   const { 
       peopleData, 
       projectData, 
@@ -51,7 +64,6 @@ function App() {
       'f1': true, 'p1': true, 'g1': true, 'e1': true
   });
 
-  // Apply Dark Mode Class
   useEffect(() => {
     if (currentThemeSettings.mode === 'dark') {
       document.documentElement.classList.add('dark');
@@ -62,7 +74,7 @@ function App() {
   
   const [selectionRange, setSelectionRange] = useState<SelectionRange | null>(null);
   const [selectedMonthIndices, setSelectedMonthIndices] = useState<number[]>([]);
-  const [groupBy, setGroupBy] = useState<string>('Managing Consultant'); // Updated default
+  const [groupBy, setGroupBy] = useState<string>('Managing Consultant');
   const [density, setDensity] = useState<'comfortable' | 'compact'>('comfortable');
   const [activeFilters, setActiveFilters] = useState<Filter[]>([
      { key: 'Status', values: ['Active'] }
@@ -81,13 +93,10 @@ function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Filter and Processing Logic for View
-  // Note: This could be moved to a selector/hook if it grows larger
   const processedData = useMemo(() => {
     const rawDataSource = viewState.mode === 'Projects' ? projectData : peopleData;
     const settings = viewState.mode === 'People' ? peopleThemeSettings : projectThemeSettings;
     
-    // Create a map for Dealfolder lookup if in Project View
     const projectParentMap = new Map<string, string>();
     if (viewState.mode === 'Projects') {
         projectData.forEach(folder => {
@@ -105,44 +114,47 @@ function App() {
         return activeFilters.every(filter => {
             if (filter.values.length === 0) return true;
 
-            if (filter.key === 'Utilization') {
-                const monthsToCheck = MONTHS.slice(0, viewState.timeRange === '3M' ? 3 : viewState.timeRange === '6M' ? 6 : 9);
-                const t = settings.thresholds || { under: 50, balanced: 90, over: 110 };
+            // Capacity Filter Logic
+            if (filter.key === 'Capacity') {
+                const visibleMonths = MONTHS.slice(0, viewState.timeRange === '3M' ? 3 : viewState.timeRange === '6M' ? 6 : 9);
+                // Calculate average utilization
+                let totalPct = 0;
+                let monthCount = 0;
                 
-                let totalPt = 0;
-                let totalCapacity = 0;
-                
-                monthsToCheck.forEach(m => {
+                visibleMonths.forEach(m => {
                     const alloc = item.allocations[m];
-                    if (alloc) {
-                        totalPt += alloc.pt;
-                        totalCapacity += alloc.capacity;
-                    } else {
-                        totalCapacity += 20; 
+                    const cap = alloc?.capacity || 20;
+                    const pt = alloc?.pt || 0;
+                    if (cap > 0) {
+                        totalPct += (pt / cap) * 100;
+                        monthCount++;
                     }
                 });
-
-                const ratio = totalCapacity > 0 ? totalPt / totalCapacity : 0;
-                const percentage = ratio * 100;
+                const avgUtil = monthCount > 0 ? totalPct / monthCount : 0;
                 
-                let status = 'Fully Allocated';
-                if (percentage <= t.under) status = 'Available';
-                else if (percentage > t.over) status = 'Over Capacity';
+                const isOverbooked = avgUtil > settings.thresholds!.over; // > 100
+                const isWarning = avgUtil > settings.thresholds!.balanced && avgUtil <= settings.thresholds!.over; // 90-100
+                const isAvailable = avgUtil <= settings.thresholds!.balanced; // < 90
 
-                return filter.values.includes(status);
+                if (filter.values.includes('Overbooked') && isOverbooked) return true;
+                if (filter.values.includes('Warning') && isWarning) return true;
+                if (filter.values.includes('Available') && isAvailable) return true;
+                return false;
             }
 
-            // Common Filters
+            if (filter.key === 'Utilization') {
+                // ... kept for backward compatibility or different filter logic
+                return true; 
+            }
+
             if (filter.key === 'Status') return filter.values.includes(item.status || 'Active');
 
-            // People View Specific
             if (viewState.mode === 'People') {
                 if (filter.key === 'Managing Consultant') return filter.values.includes(item.manager || 'Unassigned');
                 if (filter.key === 'Department') return filter.values.includes(item.department || 'Unassigned');
                 if (filter.key === 'Employee') return filter.values.includes(item.name);
                 if (filter.key === 'Skill') return filter.values.every(s => item.skills?.includes(s));
             } 
-            // Projects View Specific
             else {
                 if (filter.key === 'Dealfolder') {
                     const parentName = projectParentMap.get(item.id);
@@ -151,15 +163,12 @@ function App() {
                 if (filter.key === 'Deal') return filter.values.includes(item.name);
                 if (filter.key === 'Project Lead') return filter.values.includes(item.manager || '');
                 if (filter.key === 'Employee') {
-                    // Check if any child (assigned employee) matches
                     return item.children && item.children.some(child => filter.values.includes(child.name));
                 }
                 if (filter.key === 'Managing Consultant') {
-                    // Check if any child (assigned employee) has this manager
                     return item.children && item.children.some(child => child.manager && filter.values.includes(child.manager));
                 }
             }
-            
             return true;
         });
     });
@@ -192,6 +201,32 @@ function App() {
         return { ...item, allocations: newAllocations };
     });
 
+    // Helper to calculate group statistics
+    const getGroupSubtext = (children: Resource[]) => {
+        const count = children.length;
+        if (count === 0) return 'No items';
+        
+        // Calculate Avg Utilization for current time range
+        const months = MONTHS.slice(0, 6);
+        let totalUtil = 0;
+        let validMonths = 0;
+
+        children.forEach(c => {
+            months.forEach(m => {
+                const alloc = c.allocations[m];
+                const pt = alloc?.pt || 0;
+                const cap = alloc?.capacity || 20;
+                if (cap > 0) {
+                    totalUtil += (pt / cap);
+                    validMonths++;
+                }
+            });
+        });
+
+        const avg = validMonths > 0 ? (totalUtil / validMonths) * 100 : 0;
+        return `${count} Members • ${avg.toFixed(0)}% Avg Util.`;
+    };
+
     if (viewState.mode === 'People') {
         if (groupBy === 'None') return calculatedItems;
         if (groupBy === 'Department') {
@@ -204,7 +239,7 @@ function App() {
             return Object.entries(groups).map(([name, children], idx) => ({
                 id: `grp_dept_${idx}`,
                 name: name,
-                subtext: `${children.length} Members`,
+                subtext: getGroupSubtext(children),
                 type: 'group' as const,
                 isExpanded: true,
                 allocations: {},
@@ -221,7 +256,7 @@ function App() {
             return Object.entries(groups).map(([name, children], idx) => ({
                 id: `grp_mgr_${idx}`,
                 name: name,
-                subtext: `${children.length} Reports`,
+                subtext: getGroupSubtext(children),
                 type: 'group' as const,
                 isExpanded: true,
                 allocations: {},
@@ -268,7 +303,6 @@ function App() {
   }, [processedData, expandedRows]);
 
   const handleCellClick = (resourceId: string, month: string) => {
-      // Determine if multiple months are selected
       const visibleMonths = MONTHS.slice(0, viewState.timeRange === '3M' ? 3 : viewState.timeRange === '6M' ? 6 : 9);
       let targetMonths = [month];
 
@@ -390,7 +424,6 @@ function App() {
   else if (selectionRange && !isSingleCellRange) selectionLabel = 'Cells selected';
   else if (selectedMonthIndices.length > 0) selectionLabel = 'Months selected';
 
-  // Determine if we are on mobile to select correct modal
   const isMobile = windowWidth < 768;
 
   return (

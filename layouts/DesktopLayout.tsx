@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { ViewState, ThemeSettings, Filter, Resource, SelectionRange } from '../types';
 import { Heatmap } from '../components/Heatmap';
 import { Header } from '../components/Header';
-import { X, Plus, Layers, ChevronDown, Check, ChevronRight, Search } from 'lucide-react';
+import { X, Plus, Layers, ChevronDown, Check, ChevronRight, Search, BarChart3 } from 'lucide-react';
 import { MONTHS, MOCK_PEOPLE, MOCK_PROJECTS } from '../constants';
 
 interface LayoutProps {
@@ -68,31 +68,26 @@ export const DesktopLayout: React.FC<LayoutProps> = ({
     : ['None', 'Dealfolder'];
 
   const filterCategories = viewState.mode === 'People' 
-    ? ['Managing Consultant', 'Department', 'Employee', 'Skill', 'Status']
-    : ['Project Lead', 'Managing Consultant', 'Dealfolder', 'Deal', 'Employee', 'Status'];
+    ? ['Capacity', 'Managing Consultant', 'Department', 'Employee', 'Skill', 'Status']
+    : ['Capacity', 'Project Lead', 'Managing Consultant', 'Dealfolder', 'Deal', 'Employee', 'Status'];
 
   const getOptionsForCategory = (category: string) => {
+      // Special Handling for Capacity Filter
+      if (category === 'Capacity') {
+          return ['Available', 'Warning', 'Overbooked'];
+      }
+
       const rawData = viewState.mode === 'Projects' ? MOCK_PROJECTS : MOCK_PEOPLE;
-      // Note: rawData structure is grouping -> items.
-      
       const values = new Set<string>();
 
       if (viewState.mode === 'Projects') {
-        // Project View Logic
-        // Structure: Dealfolder (Group) -> Project -> Employee (Assignment)
-        
         rawData.forEach(folder => {
-            if (category === 'Dealfolder') {
-                values.add(folder.name);
-            }
-            
+            if (category === 'Dealfolder') values.add(folder.name);
             folder.children?.forEach(project => {
                 if (category === 'Deal') values.add(project.name);
                 if (category === 'Project Lead' && project.manager) values.add(project.manager);
                 if (category === 'Status') values.add(project.status || 'Active');
-
                 project.children?.forEach(empAssignment => {
-                     // In Project View, child is Employee Assignment
                      if (category === 'Employee') values.add(empAssignment.name);
                      if (category === 'Managing Consultant' && empAssignment.manager) values.add(empAssignment.manager);
                 });
@@ -100,10 +95,7 @@ export const DesktopLayout: React.FC<LayoutProps> = ({
         });
 
       } else {
-        // People View Logic
-        // Structure: Group -> Employee -> Project (Assignment)
         const allEmployees = rawData.flatMap(g => g.children || []);
-        
         allEmployees.forEach(emp => {
             if (category === 'Employee') values.add(emp.name);
             if (category === 'Managing Consultant' && emp.manager) values.add(emp.manager);
@@ -136,96 +128,6 @@ export const DesktopLayout: React.FC<LayoutProps> = ({
       } else {
           onAddFilter({ key: category, values: newValues });
       }
-  };
-
-  const stats = useMemo(() => {
-    const available: Resource[] = [];
-    const fullyAllocated: Resource[] = [];
-    const overCapacity: Resource[] = [];
-
-    // Use currentData here to reflect active filters in statistics count
-    const flatData = currentData.flatMap(item => 
-        item.children && item.type === 'group' ? item.children : 
-        item.type === 'project' && item.children ? item.children : 
-        [item]
-    );
-
-    const monthsToCheck = MONTHS.slice(0, viewState.timeRange === '3M' ? 3 : viewState.timeRange === '6M' ? 6 : 9);
-    
-    const t = themeSettings?.thresholds || { under: 50, balanced: 90, over: 110 };
-
-    flatData.forEach(res => {
-        let totalPt = 0;
-        let totalCapacity = 0;
-        
-        monthsToCheck.forEach(m => {
-            const alloc = res.allocations[m];
-            if (alloc) {
-                totalPt += alloc.pt;
-                totalCapacity += alloc.capacity;
-            } else {
-                totalCapacity += 20; 
-            }
-        });
-
-        const ratio = totalCapacity > 0 ? totalPt / totalCapacity : 0;
-        const percentage = ratio * 100;
-
-        if (percentage <= t.under) {
-            available.push(res);
-        } else if (percentage > t.over) {
-            overCapacity.push(res);
-        } else {
-            fullyAllocated.push(res);
-        }
-    });
-
-    return { available, fullyAllocated, overCapacity };
-  }, [currentData, viewState.timeRange, themeSettings?.thresholds]);
-
-  const renderLegendCard = (title: string, items: Resource[], colorHex: string, filterValue: string) => {
-      const isActive = activeFilters.some(f => f.key === 'Utilization' && f.values.includes(filterValue));
-      
-      return (
-        <button 
-            onClick={() => {
-                const existing = activeFilters.find(f => f.key === 'Utilization');
-                let newValues = existing ? [...existing.values] : [];
-                if (newValues.includes(filterValue)) {
-                    newValues = newValues.filter(v => v !== filterValue);
-                } else {
-                    newValues = [...newValues, filterValue];
-                }
-                
-                if (newValues.length === 0) {
-                    const idx = activeFilters.findIndex(f => f.key === 'Utilization');
-                    if (idx !== -1) onRemoveFilter(idx);
-                } else {
-                    onAddFilter({ key: 'Utilization', values: newValues });
-                }
-            }}
-            className={`
-                group flex items-center gap-2 px-2 py-1 rounded-full border transition-all duration-300 cursor-pointer h-7 shadow-sm text-xs backdrop-blur-md
-                hover:scale-105 active:scale-95
-                ${isActive 
-                    ? 'bg-white/80 border-slate-300 ring-2 ring-white/50 shadow-glow' 
-                    : 'bg-white/40 border-white/50 hover:bg-white/60 hover:shadow-md'
-                }
-            `}
-            title={`Filter by ${title}`}
-        >
-            <div className="size-2 rounded-full shadow-sm ring-1 ring-black/5" style={{ backgroundColor: colorHex }}></div>
-            <span className="font-semibold text-slate-600 truncate max-w-[80px] hidden sm:block">{title}</span>
-            <span className="font-bold text-slate-900 bg-white/50 px-1.5 rounded-full min-w-[18px] text-center">{items.length}</span>
-        </button>
-      );
-  };
-
-  const colors = themeSettings?.thresholdColors || {
-    under: '#cbd5e1', 
-    balanced: '#ee3a5e', 
-    optimal: '#ee3a5e',
-    over: '#be123c'
   };
 
   return (
@@ -287,7 +189,10 @@ export const DesktopLayout: React.FC<LayoutProps> = ({
                                             onClick={() => setActiveFilterCategory(category)}
                                             className={`flex items-center justify-between px-4 py-2.5 text-xs font-medium text-left transition-colors ${activeFilterCategory === category ? 'bg-white/60 text-primary shadow-sm' : 'text-slate-700 hover:bg-white/40'}`}
                                         >
-                                            {category}
+                                            <div className="flex items-center gap-2">
+                                                {category === 'Capacity' && <BarChart3 size={14} className="text-slate-400" />}
+                                                {category}
+                                            </div>
                                             <ChevronRight size={14} className={`text-slate-400 ${activeFilterCategory === category ? 'text-primary' : ''}`} />
                                         </button>
                                     ))}
@@ -298,17 +203,19 @@ export const DesktopLayout: React.FC<LayoutProps> = ({
                                             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 px-2">
                                                 Select {activeFilterCategory}
                                             </div>
-                                            <div className="relative group/search">
-                                                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within/search:text-primary" size={14} />
-                                                <input 
-                                                    ref={searchInputRef}
-                                                    type="text" 
-                                                    placeholder={`Search...`}
-                                                    value={searchQuery}
-                                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                                    className="w-full pl-8 pr-3 py-1.5 bg-white/40 border border-white/60 rounded-lg text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white/60 transition-all"
-                                                />
-                                            </div>
+                                            {activeFilterCategory !== 'Capacity' && (
+                                                <div className="relative group/search">
+                                                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 transition-colors group-focus-within/search:text-primary" size={14} />
+                                                    <input 
+                                                        ref={searchInputRef}
+                                                        type="text" 
+                                                        placeholder={`Search...`}
+                                                        value={searchQuery}
+                                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                                        className="w-full pl-8 pr-3 py-1.5 bg-white/40 border border-white/60 rounded-lg text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white/60 transition-all"
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="flex-1 overflow-y-auto custom-scrollbar p-1">
                                             {(() => {
@@ -322,9 +229,18 @@ export const DesktopLayout: React.FC<LayoutProps> = ({
                                                 return filteredOptions.map(option => {
                                                     const currentFilter = activeFilters.find(f => f.key === activeFilterCategory);
                                                     const isSelected = currentFilter?.values.includes(option);
+                                                    
+                                                    // Custom rendering for Capacity options
+                                                    let colorClass = 'bg-white/60 border-slate-300';
+                                                    if (activeFilterCategory === 'Capacity') {
+                                                        if (option === 'Available') colorClass = 'bg-slate-100 border-slate-200 text-slate-600';
+                                                        if (option === 'Warning') colorClass = 'bg-amber-50 border-amber-200 text-amber-600';
+                                                        if (option === 'Overbooked') colorClass = 'bg-red-50 border-red-200 text-red-600';
+                                                    }
+
                                                     return (
                                                         <label key={option} className="flex items-center gap-2 px-3 py-2 hover:bg-white/50 rounded-lg cursor-pointer group transition-all active:scale-98">
-                                                            <div className={`size-4 rounded-md border flex items-center justify-center transition-all shrink-0 ${isSelected ? 'bg-primary border-primary shadow-sm' : 'border-slate-300 bg-white/60 group-hover:border-primary/50'}`}>
+                                                            <div className={`size-4 rounded-md border flex items-center justify-center transition-all shrink-0 ${isSelected ? 'bg-primary border-primary shadow-sm' : colorClass} ${isSelected ? '' : 'group-hover:border-primary/50'}`}>
                                                                 {isSelected && <Check size={10} className="text-white" strokeWidth={3} />}
                                                             </div>
                                                             <input 
@@ -351,15 +267,6 @@ export const DesktopLayout: React.FC<LayoutProps> = ({
                 </div>
 
                 <div className="flex items-center gap-3">
-                    {/* Quick Filters / Legend */}
-                    <div className="flex items-center gap-2 mr-2">
-                         {renderLegendCard('Available', stats.available, colors.under, 'Available')}
-                         {renderLegendCard('Fully Allocated', stats.fullyAllocated, colors.balanced, 'Fully Allocated')}
-                         {renderLegendCard('Over Capacity', stats.overCapacity, colors.over, 'Over Capacity')}
-                    </div>
-
-                    <div className="w-px h-6 bg-slate-400/20 mx-1"></div>
-
                     <div className="relative group z-20">
                         <button 
                             onClick={() => setIsGroupMenuOpen(!isGroupMenuOpen)}

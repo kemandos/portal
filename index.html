@@ -31,6 +31,25 @@
             },
             transitionTimingFunction: {
               'spring': 'cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+            },
+            animation: {
+              'fade-in': 'fadeIn 0.3s ease-out',
+              'zoom-in': 'zoomIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+              'slide-up': 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+            },
+            keyframes: {
+              fadeIn: {
+                '0%': { opacity: '0' },
+                '100%': { opacity: '1' },
+              },
+              zoomIn: {
+                '0%': { opacity: '0', transform: 'scale(0.95)' },
+                '100%': { opacity: '1', transform: 'scale(1)' },
+              },
+              slideUp: {
+                '0%': { transform: 'translateY(10px)', opacity: '0' },
+                '100%': { transform: 'translateY(0)', opacity: '1' },
+              }
             }
           }
         }
@@ -89,6 +108,41 @@
       }
       .liquid-hover:active {
         transform: scale(0.95);
+      }
+
+      /* Animation Utilities for Tailwind-animate compatibility */
+      .animate-in {
+        animation-duration: 0.3s;
+        animation-fill-mode: both;
+      }
+      .fade-in {
+        animation-name: fadeIn;
+      }
+      .zoom-in-95 {
+        animation-name: zoomIn95;
+      }
+      .slide-in-from-bottom-5 {
+        animation-name: slideInBottom5;
+      }
+      .slide-in-from-top-2 {
+        animation-name: slideInTop2;
+      }
+      
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      @keyframes zoomIn95 {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+      }
+      @keyframes slideInBottom5 {
+        from { transform: translateY(1.25rem); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      @keyframes slideInTop2 {
+        from { transform: translateY(-0.5rem); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
       }
     </style>
   <script type="importmap">

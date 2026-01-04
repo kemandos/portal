@@ -19,16 +19,16 @@ const PROJECT_BETA = { id: 'p7', name: 'Beta: Mobile API', subtext: 'API Team', 
 
 // Shared Employees
 // Departments: Engineering, Reporting, Project Management, Management
-const EMP_JANE = { id: 'e1', name: 'Jane Doe', subtext: 'Senior Data Engineer', type: 'employee' as const, avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026024d', status: 'Active' as const, manager: 'David Kim', department: 'Engineering' };
-const EMP_JOHN = { id: 'e2', name: 'John Smith', subtext: 'Data Engineer', type: 'employee' as const, initials: 'JS', status: 'Active' as const, manager: 'David Kim', department: 'Engineering' };
-const EMP_MIKE = { id: 'e6', name: 'Mike Ross', subtext: 'Junior Data Engineer', type: 'employee' as const, avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704d', status: 'Active' as const, manager: 'David Kim', department: 'Engineering' };
+const EMP_JANE = { id: 'e1', name: 'Jane Doe', subtext: 'Senior Data Engineer', type: 'employee' as const, avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026024d', status: 'Active' as const, manager: 'David Kim', department: 'Engineering', skills: ['React', 'Node.js', 'Typescript'] };
+const EMP_JOHN = { id: 'e2', name: 'John Smith', subtext: 'Data Engineer', type: 'employee' as const, initials: 'JS', status: 'Active' as const, manager: 'David Kim', department: 'Engineering', skills: ['Python', 'SQL', 'AWS'] };
+const EMP_MIKE = { id: 'e6', name: 'Mike Ross', subtext: 'Junior Data Engineer', type: 'employee' as const, avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704d', status: 'Active' as const, manager: 'David Kim', department: 'Engineering', skills: ['Java', 'Spring', 'Docker'] };
 
-const EMP_ALICE = { id: 'e3', name: 'Alice Wong', subtext: 'Senior Data Consultant', type: 'employee' as const, avatar: 'https://i.pravatar.cc/150?u=a04258a2462d826712d', status: 'Active' as const, manager: 'David Kim', department: 'Reporting' };
-const EMP_SARAH = { id: 'e5', name: 'Sarah Jenkins', subtext: 'Data Consultant', type: 'employee' as const, avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026024e', status: 'Active' as const, manager: 'David Kim', department: 'Reporting' };
+const EMP_ALICE = { id: 'e3', name: 'Alice Wong', subtext: 'Senior Data Consultant', type: 'employee' as const, avatar: 'https://i.pravatar.cc/150?u=a04258a2462d826712d', status: 'Active' as const, manager: 'David Kim', department: 'Reporting', skills: ['Tableau', 'Looker', 'Analytics'] };
+const EMP_SARAH = { id: 'e5', name: 'Sarah Jenkins', subtext: 'Data Consultant', type: 'employee' as const, avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026024e', status: 'Active' as const, manager: 'David Kim', department: 'Reporting', skills: ['PowerBI', 'SQL', 'Excel'] };
 
-const EMP_BOB = { id: 'e4', name: 'Bob Miller', subtext: 'Senior Project Manager', type: 'employee' as const, initials: 'BM', status: 'Active' as const, manager: 'David Kim', department: 'Project Management' };
+const EMP_BOB = { id: 'e4', name: 'Bob Miller', subtext: 'Senior Project Manager', type: 'employee' as const, initials: 'BM', status: 'Active' as const, manager: 'David Kim', department: 'Project Management', skills: ['Agile', 'JIRA', 'Scrum'] };
 
-const EMP_DAVID = { id: 'e7', name: 'David Kim', subtext: 'Managing Consultant', type: 'employee' as const, initials: 'DK', status: 'Active' as const, manager: 'CEO', department: 'Management' };
+const EMP_DAVID = { id: 'e7', name: 'David Kim', subtext: 'Managing Consultant', type: 'employee' as const, initials: 'DK', status: 'Active' as const, manager: 'CEO', department: 'Management', skills: ['Strategy', 'Leadership', 'Sales'] };
 
 export const MONTHS = ["Jan '24", "Feb '24", "Mar '24", "Apr '24", "May '24", "Jun '24", "Jul '24", "Aug '24", "Sep '24"];
 
@@ -78,7 +78,7 @@ export const MOCK_PEOPLE: Resource[] = [
         children: [
             {
                 ...EMP_JANE,
-                skills: ['React', 'Node.js'], isExpanded: true,
+                isExpanded: true,
                 allocations: { "Jan '24": ALLOC_OPTIMAL, "Feb '24": ALLOC_OPTIMAL, "Mar '24": ALLOC_OPTIMAL, "Apr '24": ALLOC_OPTIMAL, "May '24": ALLOC_UNDER },
                 children: [
                     { ...PROJECT_ALPHA, allocations: { "Jan '24": { pt: 10, capacity: 0, status: 'optimal' } } },
@@ -88,7 +88,7 @@ export const MOCK_PEOPLE: Resource[] = [
             },
             {
                 ...EMP_JOHN,
-                skills: ['Java', 'Architecture'], isExpanded: false,
+                isExpanded: false,
                 allocations: { "Jan '24": ALLOC_OPTIMAL, "Feb '24": ALLOC_OPTIMAL, "Mar '24": ALLOC_OPTIMAL },
                 children: [
                      { ...PROJECT_MAPS, color: 'bg-purple-500', allocations: { "Jan '24": ALLOC_OPTIMAL } }
@@ -96,7 +96,7 @@ export const MOCK_PEOPLE: Resource[] = [
             },
             {
                 ...EMP_MIKE,
-                skills: ['System Design'], isExpanded: false,
+                isExpanded: false,
                 allocations: { "Jan '24": {pt: 5, capacity: 20, status: 'optimal'} },
                 children: [
                     { ...PROJECT_CLOUD, color: 'bg-cyan-500', allocations: { "Jan '24": {pt: 5, capacity: 0, status: 'optimal'} } }
@@ -109,7 +109,7 @@ export const MOCK_PEOPLE: Resource[] = [
         children: [
             {
                 ...EMP_ALICE,
-                skills: ['Tableau', 'SQL'], isExpanded: true,
+                isExpanded: true,
                 allocations: { "Jan '24": ALLOC_OPTIMAL, "Feb '24": ALLOC_UNDER },
                 children: [
                     { ...PROJECT_MARKETING, allocations: { "Jan '24": ALLOC_OPTIMAL, "Feb '24": {pt: 12.5, capacity: 0, status: 'under'} } }
@@ -117,7 +117,7 @@ export const MOCK_PEOPLE: Resource[] = [
             },
             {
                 ...EMP_SARAH,
-                skills: ['PowerBI'], isExpanded: false,
+                isExpanded: false,
                 allocations: { "Jan '24": ALLOC_OPTIMAL },
                 children: [
                     { ...PROJECT_CLOUD, color: 'bg-cyan-500', allocations: { "Jan '24": {pt: 10, capacity: 0, status: 'optimal'} } }
@@ -130,7 +130,7 @@ export const MOCK_PEOPLE: Resource[] = [
         children: [
             {
                 ...EMP_BOB,
-                skills: ['Agile', 'Roadmapping'], isExpanded: false,
+                isExpanded: false,
                 allocations: { "Jan '24": ALLOC_OPTIMAL },
                 children: [
                     { ...PROJECT_STOREFRONT, color: 'bg-indigo-500', allocations: { "Jan '24": ALLOC_OPTIMAL } }
@@ -143,7 +143,7 @@ export const MOCK_PEOPLE: Resource[] = [
         children: [
              {
                  ...EMP_DAVID,
-                 skills: ['Management', 'Strategy'], isExpanded: false,
+                 isExpanded: false,
                  allocations: { "Jan '24": ALLOC_OPTIMAL },
                  children: []
             }

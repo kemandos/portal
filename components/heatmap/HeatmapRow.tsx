@@ -131,11 +131,13 @@ export const HeatmapRow: React.FC<HeatmapRowProps> = ({
       }
   };
   
-  // Custom styles for group header row to make it look like a section break
   const groupHeaderClass = "sticky left-[48px] z-20 bg-[#ebe9e4] bg-opacity-60 backdrop-blur-md px-4 py-3 cursor-pointer align-middle border-t border-b border-white/50";
+  
+  // Zebra striping for readability
+  const rowBackgroundClass = row.isGroupHeader ? '' : 'even:bg-slate-50/40 hover:bg-white/60';
 
   return (
-    <tr className={`${rowMinHeight} group transition-all duration-300 hover:bg-white/30`}>
+    <tr className={`${rowMinHeight} group transition-all duration-300 ${rowBackgroundClass}`}>
         {/* Checkbox */}
         <td className={`sticky left-0 z-20 ${isSelectedRow ? 'bg-primary/5' : (selectedIds.includes(resource.id) ? 'bg-primary/5' : 'bg-white/20')} backdrop-blur-md ${paddingClass} text-center transition-colors align-middle border-r border-slate-200/50`}>
             {!row.isGroupHeader && isRowSelectable && (
@@ -196,6 +198,7 @@ export const HeatmapRow: React.FC<HeatmapRowProps> = ({
                     onMouseUp={(val) => actions.handleMouseUp(resource.id, monthIndex, val, isProjectRoot)}
                     setEditingCell={actions.setEditingCell}
                     onInlineBlur={actions.handleInlineInputBlur}
+                    setTooltipState={actions.setTooltipState}
                 />
             );
         })}
