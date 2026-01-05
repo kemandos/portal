@@ -65,10 +65,10 @@ export const DesktopLayout: React.FC<LayoutProps> = ({
 
   const groupOptions = viewState.mode === 'People' 
     ? ['None', 'Department', 'Managing Consultant'] 
-    : ['None', 'Dealfolder'];
+    : ['None', 'Dealfolder', 'Project Lead'];
 
   const filterCategories = viewState.mode === 'People' 
-    ? ['Capacity', 'Managing Consultant', 'Department', 'Employee', 'Skill', 'Status']
+    ? ['Capacity', 'Managing Consultant', 'Department', 'Employee', 'Skill']
     : ['Capacity', 'Project Lead', 'Managing Consultant', 'Dealfolder', 'Deal', 'Employee', 'Status'];
 
   const getOptionsForCategory = (category: string) => {
@@ -309,28 +309,6 @@ export const DesktopLayout: React.FC<LayoutProps> = ({
                     </button>
                 </div>
             </div>
-
-            {viewState.mode === 'Projects' && (
-              <div className="px-6 py-2 text-xs text-slate-500 3xl:text-sm">
-                {viewState.selectedIds.length > 0 && (
-                  <span>
-                    💡 {viewState.selectedIds.length} project{viewState.selectedIds.length > 1 ? 's' : ''} selected. 
-                    Click "Assign" to add employees to {viewState.selectedIds.length > 1 ? 'these projects' : 'this project'}.
-                  </span>
-                )}
-                {selectedMonthIndices && selectedMonthIndices.length > 0 && (
-                  <span>
-                    💡 {selectedMonthIndices.length} month{selectedMonthIndices.length > 1 ? 's' : ''} selected. 
-                    Click cells to view/edit allocations across {selectedMonthIndices.length > 1 ? 'these months' : 'this month'}.
-                  </span>
-                )}
-                {viewState.selectedIds.length === 0 && (!selectedMonthIndices || selectedMonthIndices.length === 0) && (
-                  <span className="text-slate-400">
-                    💡 Select projects to bulk assign employees, or select months to view time periods.
-                  </span>
-                )}
-              </div>
-            )}
 
             {/* Heatmap Container */}
             <div className="flex-1 min-h-0 flex flex-col relative z-10 transition-all duration-500 ease-out">

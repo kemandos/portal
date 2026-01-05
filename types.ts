@@ -51,12 +51,14 @@ export interface ThemeSettings {
   heatmapOpacity?: number; // 0 to 1
   thresholdColors?: {
     under: string;
+    low: string;      // New category
     balanced: string;
     optimal: string;
     over: string;
   };
   thresholds?: {
-    under: number;    // Percentage (e.g. 50)
+    under: number;    // Percentage (e.g. 25)
+    low: number;      // Percentage (e.g. 75) - New category
     balanced: number; // Percentage (e.g. 90)
     over: number;     // Percentage (e.g. 110)
   };

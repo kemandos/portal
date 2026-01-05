@@ -69,9 +69,10 @@ export const HeatmapResourceInfo: React.FC<HeatmapResourceInfoProps> = ({
           
           let statusColor = 'bg-slate-400'; // Available
           if (avgUtil > 1.0) statusColor = 'bg-red-500'; // Over
-          else if (avgUtil > 0.9) statusColor = 'bg-amber-500'; // Warning
-          else if (avgUtil > 0.5) statusColor = 'bg-emerald-500'; // Balanced
-          else if (avgUtil > 0) statusColor = 'bg-slate-400'; // Under
+          else if (avgUtil > 0.95) statusColor = 'bg-amber-500'; // Warning
+          else if (avgUtil > 0.75) statusColor = 'bg-emerald-500'; // Balanced
+          else if (avgUtil > 0.25) statusColor = 'bg-sky-400'; // Low
+          else statusColor = 'bg-slate-400'; // Under
 
           return (
             <div className={`relative ${sizeClass} rounded-full bg-gray-100 flex-shrink-0 border-2 border-white shadow-sm transition-transform duration-300 ease-spring hover:scale-110 hover:shadow-glow group/avatar`}>
@@ -91,13 +92,14 @@ export const HeatmapResourceInfo: React.FC<HeatmapResourceInfoProps> = ({
                        const pct = cap > 0 ? (pt / cap) * 100 : 0;
                        
                        let color = '#e2e8f0'; // slate-200 (empty/default)
-                       const thresholds = themeSettings.thresholds || { under: 50, balanced: 90, over: 100 };
-                       const colors = themeSettings.thresholdColors || { under: '#94a3b8', balanced: '#10b981', optimal: '#f59e0b', over: '#ef4444' };
+                       const thresholds = themeSettings.thresholds || { under: 25, low: 75, balanced: 95, over: 100 };
+                       const colors = themeSettings.thresholdColors || { under: '#94a3b8', low: '#38bdf8', balanced: '#10b981', optimal: '#f59e0b', over: '#ef4444' };
 
                        if (pt > 0) {
                            if (pct > thresholds.over) color = colors.over; 
                            else if (pct > thresholds.balanced) color = colors.optimal; 
-                           else if (pct > thresholds.under) color = colors.balanced; 
+                           else if (pct > thresholds.low) color = colors.balanced; 
+                           else if (pct > thresholds.under) color = colors.low; 
                            else color = colors.under; 
                        }
                        

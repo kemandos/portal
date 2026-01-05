@@ -19,8 +19,9 @@ function App() {
   });
 
   // Updated Theme Settings for new Color System
-  // Under (0-50%): Slate/Gray
-  // Balanced (50-90%): Emerald
+  // Under (0-25%): Slate/Gray
+  // Low (25-75%): Blue
+  // Balanced (75-90%): Emerald
   // Warning (90-100%): Amber
   // Over (>100%): Red
   const [peopleThemeSettings, setPeopleThemeSettings] = useState<ThemeSettings>({
@@ -29,11 +30,12 @@ function App() {
     cellStyle: 'modern',
     thresholdColors: {
         under: '#94a3b8',   // Slate 400
+        low: '#38bdf8',      // Sky 400
         balanced: '#10b981', // Emerald 500
         optimal: '#f59e0b',  // Amber 500 (Warning zone)
         over: '#ef4444'      // Red 500
     },
-    thresholds: { under: 50, balanced: 90, over: 100 }
+    thresholds: { under: 25, low: 75, balanced: 95, over: 100 }
   });
 
   const [projectThemeSettings, setProjectThemeSettings] = useState<ThemeSettings>({
@@ -42,11 +44,12 @@ function App() {
     cellStyle: 'modern',
     thresholdColors: {
         under: '#94a3b8',
+        low: '#38bdf8',
         balanced: '#10b981',
         optimal: '#f59e0b',
         over: '#ef4444'
     },
-    thresholds: { under: 50, balanced: 90, over: 100 }
+    thresholds: { under: 25, low: 75, balanced: 95, over: 100 }
   });
 
   const currentThemeSettings = viewState.mode === 'People' ? peopleThemeSettings : projectThemeSettings;
@@ -72,20 +75,24 @@ function App() {
     }
   }, [currentThemeSettings.mode]);
 
-  // Clear selections when switching modes
+  // Clear selections and reset filters when switching modes
   useEffect(() => {
     setViewState(prev => ({ ...prev, selectedIds: [] }));
     setSelectionRange(null);
     setSelectedMonthIndices([]);
+
+    if (viewState.mode === 'Projects') {
+        setActiveFilters([{ key: 'Status', values: ['Active'] }]);
+    } else {
+        setActiveFilters([]);
+    }
   }, [viewState.mode]);
   
   const [selectionRange, setSelectionRange] = useState<SelectionRange | null>(null);
   const [selectedMonthIndices, setSelectedMonthIndices] = useState<number[]>([]);
   const [groupBy, setGroupBy] = useState<string>('Managing Consultant');
   const [density, setDensity] = useState<'comfortable' | 'compact'>('comfortable');
-  const [activeFilters, setActiveFilters] = useState<Filter[]>([
-     { key: 'Status', values: ['Active'] }
-  ]);
+  const [activeFilters, setActiveFilters] = useState<Filter[]>([]);
   
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
@@ -147,13 +154,13 @@ function App() {
                 const avgUtil = monthCount > 0 ? totalPct / monthCount : 0;
                 
                 // Logic adjusted to:
-                // Available: <= 90% (includes under and balanced)
+                // Available: <= 90% (includes under, low and balanced)
                 // Warning: 90% - 100%
                 // Overbooked: > 100%
                 
                 const isOverbooked = avgUtil > settings.thresholds!.over; // > 100
-                const isWarning = avgUtil > settings.thresholds!.balanced && avgUtil <= settings.thresholds!.over; // 90-100
-                const isAvailable = avgUtil <= settings.thresholds!.balanced; // < 90
+                const isWarning = avgUtil > settings.thresholds!.balanced && avgUtil <= settings.thresholds!.over; 
+                const isAvailable = avgUtil <= settings.thresholds!.balanced; 
 
                 if (filter.values.includes('Overbooked') && isOverbooked) return true;
                 if (filter.values.includes('Warning') && isWarning) return true;
@@ -283,7 +290,33 @@ function App() {
         }
          return calculatedItems; 
     } else {
+        // Projects View
         if (groupBy === 'None') return calculatedItems;
+        
+        if (groupBy === 'Project Lead') {
+             // Flatten projects out of folders first if they are in folders
+             // Current calculatedItems are already flat projects because of how we processed processedData earlier
+             // calculatedItems = filteredItems (which are flattened children of projectData)
+             // So we just group calculatedItems by manager.
+             
+             const groups: Record<string, Resource[]> = {};
+             calculatedItems.forEach(item => {
+                 const mgr = item.manager || 'Unassigned';
+                 if (!groups[mgr]) groups[mgr] = [];
+                 groups[mgr].push(item);
+             });
+
+             return Object.entries(groups).map(([name, children], idx) => ({
+                 id: `grp_lead_${idx}`,
+                 name: name,
+                 subtext: getGroupSubtext(children),
+                 type: 'group' as const,
+                 isExpanded: true,
+                 allocations: {},
+                 children
+             }));
+        }
+
         if (groupBy === 'Dealfolder') {
              return projectData.map(folder => {
                  const matchingChildren = (folder.children || []).map(child => 

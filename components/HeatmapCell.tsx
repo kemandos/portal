@@ -67,11 +67,12 @@ export const HeatmapCell: React.FC<HeatmapCellProps> = ({
     const opacity = themeSettings.heatmapOpacity !== undefined ? themeSettings.heatmapOpacity : 1;
     const colors = themeSettings.thresholdColors || {
         under: '#94a3b8', 
+        low: '#38bdf8', 
         balanced: '#10b981', 
         optimal: '#f59e0b', 
         over: '#ef4444'
     };
-    const thresholds = themeSettings.thresholds || { under: 50, balanced: 90, over: 100 };
+    const thresholds = themeSettings.thresholds || { under: 25, low: 75, balanced: 95, over: 100 };
 
     const applyOpacity = (hex: string) => {
         if (!hex) return '#ee3a5e';
@@ -95,12 +96,14 @@ export const HeatmapCell: React.FC<HeatmapCellProps> = ({
     // Updated Logic:
     // Over > 100% -> Red
     // Warning > 90% -> Amber
-    // Balanced > 50% -> Green
-    // Under <= 50% -> Gray/Blue
+    // Balanced > 75% -> Green
+    // Low > 25% -> Blue
+    // Under <= 25% -> Gray
     
     if (percentage > thresholds.over) return { backgroundColor: applyOpacity(colors.over), color: '#ffffff', boxShadow: '0 4px 14px rgba(239, 68, 68, 0.25)' }; 
     if (percentage > thresholds.balanced) return { backgroundColor: applyOpacity(colors.optimal), color: '#ffffff', boxShadow: '0 4px 14px rgba(245, 158, 11, 0.25)' }; 
-    if (percentage > thresholds.under) return { backgroundColor: applyOpacity(colors.balanced), color: '#ffffff', boxShadow: '0 4px 14px rgba(16, 185, 129, 0.25)' }; 
+    if (percentage > thresholds.low) return { backgroundColor: applyOpacity(colors.balanced), color: '#ffffff', boxShadow: '0 4px 14px rgba(16, 185, 129, 0.25)' }; 
+    if (percentage > thresholds.under) return { backgroundColor: applyOpacity(colors.low), color: '#ffffff', boxShadow: '0 4px 14px rgba(56, 189, 248, 0.25)' }; 
     
     // Under utilized
     return { backgroundColor: applyOpacity(colors.under), color: '#ffffff', boxShadow: '0 4px 14px rgba(148, 163, 184, 0.25)' }; 

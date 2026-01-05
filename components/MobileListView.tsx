@@ -33,11 +33,12 @@ export const MobileListView: React.FC<MobileListViewProps> = ({
 }) => {
 
   const getStatusColor = (percentage: number) => {
-    const t = themeSettings?.thresholds || { under: 50, balanced: 90, over: 100 };
+    const t = themeSettings?.thresholds || { under: 25, low: 75, balanced: 95, over: 100 };
     if (percentage === 0) return 'bg-white/40 text-slate-400 border-slate-200/50';
     if (percentage > t.over) return 'bg-[#ef4444] text-white border-transparent shadow-[0_2px_8px_rgba(239,68,68,0.25)]';
     if (percentage > t.balanced) return 'bg-[#f59e0b] text-white border-transparent shadow-[0_2px_8px_rgba(245,158,11,0.25)]';
-    if (percentage > t.under) return 'bg-[#10b981] text-white border-transparent shadow-[0_2px_8px_rgba(16,185,129,0.25)]';
+    if (percentage > t.low) return 'bg-[#10b981] text-white border-transparent shadow-[0_2px_8px_rgba(16,185,129,0.25)]';
+    if (percentage > t.under) return 'bg-[#38bdf8] text-white border-transparent shadow-[0_2px_8px_rgba(56,189,248,0.25)]';
     return 'bg-slate-400 text-white border-transparent shadow-[0_2px_8px_rgba(148,163,184,0.25)]';
   };
 

@@ -105,7 +105,7 @@ export const MobileLayout: React.FC<LayoutProps> = ({
 
   // --- Dynamic Filter Logic ---
   const filterCategories = viewState.mode === 'People' 
-    ? ['Managing Consultant', 'Department', 'Employee', 'Skill', 'Status']
+    ? ['Managing Consultant', 'Department', 'Employee', 'Skill']
     : ['Project Lead', 'Managing Consultant', 'Dealfolder', 'Deal', 'Employee', 'Status'];
     
   const getOptionsForCategory = (category: string) => {

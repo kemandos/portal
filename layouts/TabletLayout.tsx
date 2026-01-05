@@ -55,12 +55,12 @@ export const TabletLayout: React.FC<LayoutProps> = ({
   }, []);
 
   const filterCategories = viewState.mode === 'People' 
-    ? ['Capacity', 'Managing Consultant', 'Department', 'Employee', 'Status']
+    ? ['Capacity', 'Managing Consultant', 'Department', 'Employee']
     : ['Capacity', 'Project Lead', 'Dealfolder', 'Status'];
     
   const groupOptions = viewState.mode === 'People' 
     ? ['None', 'Department', 'Managing Consultant'] 
-    : ['None', 'Dealfolder'];
+    : ['None', 'Dealfolder', 'Project Lead'];
 
   const getOptionsForCategory = (category: string) => {
       if (category === 'Capacity') return ['Available', 'Warning', 'Overbooked'];

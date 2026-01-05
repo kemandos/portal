@@ -26,14 +26,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   // Local state for the form
   const [thresholdColors, setThresholdColors] = useState({
       under: '#f1f5f9',
+      low: '#38bdf8',
       balanced: '#10b981',
       optimal: '#f59e0b',
       over: '#dc2626'
   });
 
   const [thresholds, setThresholds] = useState({
-      under: 50,
-      balanced: 90,
+      under: 25,
+      low: 75,
+      balanced: 95,
       over: 100
   });
 
@@ -47,13 +49,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         setThresholdColors({
             under: currentSettings.thresholdColors?.under || '#f1f5f9',
+            low: currentSettings.thresholdColors?.low || '#38bdf8',
             balanced: currentSettings.thresholdColors?.balanced || '#10b981',
             optimal: currentSettings.thresholdColors?.optimal || '#f59e0b',
             over: currentSettings.thresholdColors?.over || '#dc2626'
         });
         setThresholds({
-            under: currentSettings.thresholds?.under || 50,
-            balanced: currentSettings.thresholds?.balanced || 90,
+            under: currentSettings.thresholds?.under || 25,
+            low: currentSettings.thresholds?.low || 75,
+            balanced: currentSettings.thresholds?.balanced || 95,
             over: currentSettings.thresholds?.over || 100
         });
         setOpacity(currentSettings.heatmapOpacity !== undefined ? currentSettings.heatmapOpacity : 1);
@@ -66,11 +70,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       // Effect will handle loading data
   };
 
-  const handleThresholdColorChange = (key: 'under' | 'balanced' | 'optimal' | 'over', val: string) => {
+  const handleThresholdColorChange = (key: 'under' | 'low' | 'balanced' | 'optimal' | 'over', val: string) => {
       setThresholdColors(prev => ({ ...prev, [key]: val }));
   };
 
-  const handleThresholdValueChange = (key: 'under' | 'balanced' | 'over', val: string) => {
+  const handleThresholdValueChange = (key: 'under' | 'low' | 'balanced' | 'over', val: string) => {
       const numVal = parseInt(val, 10);
       setThresholds(prev => ({ ...prev, [key]: numVal }));
   };
@@ -197,6 +201,48 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     </div>
 
                     <div className="p-3 rounded-xl bg-white/40 border border-white/50 space-y-3 shadow-sm">
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-3">
+                                <div className="size-8 rounded-full shadow-sm ring-1 ring-black/5 flex items-center justify-center bg-white/70">
+                                    <div className="size-4 rounded-full" style={{ backgroundColor: thresholdColors.low }}></div>
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-xs font-bold text-slate-700">Low Utilization</span>
+                                    <span className="text-[10px] text-slate-400">{thresholds.under}% - {thresholds.low}%</span>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <input 
+                                    type="number"
+                                    value={thresholds.low}
+                                    onChange={(e) => handleThresholdValueChange('low', e.target.value)}
+                                    className="w-14 px-2 py-1 text-right text-xs font-bold text-slate-900 bg-white/70 border border-white/60 rounded focus:ring-1 focus:ring-primary focus:border-primary outline-none"
+                                />
+                                <span className="text-xs text-slate-500">%</span>
+                                <div className="relative size-6 ml-1">
+                                    <input 
+                                        type="color" 
+                                        value={thresholdColors.low} 
+                                        onChange={(e) => handleThresholdColorChange('low', e.target.value)}
+                                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                    />
+                                    <div className="pointer-events-none size-6 rounded border border-white/60 flex items-center justify-center bg-white/70 text-slate-400 hover:text-slate-600 shadow-sm">
+                                        <Palette size={14} />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <input 
+                            type="range" 
+                            min={thresholds.under} 
+                            max="100" 
+                            value={thresholds.low} 
+                            onChange={(e) => handleThresholdValueChange('low', e.target.value)}
+                            className="w-full h-1.5 bg-gray-200/50 rounded-lg appearance-none cursor-pointer accent-blue-400" 
+                        />
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-white/40 border border-white/50 space-y-3 shadow-sm">
                          <div className="flex items-center justify-between gap-4">
                             <div className="flex items-center gap-3">
                                 <div className="size-8 rounded-full shadow-sm ring-1 ring-black/5 flex items-center justify-center bg-white/70">
@@ -204,7 +250,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                 </div>
                                 <div className="flex flex-col">
                                     <span className="text-xs font-bold text-slate-700">Balanced</span>
-                                    <span className="text-[10px] text-slate-400">{thresholds.under}% - {thresholds.balanced}%</span>
+                                    <span className="text-[10px] text-slate-400">{thresholds.low}% - {thresholds.balanced}%</span>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
@@ -230,7 +276,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         </div>
                         <input 
                             type="range" 
-                            min={thresholds.under} 
+                            min={thresholds.low} 
                             max="120" 
                             value={thresholds.balanced} 
                             onChange={(e) => handleThresholdValueChange('balanced', e.target.value)}
