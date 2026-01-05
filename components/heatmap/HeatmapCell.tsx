@@ -64,14 +64,16 @@ export const HeatmapCell: React.FC<HeatmapCellProps> = ({
   };
 
   const getStatusStyle = (percentage: number, isTransparent: boolean = false) => {
+    const isDark = themeSettings.mode === 'dark';
     const opacity = themeSettings.heatmapOpacity !== undefined ? themeSettings.heatmapOpacity : 1;
     const colors = themeSettings.thresholdColors || {
         under: '#94a3b8', 
+        low: '#38bdf8', 
         balanced: '#10b981', 
         optimal: '#f59e0b', 
         over: '#ef4444'
     };
-    const thresholds = themeSettings.thresholds || { under: 50, balanced: 90, over: 100 };
+    const thresholds = themeSettings.thresholds || { under: 25, low: 75, balanced: 95, over: 100 };
 
     const applyOpacity = (hex: string) => {
         if (!hex) return '#ee3a5e';
@@ -82,28 +84,32 @@ export const HeatmapCell: React.FC<HeatmapCellProps> = ({
         return `rgba(${r}, ${g}, ${b}, ${opacity})`;
     };
 
-    if (percentage === 0) return { backgroundColor: 'rgba(255, 255, 255, 0.4)', border: '1px solid rgba(0, 0, 0, 0.05)', color: '#94a3b8' };
+    // Dark Mode Empty Cell: Specific dark grey from screenshot
+    if (percentage === 0) {
+        if (isDark) {
+            return { backgroundColor: '#1f1f1f', border: '1px solid #333', color: '#6b7280' };
+        }
+        return { backgroundColor: 'rgba(255, 255, 255, 0.4)', border: '1px solid rgba(0, 0, 0, 0.05)', color: '#94a3b8' };
+    }
 
     if (isTransparent) {
         return { 
             backgroundColor: 'transparent',
-            color: '#1e293b', 
+            color: isDark ? '#e2e8f0' : '#1e293b', 
             fontWeight: 700
         };
     }
     
-    // Updated Logic:
-    // Over > 100% -> Red
-    // Warning > 90% -> Amber
-    // Balanced > 50% -> Green
-    // Under <= 50% -> Gray/Blue
+    // Filled Cells - Vibrant colors
+    // Note: Dark mode should use less opacity or full solid colors to pop against black
     
-    if (percentage > thresholds.over) return { backgroundColor: applyOpacity(colors.over), color: '#ffffff', boxShadow: '0 4px 14px rgba(239, 68, 68, 0.25)' }; 
-    if (percentage > thresholds.balanced) return { backgroundColor: applyOpacity(colors.optimal), color: '#ffffff', boxShadow: '0 4px 14px rgba(245, 158, 11, 0.25)' }; 
-    if (percentage > thresholds.under) return { backgroundColor: applyOpacity(colors.balanced), color: '#ffffff', boxShadow: '0 4px 14px rgba(16, 185, 129, 0.25)' }; 
+    if (percentage > thresholds.over) return { backgroundColor: applyOpacity(colors.over), color: '#ffffff', boxShadow: '0 2px 8px rgba(239, 68, 68, 0.3)' }; 
+    if (percentage > thresholds.balanced) return { backgroundColor: applyOpacity(colors.optimal), color: '#ffffff', boxShadow: '0 2px 8px rgba(245, 158, 11, 0.3)' }; 
+    if (percentage > thresholds.low) return { backgroundColor: applyOpacity(colors.balanced), color: '#ffffff', boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)' }; 
+    if (percentage > thresholds.under) return { backgroundColor: applyOpacity(colors.low), color: '#ffffff', boxShadow: '0 2px 8px rgba(56, 189, 248, 0.3)' }; 
     
     // Under utilized
-    return { backgroundColor: applyOpacity(colors.under), color: '#ffffff', boxShadow: '0 4px 14px rgba(148, 163, 184, 0.25)' }; 
+    return { backgroundColor: applyOpacity(colors.under), color: '#ffffff', boxShadow: '0 2px 8px rgba(148, 163, 184, 0.3)' }; 
   };
 
   const allocation = resource.allocations[month];
@@ -186,14 +192,14 @@ export const HeatmapCell: React.FC<HeatmapCellProps> = ({
 
   return (
     <td 
-        className={`p-1 relative cursor-pointer border-l border-slate-200/50 transition-all duration-300 align-middle ${isSelected ? 'bg-primary/5' : ''}`}
+        className={`p-1 relative cursor-pointer border-l border-slate-200/50 dark:border-[#222] transition-all duration-300 align-middle ${isSelected ? 'bg-primary/5' : ''}`}
         onMouseDown={onMouseDown}
         onMouseEnter={handleMouseEnterCell}
         onMouseLeave={handleMouseLeaveCell}
         onMouseUp={() => onMouseUp(displayValue)}
     >
-        <div className={`w-full ${cellHeight} rounded-xl flex items-center justify-center text-xs font-bold transition-all duration-300 relative group/cell overflow-hidden 3xl:text-sm 3xl:rounded-2xl
-            ${isSelected ? 'scale-100 ring-1 ring-primary/20' : 'hover:scale-105 hover:brightness-110 hover:shadow-liquid hover:-translate-y-0.5'}
+        <div className={`w-full ${cellHeight} rounded-lg flex items-center justify-center text-xs font-bold transition-all duration-300 relative group/cell 
+            ${isSelected ? 'scale-100 ring-1 ring-primary/20' : 'hover:scale-[1.02] hover:brightness-110 hover:shadow-lg'}
             ${isEditing ? 'bg-white ring-2 ring-primary shadow-lg z-50 scale-105' : ''}
             active:scale-95 active:duration-100 ease-spring
             `}
@@ -214,18 +220,18 @@ export const HeatmapCell: React.FC<HeatmapCellProps> = ({
                 hasAllocation || isProjectRoot ? (
                     <div className="flex flex-col items-center justify-center leading-none gap-0.5">
                         {isCompactMode ? (
-                            <span className="text-[10px] tracking-tighter 3xl:text-xs">
+                            <span className="text-[10px] tracking-tighter">
                                 {Number.isInteger(ptAllocated) ? ptAllocated : ptAllocated.toFixed(1)}
                                 {!isProjectChild && `/${Number.isInteger(ptCapacity) ? ptCapacity : ptCapacity.toFixed(1)}`}
                             </span>
                         ) : (
                             <div className="flex flex-col items-center">
-                                <span className="text-[11px] 3xl:text-[13px]">
+                                <span className="text-[11px]">
                                     {Number.isInteger(ptAllocated) ? ptAllocated : ptAllocated.toFixed(1)} 
                                     {!isProjectChild && <span className="opacity-70 font-normal"> / {Number.isInteger(ptCapacity) ? ptCapacity : ptCapacity.toFixed(1)}</span>}
                                 </span>
                                 {!isProjectChild && !shouldRemoveBackground && percentage > 0 && (
-                                    <span className="text-[9px] opacity-80 font-medium 3xl:text-[11px]">
+                                    <span className="text-[9px] opacity-80 font-medium">
                                         {percentage.toFixed(0)}%
                                     </span>
                                 )}
@@ -233,7 +239,7 @@ export const HeatmapCell: React.FC<HeatmapCellProps> = ({
                         )}
                     </div>
                 ) : (
-                    <span className="opacity-0 group-hover/cell:opacity-100 text-slate-400 text-[10px] scale-150 font-light">+</span>
+                    <span className="opacity-0 group-hover/cell:opacity-100 text-slate-400 dark:text-slate-600 text-[10px] scale-150 font-light">+</span>
                 )
             )}
         </div>

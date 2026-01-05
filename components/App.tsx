@@ -8,6 +8,7 @@ import { BulkAssignmentModal } from './components/modals/BulkAssignmentModal';
 import { SettingsModal } from './components/modals/SettingsModal';
 import { HeatmapSettingsModal } from './components/modals/HeatmapSettingsModal';
 import { Sidebar } from './components/Sidebar';
+import { BottomNav } from './components/BottomNav';
 import { MONTHS } from './constants';
 import { ViewState, ThemeSettings, Filter, Resource, SelectionRange } from './types';
 import { ClipboardList, X } from 'lucide-react';
@@ -458,9 +459,7 @@ function App() {
     onAddChild: handleAddChild,
     expandedRows, setExpandedRows,
     selectedMonthIndices, onMonthSelectionChange: handleMonthSelectionChange,
-    onInlineSave: handleInlineSave,
-    // Pass theme toggle to layouts
-    toggleTheme: toggleTheme
+    onInlineSave: handleInlineSave
   };
 
   const isSingleCellRange = selectionRange && 
@@ -490,10 +489,9 @@ function App() {
       }
   }
 
-  // Update Breakpoints: Tablet (Horizontal) is now considered "Tablet" layout up to 1280px (iPad Pro Landscape)
   const isMobile = windowWidth < 768;
-  const isTablet = windowWidth >= 768 && windowWidth < 1280;
-  const isDesktop = windowWidth >= 1280;
+  const isTablet = windowWidth >= 768 && windowWidth < 1024;
+  const isDesktop = windowWidth >= 1024;
   
   const selectionBarClasses = isDesktop 
       ? "bottom-[calc(2rem+env(safe-area-inset-bottom))]"
@@ -502,13 +500,11 @@ function App() {
   return (
     <div className="flex h-screen w-full bg-[#F5F2EB] dark:bg-[#0c0c0e] transition-colors duration-300 overflow-hidden">
       {/* Sidebar - Desktop Only (Triggers Global Settings) */}
-      {isDesktop && (
-        <Sidebar 
-            isDarkMode={currentThemeSettings.mode === 'dark'} 
-            toggleTheme={toggleTheme}
-            onOpenSettings={() => setIsAppSettingsOpen(true)}
-        />
-      )}
+      <Sidebar 
+        isDarkMode={currentThemeSettings.mode === 'dark'} 
+        toggleTheme={toggleTheme}
+        onOpenSettings={() => setIsAppSettingsOpen(true)}
+      />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
           {isMobile ? (
@@ -563,6 +559,9 @@ function App() {
           )}
       </div>
 
+      {/* Bottom Nav - Mobile/Tablet Only (Triggers Global Settings) */}
+      <BottomNav onOpenSettings={() => setIsAppSettingsOpen(true)} />
+
       {/* Modals */}
       {isMobile ? (
           <MobileEditAssignmentModal 
@@ -594,7 +593,7 @@ function App() {
         initialMonths={modalData.initialMonths}
       />
       
-      {/* Global Settings Modal (Sidebar) */}
+      {/* Global Settings Modal (Sidebar/BottomNav) */}
       <SettingsModal 
         isOpen={isAppSettingsOpen}
         onClose={() => setIsAppSettingsOpen(false)}

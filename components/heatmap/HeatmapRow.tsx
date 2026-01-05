@@ -65,12 +65,10 @@ export const HeatmapRow: React.FC<HeatmapRowProps> = ({
     ? 'left-0' 
     : (isCompact || isPortraitTablet ? 'left-[40px] 3xl:left-[48px]' : 'left-[48px] 3xl:left-[56px]');
 
-  // Header Height Offset for Sticky Group Headers
   const topOffsetClass = isCompact || isPortraitTablet 
       ? 'top-[41px] 3xl:top-[53px]' 
       : 'top-[45px] 3xl:top-[57px]';
 
-  // Only disable in Projects view when months are selected
   const isCheckboxDisabled = viewMode === 'Projects' && selectedMonthIndices.length > 0;
 
   const handleDisabledHover = (e: React.MouseEvent, message: string) => {
@@ -107,11 +105,11 @@ export const HeatmapRow: React.FC<HeatmapRowProps> = ({
                 }
             }}
             disabled={isCheckboxDisabled}
-            className={`peer appearance-none ${isCompact || isPortraitTablet ? 'size-4' : 'size-5 3xl:size-6'} rounded-full border border-gray-300 bg-white/60 backdrop-blur-sm transition-all duration-300 ease-spring checked:bg-primary checked:border-primary checked:scale-110 ${isCheckboxDisabled ? '' : 'cursor-pointer hover:scale-110 active:scale-90'}`}
+            className={`peer appearance-none ${isCompact || isPortraitTablet ? 'size-4' : 'size-5 3xl:size-6'} rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-white/10 transition-all duration-300 ease-spring checked:bg-white checked:border-white dark:checked:bg-white dark:checked:border-white checked:scale-110 ${isCheckboxDisabled ? '' : 'cursor-pointer hover:scale-110 active:scale-90'}`}
         />
         <Check 
             size={isCompact || isPortraitTablet ? 10 : 12} 
-            className="absolute text-white opacity-0 peer-checked:opacity-100 transition-all duration-200 pointer-events-none stroke-[3] 3xl:w-4 3xl:h-4" 
+            className="absolute text-slate-900 opacity-0 peer-checked:opacity-100 transition-all duration-200 pointer-events-none stroke-[4] 3xl:w-4 3xl:h-4" 
         />
     </div>
   );
@@ -124,26 +122,26 @@ export const HeatmapRow: React.FC<HeatmapRowProps> = ({
     return (
         <tr className={`${rowMinHeight} group`}>
             {viewMode === 'People' && (
-                <td className={`sticky left-0 z-20 bg-white ${paddingClass} border-r border-slate-200/50`}>
+                <td className={`sticky left-0 z-20 bg-white dark:bg-[#0c0c0e] ${paddingClass} border-r border-slate-200/50 dark:border-[#222]`}>
                      <div className="w-full h-full flex items-center justify-center">
-                         <div className="w-5 h-5 rounded border border-gray-300 3xl:w-6 3xl:h-6"></div>
+                         <div className="w-5 h-5 rounded border border-gray-300 dark:border-slate-700 3xl:w-6 3xl:h-6"></div>
                      </div>
                 </td>
             )}
             <td 
-                className={`sticky ${stickyLeftClass} z-20 bg-[#FDFBF7] shadow-[4px_0_8px_-2px_rgba(0,0,0,0.1)] ${paddingClass} border-r border-slate-200 cursor-pointer relative ring-2 ring-blue-400/0 z-30`}
+                className={`sticky ${stickyLeftClass} z-20 bg-[#FDFBF7] dark:bg-[#111] shadow-[4px_0_8px_-2px_rgba(0,0,0,0.05)] dark:shadow-none ${paddingClass} border-r border-slate-200 dark:border-[#222] cursor-pointer relative ring-2 ring-blue-400/0 z-30`}
             >
                 <div className="flex items-center h-full">
                     <div style={{ width: row.depth * 24 }} className="shrink-0" />
                     <button 
                         type="button"
-                        className="flex items-center gap-3 text-sm 3xl:text-base font-semibold text-slate-600 hover:text-primary transition-colors group w-full px-2 py-1 rounded-lg"
+                        className="flex items-center gap-3 text-sm 3xl:text-base font-semibold text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary transition-colors group w-full px-2 py-1 rounded-lg"
                         onClick={(e) => {
                             e.stopPropagation();
                             if (onAddChild && row.parentId) onAddChild(row.parentId);
                         }}
                     >
-                        <div className="flex items-center justify-center size-8 rounded-full border border-slate-300 bg-white group-hover:border-primary group-hover:bg-primary/5 transition-all shadow-sm 3xl:size-10">
+                        <div className="flex items-center justify-center size-8 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 group-hover:border-primary group-hover:bg-primary/5 transition-all shadow-sm 3xl:size-10">
                             <Plus size={16} className="3xl:w-5 3xl:h-5" />
                         </div>
                         <span>{label}</span>
@@ -151,7 +149,7 @@ export const HeatmapRow: React.FC<HeatmapRowProps> = ({
                 </div>
             </td>
             {visibleMonths.map(month => (
-                <td key={month} className="border-l border-slate-200/50 bg-slate-50/30"></td>
+                <td key={month} className="border-l border-slate-200/50 dark:border-[#222] bg-slate-50/30 dark:bg-[#111]"></td>
             ))}
         </tr>
     );
@@ -171,7 +169,6 @@ export const HeatmapRow: React.FC<HeatmapRowProps> = ({
 
   const handleResourceClick = (e: React.MouseEvent, resource: Resource) => {
       e.stopPropagation();
-      // If forced expand (People View Employees), do not allow collapse
       if (viewMode === 'People' && resource.type === 'employee') {
           onItemClick(resource.id); 
           return;
@@ -187,23 +184,21 @@ export const HeatmapRow: React.FC<HeatmapRowProps> = ({
       }
   };
   
-  // FIXED: Opaque background for sticky headers
-  const groupHeaderClass = `sticky ${stickyLeftClass} ${topOffsetClass} z-30 bg-[#FDFBF7] shadow-[4px_0_8px_-2px_rgba(0,0,0,0.1)] ${paddingClass} cursor-pointer align-middle border-t border-b border-slate-200`;
+  const groupHeaderClass = `sticky ${stickyLeftClass} ${topOffsetClass} z-30 bg-[#FDFBF7] dark:bg-[#111] shadow-[4px_0_8px_-2px_rgba(0,0,0,0.05)] dark:shadow-none ${paddingClass} cursor-pointer align-middle border-t border-b border-slate-200 dark:border-[#222]`;
   
-  const resourceInfoClass = `sticky ${stickyLeftClass} z-20 ${isSelectedRow ? 'bg-rose-50' : 'bg-[#FDFBF7]'} shadow-[4px_0_8px_-2px_rgba(0,0,0,0.1)] ${paddingClass} transition-colors cursor-pointer align-middle border-r border-slate-200`;
+  const resourceInfoClass = `sticky ${stickyLeftClass} z-20 ${isSelectedRow ? 'bg-rose-50 dark:bg-rose-950/20' : 'bg-[#FDFBF7] dark:bg-[#111]'} shadow-[4px_0_8px_-2px_rgba(0,0,0,0.05)] dark:shadow-none ${paddingClass} transition-colors cursor-pointer align-middle border-r border-slate-200 dark:border-[#222]`;
 
-  // Zebra striping and hover logic
   const rowBackgroundClass = row.isGroupHeader 
-    ? 'bg-white' 
+    ? 'bg-white dark:bg-[#0c0c0e]' 
     : rowIndex % 2 === 0 
-        ? 'bg-white/40 hover:bg-white/90' 
-        : 'bg-slate-50/40 hover:bg-white/90';
+        ? 'bg-white/40 dark:bg-[#0c0c0e] hover:bg-white/90 dark:hover:bg-[#151515]' 
+        : 'bg-slate-50/40 dark:bg-[#0e0e10] hover:bg-white/90 dark:hover:bg-[#151515]';
 
   return (
     <tr className={`${rowMinHeight} group transition-all duration-300 ${rowBackgroundClass}`}>
         {/* Checkbox - Only show in People View */}
         {viewMode === 'People' && (
-            <td className={`sticky left-0 ${row.isGroupHeader ? `${topOffsetClass} z-30 border-t border-b border-slate-200` : 'z-20'} ${isSelectedRow ? 'bg-rose-50' : 'bg-white'} ${paddingClass} text-center transition-colors align-middle border-r border-slate-200/50`}>
+            <td className={`sticky left-0 ${row.isGroupHeader ? `${topOffsetClass} z-30 border-t border-b border-slate-200 dark:border-[#222]` : 'z-20'} ${isSelectedRow ? 'bg-rose-50 dark:bg-rose-950/20' : 'bg-white dark:bg-[#0c0c0e]'} ${paddingClass} text-center transition-colors align-middle border-r border-slate-200/50 dark:border-[#222]`}>
                 {!row.isGroupHeader && isRowSelectable && (
                     <LiquidCheckbox 
                         checked={selectedIds.includes(resource.id)}
@@ -227,18 +222,17 @@ export const HeatmapRow: React.FC<HeatmapRowProps> = ({
             handleResourceClick={handleResourceClick}
             visibleMonths={visibleMonths}
             themeSettings={themeSettings}
-            colSpan={undefined} // Do not colspan to ensure sticky left behavior works reliably
+            colSpan={undefined} 
             className={row.isGroupHeader ? groupHeaderClass : resourceInfoClass}
             setTooltipState={actions.setTooltipState}
         />
 
         {/* Data Cells OR Empty Header Cells */}
         {row.isGroupHeader ? (
-             // Render empty sticky-top cells for the rest of the row to maintain background/borders
              visibleMonths.map(month => (
                  <td 
                     key={month} 
-                    className={`sticky ${topOffsetClass} z-10 bg-white border-t border-b border-l border-slate-200`}
+                    className={`sticky ${topOffsetClass} z-10 bg-white dark:bg-[#0c0c0e] border-t border-b border-l border-slate-200 dark:border-[#222]`}
                  />
              ))
         ) : (

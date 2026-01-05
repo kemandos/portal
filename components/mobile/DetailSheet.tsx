@@ -52,22 +52,22 @@ export const DetailSheet: React.FC<DetailSheetProps> = ({
     <div className="fixed inset-0 z-[60] flex flex-col pointer-events-none">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-slate-900/20 backdrop-blur-sm animate-in fade-in duration-300 pointer-events-auto"
+        className="absolute inset-0 bg-slate-900/20 dark:bg-black/60 backdrop-blur-sm animate-in fade-in duration-300 pointer-events-auto"
         onClick={onClose}
       />
       
       {/* Full Screen Modal - Slide from Right */}
-      <div className="absolute inset-0 bg-white flex flex-col animate-in slide-in-from-right duration-300 pointer-events-auto">
+      <div className="absolute inset-0 bg-white dark:bg-[#0c0c0e] flex flex-col animate-in slide-in-from-right duration-300 pointer-events-auto">
         
         {/* Header */}
-        <div className="flex items-center px-4 py-4 border-b border-gray-100 flex-none bg-white z-10 gap-4">
+        <div className="flex items-center px-4 py-4 border-b border-gray-100 dark:border-white/10 flex-none bg-white dark:bg-[#0c0c0e] z-10 gap-4">
             <button 
                 onClick={onClose}
-                className="text-slate-400 hover:text-slate-900 transition-colors -ml-1"
+                className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors -ml-1"
             >
                 <ArrowLeft size={24} />
             </button>
-            <div className="text-sm font-bold text-slate-400 uppercase tracking-wider">
+            <div className="text-sm font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                 {viewMode === 'People' ? 'Employee Details' : 'Project Details'}
             </div>
         </div>
@@ -77,17 +77,17 @@ export const DetailSheet: React.FC<DetailSheetProps> = ({
             {/* Header Info - Centered */}
             <div className="flex flex-col items-center text-center mb-8">
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-900 leading-tight">{resource.name}</h2>
-                  <p className="text-slate-500 font-medium mt-1">{resource.subtext}</p>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white leading-tight">{resource.name}</h2>
+                  <p className="text-slate-500 dark:text-slate-400 font-medium mt-1">{resource.subtext}</p>
                   {resource.skills && resource.skills.length > 0 && (
                     <div className="flex flex-wrap justify-center gap-1.5 mt-3">
                       {resource.skills.slice(0, 3).map(skill => (
-                        <span key={skill} className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-1 rounded-md border border-slate-200">
+                        <span key={skill} className="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-1 rounded-md border border-slate-200 dark:border-slate-700">
                           {skill}
                         </span>
                       ))}
                       {resource.skills.length > 3 && (
-                        <span className="text-[10px] font-bold bg-slate-50 text-slate-400 px-2 py-1 rounded-md border border-slate-200">
+                        <span className="text-[10px] font-bold bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500 px-2 py-1 rounded-md border border-slate-200 dark:border-slate-700">
                            +{resource.skills.length - 3}
                         </span>
                       )}
@@ -99,9 +99,9 @@ export const DetailSheet: React.FC<DetailSheetProps> = ({
             {/* Month Details Grid */}
             <div className="space-y-4 mb-8">
                 <div className="flex items-center justify-between mb-1">
-                    <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                         Month Details
-                        <span className="text-xs font-normal text-slate-400">(6 Months)</span>
+                        <span className="text-xs font-normal text-slate-400 dark:text-slate-500">(6 Months)</span>
                     </h3>
                     <button
                         onClick={() => {
@@ -112,7 +112,7 @@ export const DetailSheet: React.FC<DetailSheetProps> = ({
                                 setIsSelectionMode(true);
                             }
                         }}
-                        className={`text-xs font-bold transition-colors ${isSelectionMode ? 'text-primary' : 'text-slate-400 hover:text-slate-600'}`}
+                        className={`text-xs font-bold transition-colors ${isSelectionMode ? 'text-primary' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
                     >
                         {isSelectionMode ? 'Cancel Selection' : 'Select Multiple'}
                     </button>
@@ -137,10 +137,10 @@ export const DetailSheet: React.FC<DetailSheetProps> = ({
                                     }
                                 }}
                                 className={`
-                                    relative bg-white border-2 rounded-2xl p-4 text-left flex flex-col gap-1 transition-all duration-200 active:scale-[0.98]
+                                    relative bg-white dark:bg-[#151515] border-2 rounded-2xl p-4 text-left flex flex-col gap-1 transition-all duration-200 active:scale-[0.98]
                                     ${isSelected 
-                                        ? 'border-primary bg-primary/5 shadow-md' 
-                                        : 'border-slate-100 hover:border-slate-200'
+                                        ? 'border-primary bg-primary/5 dark:bg-primary/10 shadow-md' 
+                                        : 'border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700'
                                     }
                                 `}
                             >
@@ -150,7 +150,7 @@ export const DetailSheet: React.FC<DetailSheetProps> = ({
                                         size-5 rounded-full flex items-center justify-center transition-colors
                                         ${isSelected 
                                             ? 'bg-primary border-primary' 
-                                            : 'border-2 border-slate-200 bg-transparent'
+                                            : 'border-2 border-slate-200 dark:border-slate-700 bg-transparent'
                                         }
                                     `}>
                                         {isSelected && <Check size={12} className="text-white" strokeWidth={3} />}
@@ -158,25 +158,25 @@ export const DetailSheet: React.FC<DetailSheetProps> = ({
                                 </div>
 
                                 <div className="flex justify-between items-start w-full mb-1">
-                                    <span className="font-bold text-slate-900 text-sm">{month}</span>
+                                    <span className="font-bold text-slate-900 dark:text-white text-sm">{month}</span>
                                 </div>
                                 
                                 <div className="flex items-baseline gap-1 mt-0">
-                                    <span className="text-2xl font-bold text-slate-900">{Number.isInteger(pt) ? pt : pt.toFixed(1)}</span>
-                                    <span className="text-xs font-medium text-slate-400">/ {cap} PT</span>
+                                    <span className="text-2xl font-bold text-slate-900 dark:text-white">{Number.isInteger(pt) ? pt : pt.toFixed(1)}</span>
+                                    <span className="text-xs font-medium text-slate-400 dark:text-slate-500">/ {cap} PT</span>
                                 </div>
                                 
                                 {/* Assigned Projects Preview */}
                                 {resource.children && resource.children.length > 0 && (
-                                     <div className="mt-3 pt-2 border-t border-slate-200/50 space-y-1.5 w-full">
+                                     <div className="mt-3 pt-2 border-t border-slate-200/50 dark:border-white/5 space-y-1.5 w-full">
                                          {resource.children.filter(c => (c.allocations[month]?.pt || 0) > 0).slice(0, 2).map(child => (
                                              <div key={child.id} className="flex justify-between items-center text-[10px] w-full">
-                                                 <span className="truncate text-slate-500 font-medium max-w-[80px]">{child.name}</span>
-                                                 <span className="font-bold text-slate-900">{child.allocations[month]?.pt}</span>
+                                                 <span className="truncate text-slate-500 dark:text-slate-400 font-medium max-w-[80px]">{child.name}</span>
+                                                 <span className="font-bold text-slate-900 dark:text-slate-200">{child.allocations[month]?.pt}</span>
                                              </div>
                                          ))}
                                          {resource.children.filter(c => (c.allocations[month]?.pt || 0) > 0).length > 2 && (
-                                             <div className="text-[9px] text-slate-400 italic">
+                                             <div className="text-[9px] text-slate-400 dark:text-slate-600 italic">
                                                  +{resource.children.filter(c => (c.allocations[month]?.pt || 0) > 0).length - 2} more...
                                              </div>
                                          )}
@@ -190,7 +190,7 @@ export const DetailSheet: React.FC<DetailSheetProps> = ({
         </div>
             
         {/* Action Buttons (Sticky Footer) */}
-        <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 pb-safe z-20">
+        <div className="absolute bottom-0 left-0 right-0 bg-white dark:bg-[#0c0c0e] border-t border-gray-200 dark:border-white/10 p-4 pb-safe z-20">
             {isSelectionMode && selectedMonths.length > 0 ? (
                 <div className="flex gap-3 animate-in slide-in-from-bottom-2 fade-in duration-200">
                     <button 
@@ -205,7 +205,7 @@ export const DetailSheet: React.FC<DetailSheetProps> = ({
                     </button>
                     <button 
                         onClick={() => setSelectedMonths([])}
-                        className="flex-1 py-3.5 bg-white border border-gray-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 active:scale-95 transition-all shadow-sm"
+                        className="flex-1 py-3.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-95 transition-all shadow-sm"
                     >
                         Clear
                     </button>
@@ -216,7 +216,7 @@ export const DetailSheet: React.FC<DetailSheetProps> = ({
                         <>
                             <button 
                                 onClick={() => onEditBudget && project && onEditBudget(project.id)}
-                                className="flex-1 py-3.5 bg-white border border-gray-200 text-slate-900 font-bold rounded-xl shadow-sm hover:bg-slate-50 active:scale-95 transition-all flex items-center justify-center"
+                                className="flex-1 py-3.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-slate-900 dark:text-white font-bold rounded-xl shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-95 transition-all flex items-center justify-center"
                                 title="Edit Budget"
                             >
                                 <Edit2 size={20} />
@@ -233,7 +233,7 @@ export const DetailSheet: React.FC<DetailSheetProps> = ({
                         <>
                             <button 
                                 onClick={onEditAllocations}
-                                className="flex-1 py-3.5 bg-white border border-gray-200 text-slate-700 font-bold rounded-xl shadow-sm hover:bg-slate-50 active:scale-95 transition-all flex items-center justify-center"
+                                className="flex-1 py-3.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-95 transition-all flex items-center justify-center"
                                 title="Edit Allocations"
                             >
                                 <Edit2 size={20} />

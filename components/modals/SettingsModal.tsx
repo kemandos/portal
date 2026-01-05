@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { X, Sliders, Droplet, Palette, Users, Briefcase } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Globe, Moon, Sun, Monitor, ChevronDown, Shield, Users } from 'lucide-react';
 import { ThemeSettings } from '../../types';
 
 interface SettingsModalProps {
@@ -21,353 +21,199 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   setProjectSettings,
   initialView
 }) => {
-  const [activeTab, setActiveTab] = useState<'People' | 'Projects'>(initialView);
+  const [activeTab, setActiveTab] = useState<'General' | 'Team' | 'Admin'>('General');
+  
+  const [activeViewSettings] = useState<'People' | 'Projects'>(initialView);
 
-  // Local state for the form
-  const [thresholdColors, setThresholdColors] = useState({
-      under: '#f1f5f9',
-      low: '#38bdf8',
-      balanced: '#10b981',
-      optimal: '#f59e0b',
-      over: '#dc2626'
-  });
+  // -- General Settings State --
+  const [language, setLanguage] = useState('English');
+  const [timezone, setTimezone] = useState('Europe/Berlin (CET)');
+  const [systemTheme, setSystemTheme] = useState(false);
 
-  const [thresholds, setThresholds] = useState({
-      under: 25,
-      low: 75,
-      balanced: 95,
-      over: 100
-  });
+  // Determine current effective mode
+  const currentMode = activeViewSettings === 'People' ? peopleSettings.mode : projectSettings.mode;
 
-  const [opacity, setOpacity] = useState(1);
-
-  // Sync local state when tab or isOpen changes
-  useEffect(() => {
-    if (isOpen) {
-        // Determine which settings to load based on active tab
-        const currentSettings = activeTab === 'People' ? peopleSettings : projectSettings;
-
-        setThresholdColors({
-            under: currentSettings.thresholdColors?.under || '#f1f5f9',
-            low: currentSettings.thresholdColors?.low || '#38bdf8',
-            balanced: currentSettings.thresholdColors?.balanced || '#10b981',
-            optimal: currentSettings.thresholdColors?.optimal || '#f59e0b',
-            over: currentSettings.thresholdColors?.over || '#dc2626'
-        });
-        setThresholds({
-            under: currentSettings.thresholds?.under || 25,
-            low: currentSettings.thresholds?.low || 75,
-            balanced: currentSettings.thresholds?.balanced || 95,
-            over: currentSettings.thresholds?.over || 100
-        });
-        setOpacity(currentSettings.heatmapOpacity !== undefined ? currentSettings.heatmapOpacity : 1);
-    }
-  }, [isOpen, activeTab, peopleSettings, projectSettings]);
-
-  // Handle Tab Switch (reset state to new tab's settings)
-  const handleTabChange = (tab: 'People' | 'Projects') => {
-      setActiveTab(tab);
-      // Effect will handle loading data
-  };
-
-  const handleThresholdColorChange = (key: 'under' | 'low' | 'balanced' | 'optimal' | 'over', val: string) => {
-      setThresholdColors(prev => ({ ...prev, [key]: val }));
-  };
-
-  const handleThresholdValueChange = (key: 'under' | 'low' | 'balanced' | 'over', val: string) => {
-      const numVal = parseInt(val, 10);
-      setThresholds(prev => ({ ...prev, [key]: numVal }));
-  };
-
-  const handleSave = () => {
-      const setter = activeTab === 'People' ? setPeopleSettings : setProjectSettings;
-      
-      setter(prev => ({ 
-          ...prev, 
-          thresholdColors: thresholdColors,
-          thresholds: thresholds,
-          heatmapOpacity: opacity
-      }));
-      onClose();
+  const handleThemeChange = (mode: 'light' | 'dark' | 'system') => {
+      if (mode === 'system') {
+          setSystemTheme(true);
+          const sysMode = 'light'; // Default fallback
+          setPeopleSettings(prev => ({ ...prev, mode: sysMode }));
+          setProjectSettings(prev => ({ ...prev, mode: sysMode }));
+      } else {
+          setSystemTheme(false);
+          setPeopleSettings(prev => ({ ...prev, mode: mode }));
+          setProjectSettings(prev => ({ ...prev, mode: mode }));
+      }
   };
 
   if (!isOpen) return null;
 
+  const NavItem = ({ id, label, icon: Icon }: { id: typeof activeTab, label: string, icon: any }) => (
+    <button 
+        onClick={() => setActiveTab(id)}
+        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium text-sm
+            ${activeTab === id 
+                ? 'bg-primary text-white shadow-md shadow-primary/20' 
+                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
+            }
+        `}
+    >
+        <Icon size={18} />
+        {label}
+    </button>
+  );
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
       <div 
-        className="absolute inset-0 bg-slate-900/20 backdrop-blur-[2px] transition-opacity" 
+        className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity" 
         onClick={onClose}
       ></div>
-      <div className="relative w-full max-w-[420px] bg-[#FDFBF7]/90 backdrop-blur-2xl rounded-2xl shadow-glass border border-white/50 overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+      
+      <div className="relative w-full max-w-5xl bg-[#FDFBF7] dark:bg-[#0F0F0F] rounded-3xl shadow-2xl border border-white/50 dark:border-white/10 overflow-hidden flex flex-col md:flex-row h-[70vh] animate-in zoom-in-95 duration-200">
         
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100/30">
-          <h2 className="text-lg font-bold text-slate-900">Heatmap Settings</h2>
-          <button 
-            onClick={onClose}
-            className="p-2 rounded-full hover:bg-white/50 transition-colors text-slate-500 hover:text-slate-700"
-          >
-            <X size={20} />
-          </button>
+        {/* Sidebar */}
+        <div className="w-full md:w-64 bg-slate-50/50 dark:bg-slate-900/50 border-b md:border-b-0 md:border-r border-slate-200/60 dark:border-slate-800/60 p-6 flex flex-col gap-6 shrink-0">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white px-2">Settings</h2>
+            <nav className="space-y-1">
+                <NavItem id="General" label="General" icon={Globe} />
+                <NavItem id="Team" label="Team & Roles" icon={Users} />
+                <NavItem id="Admin" label="Admin Settings" icon={Shield} />
+            </nav>
+            <div className="mt-auto px-2">
+                <button onClick={onClose} className="text-sm text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 font-medium transition-colors">
+                    Close Settings
+                </button>
+            </div>
         </div>
 
-        <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+        {/* Content Area */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar bg-white/40 dark:bg-black/20 relative">
             
-            {/* View Toggle */}
-            <div className="flex p-1 bg-slate-200/50 rounded-xl">
-                <button 
-                    onClick={() => handleTabChange('People')} 
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'People' ? 'bg-white shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700'}`}
-                >
-                    <Users size={14} />
-                    People View
-                </button>
-                <button 
-                    onClick={() => handleTabChange('Projects')} 
-                    className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-lg transition-all ${activeTab === 'Projects' ? 'bg-white shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700'}`}
-                >
-                    <Briefcase size={14} />
-                    Projects View
-                </button>
+            {/* Header Mobile Close */}
+            <div className="absolute top-4 right-4 md:hidden z-10">
+                 <button onClick={onClose} className="p-2 bg-white dark:bg-slate-800 rounded-full shadow-sm text-slate-500 dark:text-slate-400"><X size={20} /></button>
             </div>
 
-            <div className="space-y-3 pb-4 border-b border-gray-100/30">
-                 <label className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                    <Droplet size={16} className="text-slate-500" />
-                    Color Transparency
-                </label>
-                <div className="flex items-center gap-4">
-                    <input 
-                        type="range" 
-                        min="10" 
-                        max="100" 
-                        value={opacity * 100} 
-                        onChange={(e) => setOpacity(parseInt(e.target.value) / 100)}
-                        className="flex-1 h-2 bg-gray-200/50 rounded-lg appearance-none cursor-pointer accent-slate-900" 
-                    />
-                    <span className="text-xs font-mono font-medium text-slate-600 w-10 text-right">
-                        {Math.round(opacity * 100)}%
-                    </span>
-                </div>
-            </div>
-
-            <div className="space-y-5">
-                 <label className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                    <Sliders size={16} className="text-slate-500" />
-                    Capacity Thresholds ({activeTab})
-                </label>
-                
-                <div className="space-y-4">
-                    <div className="p-3 rounded-xl bg-white/40 border border-white/50 space-y-3 shadow-sm">
-                        <div className="flex items-center justify-between gap-4">
-                            <div className="flex items-center gap-3">
-                                <div className="size-8 rounded-full shadow-sm ring-1 ring-black/5 flex items-center justify-center bg-white/70">
-                                    <div className="size-4 rounded-full" style={{ backgroundColor: thresholdColors.under }}></div>
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="text-xs font-bold text-slate-700">Under Utilized</span>
-                                    <span className="text-[10px] text-slate-400">Below {thresholds.under}%</span>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <input 
-                                    type="number"
-                                    value={thresholds.under}
-                                    onChange={(e) => handleThresholdValueChange('under', e.target.value)}
-                                    className="w-14 px-2 py-1 text-right text-xs font-bold text-slate-900 bg-white/70 border border-white/60 rounded focus:ring-1 focus:ring-primary focus:border-primary outline-none"
-                                />
-                                <span className="text-xs text-slate-500">%</span>
-                                <div className="relative size-6 ml-1">
-                                    <input 
-                                        type="color" 
-                                        value={thresholdColors.under} 
-                                        onChange={(e) => handleThresholdColorChange('under', e.target.value)}
-                                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                                    />
-                                    <div className="pointer-events-none size-6 rounded border border-white/60 flex items-center justify-center bg-white/70 text-slate-400 hover:text-slate-600 shadow-sm">
-                                        <Palette size={14} />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <input 
-                            type="range" 
-                            min="0" 
-                            max="100" 
-                            value={thresholds.under} 
-                            onChange={(e) => handleThresholdValueChange('under', e.target.value)}
-                            className="w-full h-1.5 bg-gray-200/50 rounded-lg appearance-none cursor-pointer accent-slate-400" 
-                        />
-                    </div>
-
-                    <div className="p-3 rounded-xl bg-white/40 border border-white/50 space-y-3 shadow-sm">
-                        <div className="flex items-center justify-between gap-4">
-                            <div className="flex items-center gap-3">
-                                <div className="size-8 rounded-full shadow-sm ring-1 ring-black/5 flex items-center justify-center bg-white/70">
-                                    <div className="size-4 rounded-full" style={{ backgroundColor: thresholdColors.low }}></div>
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="text-xs font-bold text-slate-700">Low Utilization</span>
-                                    <span className="text-[10px] text-slate-400">{thresholds.under}% - {thresholds.low}%</span>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <input 
-                                    type="number"
-                                    value={thresholds.low}
-                                    onChange={(e) => handleThresholdValueChange('low', e.target.value)}
-                                    className="w-14 px-2 py-1 text-right text-xs font-bold text-slate-900 bg-white/70 border border-white/60 rounded focus:ring-1 focus:ring-primary focus:border-primary outline-none"
-                                />
-                                <span className="text-xs text-slate-500">%</span>
-                                <div className="relative size-6 ml-1">
-                                    <input 
-                                        type="color" 
-                                        value={thresholdColors.low} 
-                                        onChange={(e) => handleThresholdColorChange('low', e.target.value)}
-                                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                                    />
-                                    <div className="pointer-events-none size-6 rounded border border-white/60 flex items-center justify-center bg-white/70 text-slate-400 hover:text-slate-600 shadow-sm">
-                                        <Palette size={14} />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <input 
-                            type="range" 
-                            min={thresholds.under} 
-                            max="100" 
-                            value={thresholds.low} 
-                            onChange={(e) => handleThresholdValueChange('low', e.target.value)}
-                            className="w-full h-1.5 bg-gray-200/50 rounded-lg appearance-none cursor-pointer accent-blue-400" 
-                        />
-                    </div>
-
-                    <div className="p-3 rounded-xl bg-white/40 border border-white/50 space-y-3 shadow-sm">
-                         <div className="flex items-center justify-between gap-4">
-                            <div className="flex items-center gap-3">
-                                <div className="size-8 rounded-full shadow-sm ring-1 ring-black/5 flex items-center justify-center bg-white/70">
-                                    <div className="size-4 rounded-full" style={{ backgroundColor: thresholdColors.balanced }}></div>
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="text-xs font-bold text-slate-700">Balanced</span>
-                                    <span className="text-[10px] text-slate-400">{thresholds.low}% - {thresholds.balanced}%</span>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <input 
-                                    type="number"
-                                    value={thresholds.balanced}
-                                    onChange={(e) => handleThresholdValueChange('balanced', e.target.value)}
-                                    className="w-14 px-2 py-1 text-right text-xs font-bold text-slate-900 bg-white/70 border border-white/60 rounded focus:ring-1 focus:ring-primary focus:border-primary outline-none"
-                                />
-                                <span className="text-xs text-slate-500">%</span>
-                                <div className="relative size-6 ml-1">
-                                    <input 
-                                        type="color" 
-                                        value={thresholdColors.balanced} 
-                                        onChange={(e) => handleThresholdColorChange('balanced', e.target.value)}
-                                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                                    />
-                                    <div className="pointer-events-none size-6 rounded border border-white/60 flex items-center justify-center bg-white/70 text-slate-400 hover:text-slate-600 shadow-sm">
-                                        <Palette size={14} />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <input 
-                            type="range" 
-                            min={thresholds.low} 
-                            max="120" 
-                            value={thresholds.balanced} 
-                            onChange={(e) => handleThresholdValueChange('balanced', e.target.value)}
-                            className="w-full h-1.5 bg-gray-200/50 rounded-lg appearance-none cursor-pointer accent-emerald-500" 
-                        />
-                    </div>
+            {/* General Settings */}
+            {activeTab === 'General' && (
+                <div className="p-8 max-w-3xl animate-in fade-in slide-in-from-right-4 duration-300">
+                    <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-8">General Settings</h3>
                     
-                    <div className="p-3 rounded-xl bg-white/40 border border-white/50 space-y-3 shadow-sm">
-                         <div className="flex items-center justify-between gap-4">
-                            <div className="flex items-center gap-3">
-                                <div className="size-8 rounded-full shadow-sm ring-1 ring-black/5 flex items-center justify-center bg-white/70">
-                                    <div className="size-4 rounded-full" style={{ backgroundColor: thresholdColors.optimal }}></div>
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="text-xs font-bold text-slate-700">Warning</span>
-                                    <span className="text-[10px] text-slate-400">{thresholds.balanced}% - {thresholds.over}%</span>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <input 
-                                    type="number"
-                                    value={thresholds.over}
-                                    onChange={(e) => handleThresholdValueChange('over', e.target.value)}
-                                    className="w-14 px-2 py-1 text-right text-xs font-bold text-slate-900 bg-white/70 border border-white/60 rounded focus:ring-1 focus:ring-primary focus:border-primary outline-none"
-                                />
-                                <span className="text-xs text-slate-500">%</span>
-                                <div className="relative size-6 ml-1">
-                                    <input 
-                                        type="color" 
-                                        value={thresholdColors.optimal} 
-                                        onChange={(e) => handleThresholdColorChange('optimal', e.target.value)}
-                                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                                    />
-                                    <div className="pointer-events-none size-6 rounded border border-white/60 flex items-center justify-center bg-white/70 text-slate-400 hover:text-slate-600 shadow-sm">
-                                        <Palette size={14} />
-                                    </div>
-                                </div>
-                            </div>
+                    {/* Appearance */}
+                    <section className="mb-10 space-y-4">
+                        <div className="flex items-center gap-2 mb-2">
+                            <Monitor className="text-slate-400" size={20} />
+                            <h4 className="text-lg font-bold text-slate-800 dark:text-slate-200">Appearance</h4>
                         </div>
-                        <input 
-                            type="range" 
-                            min={thresholds.balanced} 
-                            max="150" 
-                            value={thresholds.over} 
-                            onChange={(e) => handleThresholdValueChange('over', e.target.value)}
-                            className="w-full h-1.5 bg-gray-200/50 rounded-lg appearance-none cursor-pointer accent-amber-500" 
-                        />
-                    </div>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 pl-7">Customize how the application looks on your device.</p>
+                        
+                        <div className="pl-7 grid grid-cols-3 gap-4 max-w-md">
+                            <button 
+                                onClick={() => handleThemeChange('light')}
+                                className={`flex items-center justify-center gap-2 py-2.5 rounded-lg border font-bold text-sm transition-all
+                                    ${!systemTheme && currentMode === 'light' 
+                                        ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' 
+                                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'
+                                    }`}
+                            >
+                                <Sun size={16} /> Light
+                            </button>
+                            <button 
+                                onClick={() => handleThemeChange('dark')}
+                                className={`flex items-center justify-center gap-2 py-2.5 rounded-lg border font-bold text-sm transition-all
+                                    ${!systemTheme && currentMode === 'dark' 
+                                        ? 'bg-slate-800 border-slate-800 text-white shadow-lg shadow-slate-900/20' 
+                                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'
+                                    }`}
+                            >
+                                <Moon size={16} /> Dark
+                            </button>
+                            <button 
+                                onClick={() => handleThemeChange('system')}
+                                className={`flex items-center justify-center gap-2 py-2.5 rounded-lg border font-bold text-sm transition-all
+                                    ${systemTheme 
+                                        ? 'bg-slate-200 dark:bg-slate-700 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white' 
+                                        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'
+                                    }`}
+                            >
+                                <Monitor size={16} /> System
+                            </button>
+                        </div>
+                    </section>
 
-                     <div className="flex items-center justify-between gap-4 p-3 rounded-xl bg-white/40 border border-white/50 shadow-sm">
-                         <div className="flex items-center gap-3">
-                            <div className="size-8 rounded-full shadow-sm ring-1 ring-black/5 flex items-center justify-center bg-white/70">
-                                <div className="size-4 rounded-full" style={{ backgroundColor: thresholdColors.over }}></div>
-                            </div>
-                            <div className="flex flex-col">
-                                <span className="text-xs font-bold text-slate-700">Critical</span>
-                                <span className="text-[10px] text-slate-400">Above {thresholds.over}%</span>
-                            </div>
+                    <hr className="border-slate-100 dark:border-slate-800 my-8" />
+
+                    {/* Language */}
+                    <section className="mb-10 space-y-4">
+                        <div className="flex items-center gap-2 mb-2">
+                            <Globe className="text-slate-400" size={20} />
+                            <h4 className="text-lg font-bold text-slate-800 dark:text-slate-200">Language</h4>
                         </div>
-                         <div className="flex items-center gap-2">
-                            <span className="text-xs text-slate-500">&gt;</span>
-                            <div className="w-14 px-2 py-1 text-right text-xs font-bold text-slate-400 bg-transparent border border-transparent">
-                                {thresholds.over}
-                            </div>
-                            <span className="text-xs text-slate-500">%</span>
-                            <div className="relative size-6 ml-1">
-                                <input 
-                                    type="color" 
-                                    value={thresholdColors.over} 
-                                    onChange={(e) => handleThresholdColorChange('over', e.target.value)}
-                                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                                />
-                                <div className="pointer-events-none size-6 rounded border border-white/60 flex items-center justify-center bg-white/70 text-slate-400 hover:text-slate-600 shadow-sm">
-                                    <Palette size={14} />
-                                </div>
-                            </div>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 pl-7">Select your preferred language for the interface.</p>
+                        
+                        <div className="pl-7 max-w-md relative">
+                            <select 
+                                value={language}
+                                onChange={(e) => setLanguage(e.target.value)}
+                                className="w-full appearance-none bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-xl focus:ring-primary focus:border-primary block p-3 pr-10 shadow-sm font-medium outline-none cursor-pointer hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
+                            >
+                                <option>English</option>
+                                <option>Deutsch</option>
+                                <option>Français</option>
+                                <option>Español</option>
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                         </div>
-                    </div>
+                    </section>
+
+                     <hr className="border-slate-100 dark:border-slate-800 my-8" />
+
+                    {/* Timezone */}
+                    <section className="space-y-4">
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className="size-5 rounded-full border-2 border-slate-400 flex items-center justify-center">
+                                <div className="w-2 h-0.5 bg-slate-400 rounded-full" />
+                            </div>
+                            <h4 className="text-lg font-bold text-slate-800 dark:text-slate-200">Timezone</h4>
+                        </div>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 pl-7">Your local timezone for date and time display.</p>
+                        
+                        <div className="pl-7 max-w-md relative">
+                            <select 
+                                value={timezone}
+                                onChange={(e) => setTimezone(e.target.value)}
+                                className="w-full appearance-none bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm rounded-xl focus:ring-primary focus:border-primary block p-3 pr-10 shadow-sm font-medium outline-none cursor-pointer hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
+                            >
+                                <option>Europe/Berlin (CET)</option>
+                                <option>Europe/London (GMT)</option>
+                                <option>America/New_York (EST)</option>
+                                <option>America/Los_Angeles (PST)</option>
+                                <option>Asia/Tokyo (JST)</option>
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                        </div>
+                    </section>
                 </div>
-            </div>
+            )}
 
-            <div className="pt-2">
-                <button 
-                    onClick={handleSave}
-                    className="w-full py-2.5 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 transition-colors shadow-lg shadow-slate-900/10"
-                >
-                    Save {activeTab} Preferences
-                </button>
-            </div>
+            {/* Placeholder Tabs */}
+            {(activeTab === 'Team' || activeTab === 'Admin') && (
+                <div className="p-10 flex flex-col items-center justify-center h-full text-center animate-in fade-in slide-in-from-right-4 duration-300">
+                    <div className="size-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6">
+                        {activeTab === 'Team' ? <Users size={40} className="text-slate-300 dark:text-slate-600" /> : <Shield size={40} className="text-slate-300 dark:text-slate-600" />}
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{activeTab === 'Team' ? 'Team & Roles' : 'Admin Settings'}</h3>
+                    <p className="text-slate-500 dark:text-slate-400 max-w-sm">
+                        This section contains configuration options for {activeTab === 'Team' ? 'managing team permissions and roles.' : 'system-wide administrative tasks.'}
+                    </p>
+                    <button className="mt-6 px-6 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">
+                        Available in Pro Plan
+                    </button>
+                </div>
+            )}
+
         </div>
-
       </div>
     </div>
   );

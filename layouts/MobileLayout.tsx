@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ViewState, ThemeSettings, Filter, Resource, SelectionRange } from '../types';
 import { MobileListView } from '../components/MobileListView';
-import { X, Filter as FilterIcon, Settings, RefreshCw, Plus, ChevronDown, ChevronRight, Check } from 'lucide-react';
+import { X, Filter as FilterIcon, Settings, RefreshCw, Plus, ChevronDown, ChevronRight, Check, Menu } from 'lucide-react';
 import { MOCK_PEOPLE, MOCK_PROJECTS, MONTHS } from '../constants';
 import { DetailSheet } from '../components/mobile/DetailSheet';
 import { findResource } from '../utils/resourceHelpers';
+import { MobileSidebar } from '../components/mobile/MobileSidebar';
 
 interface LayoutProps {
   viewState: ViewState;
@@ -30,24 +31,25 @@ interface LayoutProps {
   onMonthSelectionChange?: (indices: number[]) => void;
   onAddChild?: (resourceId: string) => void;
   onInlineSave?: (resourceId: string, month: string, value: number, isCapacity: boolean) => void;
+  toggleTheme?: () => void;
 }
 
 export const MobileLayout: React.FC<LayoutProps> = ({ 
     viewState, setViewState, currentData, handleSelectionChange, handleItemClick, themeSettings,
     activeFilters, onAddFilter, onRemoveFilter, onCellClick, 
     selectedMonthIndices, onAddChild, groupBy, setGroupBy,
-    expandedRows, setExpandedRows, onOpenSettings
+    expandedRows, setExpandedRows, onOpenSettings, toggleTheme
 }) => {
   
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [activeFilterCategory, setActiveFilterCategory] = useState<string | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   // Detail Sheet State
   const [detailSheetOpen, setDetailSheetOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Resource | null>(null);
   
-  // Compute active resource from currentData to ensure updates (like added assignments) are reflected immediately in DetailSheet
-  // and to prevent stale data when returning from Edit Modal.
+  // Compute active resource
   const activeResource = selectedItem ? findResource(currentData, selectedItem.id) : null;
   
   // Pull to Refresh State
@@ -56,7 +58,7 @@ export const MobileLayout: React.FC<LayoutProps> = ({
   const touchStartY = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const visibleMonths = MONTHS.slice(0, 3); // Always show first 3 months
+  const visibleMonths = MONTHS.slice(0, 3);
 
   const handleTouchStart = (e: React.TouchEvent) => {
       if (containerRef.current?.scrollTop === 0) {
@@ -95,10 +97,8 @@ export const MobileLayout: React.FC<LayoutProps> = ({
 
   const handleEditMonth = (resourceId: string, month: string | string[], intent?: 'budget' | 'assignments') => {
       if (Array.isArray(month)) {
-          // Bulk edit
           if (onCellClick) onCellClick(resourceId, month[0], month, intent);
       } else {
-          // Single edit
           if (onCellClick) onCellClick(resourceId, month, undefined, intent);
       }
   };
@@ -161,20 +161,29 @@ export const MobileLayout: React.FC<LayoutProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-[#F5F2EB] text-slate-900 font-sans w-full overflow-hidden">
+    <div className="flex flex-col h-[100dvh] bg-[#F5F2EB] dark:bg-[#0c0c0e] text-slate-900 dark:text-slate-100 font-sans w-full overflow-hidden transition-colors">
       
-      {/* Fixed Header - Simplified */}
-      <div className="bg-[#FDFBF7] border-b border-gray-200/50 shadow-sm flex-none z-30">
+      {/* Fixed Header */}
+      <div className="bg-[#FDFBF7] dark:bg-[#0c0c0e] border-b border-gray-200/50 dark:border-white/10 shadow-sm flex-none z-30">
           <div className="flex items-center justify-between px-4 py-3">
+              
+              {/* Hamburger Button */}
+              <button
+                  onClick={() => setIsSidebarOpen(true)}
+                  className="p-2.5 rounded-xl bg-white/60 dark:bg-white/5 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors active:scale-95"
+              >
+                  <Menu size={20} />
+              </button>
+
               {/* View Toggle */}
-              <div className="bg-white/60 backdrop-blur-xl rounded-xl p-1 border border-white/40 shadow-sm flex gap-1">
+              <div className="bg-white/60 dark:bg-white/5 backdrop-blur-xl rounded-xl p-1 border border-white/40 dark:border-white/10 shadow-sm flex gap-1">
                   <button
                       onClick={() => setViewState(prev => ({ ...prev, mode: 'People' }))}
                       className={`
                           px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200
                           ${viewState.mode === 'People'
-                              ? 'bg-white text-primary shadow-sm'
-                              : 'text-slate-500 hover:text-slate-700'
+                              ? 'bg-white dark:bg-slate-800 text-primary shadow-sm'
+                              : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                           }
                       `}
                   >
@@ -185,19 +194,19 @@ export const MobileLayout: React.FC<LayoutProps> = ({
                       className={`
                           px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200
                           ${viewState.mode === 'Projects'
-                              ? 'bg-white text-primary shadow-sm'
-                              : 'text-slate-500 hover:text-slate-700'
+                              ? 'bg-white dark:bg-slate-800 text-primary shadow-sm'
+                              : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                           }
                       `}
                   >
                       Projects
                   </button>
               </div>
-
+              
               {/* Settings Button */}
               <button
                   onClick={onOpenSettings}
-                  className="p-2.5 rounded-xl bg-white/60 backdrop-blur-xl border border-white/40 shadow-sm text-slate-600 hover:text-slate-900 transition-colors"
+                  className="p-2.5 rounded-xl bg-white/60 dark:bg-white/5 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-sm text-slate-600 dark:text-slate-400 hover:text-primary transition-colors active:scale-95"
               >
                   <Settings size={20} />
               </button>
@@ -207,7 +216,7 @@ export const MobileLayout: React.FC<LayoutProps> = ({
       {/* Main Content Area */}
       <main 
         ref={containerRef}
-        className="flex-1 overflow-y-auto bg-[#F5F2EB] overscroll-contain relative"
+        className="flex-1 overflow-y-auto bg-[#F5F2EB] dark:bg-[#0c0c0e] overscroll-contain relative transition-colors"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -218,24 +227,24 @@ export const MobileLayout: React.FC<LayoutProps> = ({
             className="w-full flex justify-center overflow-hidden transition-all duration-300" 
             style={{ height: pullY, opacity: Math.min(1, pullY / 40) }}
          >
-             <div className="flex items-center justify-center size-8 rounded-full bg-white shadow-md border border-gray-100 mt-2">
+             <div className="flex items-center justify-center size-8 rounded-full bg-white dark:bg-slate-800 shadow-md border border-gray-100 dark:border-slate-700 mt-2">
                  <RefreshCw size={16} className={`text-primary ${isRefreshing ? 'animate-spin' : ''}`} style={{ transform: `rotate(${pullY * 2}deg)` }} />
              </div>
          </div>
 
          {/* Controls Bar - Sticky at top of scroll */}
-         <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-xl border-b border-gray-200/50 px-3 py-3 shadow-sm">
-            <div className="bg-white/60 backdrop-blur-xl border border-white/40 rounded-2xl shadow-sm p-2 space-y-2">
+         <div className="sticky top-0 z-20 bg-white/95 dark:bg-[#0c0c0e]/95 backdrop-blur-xl border-b border-gray-200/50 dark:border-white/10 px-3 py-3 shadow-sm transition-colors">
+            <div className="bg-white/60 dark:bg-white/5 backdrop-blur-xl border border-white/40 dark:border-white/10 rounded-2xl shadow-sm p-2 space-y-2">
                 
                 {/* Filter Button - Full Width */}
                 <button 
                     onClick={() => setIsFilterSheetOpen(!isFilterSheetOpen)}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold shadow-sm border transition-all duration-200 active:scale-95 bg-white border-gray-200 text-slate-900 hover:bg-slate-50"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold shadow-sm border transition-all duration-200 active:scale-95 bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700"
                 >
                     <div className="relative shrink-0">
-                        <FilterIcon size={18} className="text-slate-600" />
+                        <FilterIcon size={18} className="text-slate-600 dark:text-slate-400" />
                         {activeFilters.length > 0 && (
-                            <span className="absolute -top-1.5 -right-1.5 size-4 bg-primary text-white text-[9px] font-bold flex items-center justify-center rounded-full shadow-sm ring-2 ring-white">
+                            <span className="absolute -top-1.5 -right-1.5 size-4 bg-primary text-white text-[9px] font-bold flex items-center justify-center rounded-full shadow-sm ring-2 ring-white dark:ring-slate-900">
                                 {activeFilters.length}
                             </span>
                         )}
@@ -247,12 +256,12 @@ export const MobileLayout: React.FC<LayoutProps> = ({
                 {activeFilters.length > 0 && (
                     <div className="flex gap-2 overflow-x-auto hide-scrollbar">
                         {activeFilters.map((filter, idx) => (
-                            <div key={idx} className="flex items-center gap-1.5 bg-white border border-gray-200/50 px-3 py-1.5 rounded-lg shadow-sm whitespace-nowrap">
-                                <span className="text-[10px] font-bold text-slate-500 uppercase">{filter.key}:</span>
+                            <div key={idx} className="flex items-center gap-1.5 bg-white dark:bg-slate-800 border border-gray-200/50 dark:border-slate-700 px-3 py-1.5 rounded-lg shadow-sm whitespace-nowrap">
+                                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">{filter.key}:</span>
                                 <span className="text-[10px] font-bold text-primary">{filter.values[0]}{filter.values.length > 1 ? ` +${filter.values.length - 1}` : ''}</span>
                                 <button 
                                     onClick={(e) => { e.stopPropagation(); onRemoveFilter(idx); }}
-                                    className="ml-0.5 p-0.5 rounded-full hover:bg-slate-100 text-slate-400"
+                                    className="ml-0.5 p-0.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-500"
                                 >
                                     <X size={12} />
                                 </button>
@@ -293,7 +302,6 @@ export const MobileLayout: React.FC<LayoutProps> = ({
         project={viewState.mode === 'Projects' ? activeResource : undefined}
         viewMode={viewState.mode}
         onEditAllocations={() => {
-            // Keep DetailSheet open so when the modal closes, we return here
             if (activeResource) {
                 if (viewState.mode === 'Projects') {
                     handleItemClick(activeResource.id, 'assignments');
@@ -303,30 +311,37 @@ export const MobileLayout: React.FC<LayoutProps> = ({
             }
         }}
         onEditBudget={(projectId) => {
-             // Keep DetailSheet open
             handleItemClick(projectId, 'budget');
         }}
         onAddChild={() => {
-            // Keep DetailSheet open
             if (activeResource && onAddChild) onAddChild(activeResource.id);
         }}
         onEditMonth={handleEditMonth}
+      />
+
+      {/* Sidebar Menu */}
+      <MobileSidebar 
+        isOpen={isSidebarOpen} 
+        onClose={() => setIsSidebarOpen(false)}
+        onOpenSettings={onOpenSettings}
+        isDarkMode={themeSettings?.mode === 'dark'}
+        toggleTheme={toggleTheme || (() => {})}
       />
 
       {/* Filter Sheet */}
       {isFilterSheetOpen && (
         <>
         <div 
-            className="fixed inset-0 z-40 bg-slate-900/20 backdrop-blur-sm animate-in fade-in duration-200"
+            className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200"
             onClick={() => setIsFilterSheetOpen(false)}
         />
-        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.1)] border-t border-gray-100 z-50 animate-in slide-in-from-bottom duration-300 rounded-t-[32px] flex flex-col max-h-[75dvh]">
+        <div className="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-[#151515]/95 backdrop-blur-xl shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.1)] border-t border-gray-100 dark:border-white/10 z-50 animate-in slide-in-from-bottom duration-300 rounded-t-[32px] flex flex-col max-h-[75dvh]">
              <div className="w-full flex justify-center pt-3 pb-1" onClick={() => setIsFilterSheetOpen(false)}>
-                <div className="w-12 h-1.5 bg-gray-300 rounded-full" />
+                <div className="w-12 h-1.5 bg-gray-300 dark:bg-slate-700 rounded-full" />
              </div>
              
-             <div className="flex items-center justify-between px-6 py-3 border-b border-gray-100">
-                <h3 className="text-lg font-bold text-slate-900">Filters</h3>
+             <div className="flex items-center justify-between px-6 py-3 border-b border-gray-100 dark:border-white/10">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Filters</h3>
                 {activeFilters.length > 0 && (
                     <button 
                         onClick={() => { activeFilters.forEach((_, i) => onRemoveFilter(0)); }}
@@ -337,17 +352,17 @@ export const MobileLayout: React.FC<LayoutProps> = ({
                 )}
              </div>
 
-             <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-slate-50/50">
+             <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-slate-50/50 dark:bg-black/20">
                 {filterCategories.map(category => {
                     const isOpen = activeFilterCategory === category;
                     const activeCount = activeFilters.find(f => f.key === category)?.values.length || 0;
                     return (
-                        <div key={category} className="bg-white border border-slate-200/60 rounded-xl overflow-hidden shadow-sm transition-all mb-3 last:mb-0">
+                        <div key={category} className="bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 rounded-xl overflow-hidden shadow-sm transition-all mb-3 last:mb-0">
                             <button 
                                 onClick={() => setActiveFilterCategory(isOpen ? null : category)}
-                                className="w-full flex items-center justify-between p-4 text-left active:bg-slate-50 hover:bg-slate-50/50 transition-colors"
+                                className="w-full flex items-center justify-between p-4 text-left active:bg-slate-50 dark:active:bg-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-700/50 transition-colors"
                             >
-                                <span className="text-sm font-bold text-slate-700">{category}</span>
+                                <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{category}</span>
                                 <div className="flex items-center gap-3">
                                     {activeCount > 0 && (
                                         <span className="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
@@ -359,16 +374,16 @@ export const MobileLayout: React.FC<LayoutProps> = ({
                             </button>
                             {isOpen && (
                                 <div className="px-4 pb-4 pt-0 animate-in slide-in-from-top-2">
-                                    <div className="h-px bg-slate-100 mb-3" />
+                                    <div className="h-px bg-slate-100 dark:bg-slate-700 mb-3" />
                                     <div className="max-h-[200px] overflow-y-auto custom-scrollbar space-y-1">
                                         {getOptionsForCategory(category).map(option => {
                                             const isSelected = activeFilters.find(f => f.key === category)?.values.includes(option);
                                             return (
-                                                <label key={option} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer group transition-colors">
-                                                    <div className={`size-5 rounded-md border flex items-center justify-center transition-colors ${isSelected ? 'bg-primary border-primary shadow-sm' : 'bg-white border-slate-300 group-hover:border-primary/50'}`}>
+                                                <label key={option} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer group transition-colors">
+                                                    <div className={`size-5 rounded-md border flex items-center justify-center transition-colors ${isSelected ? 'bg-primary border-primary shadow-sm' : 'bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 group-hover:border-primary/50'}`}>
                                                         {isSelected && <Check size={12} className="text-white" strokeWidth={3} />}
                                                     </div>
-                                                    <span className={`text-sm ${isSelected ? 'font-bold text-slate-900' : 'text-slate-600'}`}>{option}</span>
+                                                    <span className={`text-sm ${isSelected ? 'font-bold text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-300'}`}>{option}</span>
                                                     <input 
                                                         type="checkbox" 
                                                         className="hidden"
@@ -386,10 +401,10 @@ export const MobileLayout: React.FC<LayoutProps> = ({
                 })}
              </div>
              
-             <div className="p-4 bg-white border-t border-gray-100 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.02)]">
+             <div className="p-4 bg-white dark:bg-slate-800 border-t border-gray-100 dark:border-slate-700 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.02)]">
                 <button 
                     onClick={() => setIsFilterSheetOpen(false)}
-                    className="w-full py-3.5 text-sm font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-xl shadow-lg transition-colors active:scale-95"
+                    className="w-full py-3.5 text-sm font-bold text-white bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 rounded-xl shadow-lg transition-colors active:scale-95"
                 >
                     Apply Filters
                 </button>

@@ -25,7 +25,7 @@ export const BulkAllocationTable: React.FC<BulkAllocationTableProps> = ({
     <div className="overflow-x-auto custom-scrollbar">
         <div className="min-w-max">
                 {/* Header Row */}
-            <div className="flex items-center bg-slate-50 border-b border-gray-200 px-4 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider sticky top-0 z-10">
+            <div className="flex items-center bg-slate-50 dark:bg-white/5 border-b border-gray-200 dark:border-white/10 px-4 py-3 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider sticky top-0 z-10">
                 <div className="w-[180px] shrink-0">Employee</div>
                 <div className="w-[140px] shrink-0">Role</div>
                 {activeMonths.map(month => (
@@ -35,20 +35,20 @@ export const BulkAllocationTable: React.FC<BulkAllocationTableProps> = ({
             </div>
 
             {selectedEmployees.length === 0 && (
-                <div className="p-8 text-center text-slate-400 text-sm">
+                <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-sm">
                     No employees selected. Search to add employees.
                 </div>
             )}
 
             {selectedEmployees.map((employee) => (
-                <div key={employee.id} className="flex items-center px-4 py-3 border-b border-gray-100 hover:bg-slate-50 transition-colors group">
+                <div key={employee.id} className="flex items-center px-4 py-3 border-b border-gray-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
                     <div className="w-[180px] shrink-0 flex items-center gap-3">
-                        <div className="size-9 rounded-full bg-white border border-gray-200 shrink-0 overflow-hidden shadow-sm">
+                        <div className="size-9 rounded-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 shrink-0 overflow-hidden shadow-sm">
                             <img src={employee.avatar || `https://i.pravatar.cc/150?u=${employee.id}`} alt={employee.name} className="w-full h-full object-cover" />
                         </div>
                         <div className="truncate pr-2 min-w-0">
-                            <p className="text-sm font-bold text-slate-900 truncate">{employee.name}</p>
-                            <p className="text-[11px] text-slate-500 truncate">{employee.subtext || 'Senior Dev'}</p>
+                            <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{employee.name}</p>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{employee.subtext || 'Senior Dev'}</p>
                         </div>
                     </div>
 
@@ -56,7 +56,7 @@ export const BulkAllocationTable: React.FC<BulkAllocationTableProps> = ({
                         <select 
                             value={employeeRoles[employee.id] || 'Engineer'}
                             onChange={(e) => handleRoleChange(employee.id, e.target.value)}
-                            className="w-full px-2 py-1.5 text-xs font-medium text-slate-700 bg-white border border-gray-200 rounded-lg shadow-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none cursor-pointer"
+                            className="w-full px-2 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-lg shadow-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none cursor-pointer"
                         >
                             <option value="Engineer">Engineer</option>
                             <option value="Senior Engineer">Senior Engineer</option>
@@ -80,20 +80,20 @@ export const BulkAllocationTable: React.FC<BulkAllocationTableProps> = ({
 
                         return (
                             <div key={month} className="w-32 shrink-0 flex flex-col justify-center items-center gap-1 px-1">
-                                <div className="flex items-center bg-white border border-gray-200 rounded-lg shadow-sm h-10 w-24 overflow-hidden group-hover:border-primary/50 transition-colors">
-                                    <div className="flex-1 h-full flex items-center justify-center text-sm font-bold text-slate-900 bg-transparent pl-2">
+                                <div className="flex items-center bg-white dark:bg-black/20 border border-gray-200 dark:border-white/10 rounded-lg shadow-sm h-10 w-24 overflow-hidden group-hover:border-primary/50 transition-colors">
+                                    <div className="flex-1 h-full flex items-center justify-center text-sm font-bold text-slate-900 dark:text-white bg-transparent pl-2">
                                         {val.toFixed(1)}
                                     </div>
-                                    <div className="flex flex-col border-l border-gray-200 w-8 h-full bg-slate-50">
+                                    <div className="flex flex-col border-l border-gray-200 dark:border-white/10 w-8 h-full bg-slate-50 dark:bg-white/5">
                                         <button 
                                             onClick={() => handleAllocationChange(employee.id, month, 0.5)}
-                                            className="flex-1 flex items-center justify-center hover:bg-white text-slate-500 hover:text-primary transition-colors border-b border-gray-200 active:bg-slate-100"
+                                            className="flex-1 flex items-center justify-center hover:bg-white dark:hover:bg-white/10 text-slate-500 hover:text-primary transition-colors border-b border-gray-200 dark:border-white/10 active:bg-slate-100 dark:active:bg-white/10"
                                         >
                                             <ChevronUp size={12} strokeWidth={3} />
                                         </button>
                                         <button 
                                             onClick={() => handleAllocationChange(employee.id, month, -0.5)}
-                                            className="flex-1 flex items-center justify-center hover:bg-white text-slate-500 hover:text-primary transition-colors disabled:opacity-30 disabled:hover:bg-transparent active:bg-slate-100"
+                                            className="flex-1 flex items-center justify-center hover:bg-white dark:hover:bg-white/10 text-slate-500 hover:text-primary transition-colors disabled:opacity-30 disabled:hover:bg-transparent active:bg-slate-100 dark:active:bg-white/10"
                                             disabled={val <= 0}
                                         >
                                             <ChevronDown size={12} strokeWidth={3} />
@@ -110,7 +110,7 @@ export const BulkAllocationTable: React.FC<BulkAllocationTableProps> = ({
                     <div className="w-10 shrink-0 flex justify-end">
                         <button 
                             onClick={() => handleRemoveEmployee(employee.id)}
-                            className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 p-2 rounded-full hover:bg-red-50"
+                            className="text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100 p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20"
                         >
                             <Trash2 size={16} />
                         </button>

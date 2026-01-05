@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { ViewState, ThemeSettings, Filter, Resource, SelectionRange } from '../types';
 import { Heatmap } from '../components/Heatmap';
-import { Users, Settings, Filter as FilterIcon, ChevronDown, ChevronUp, Layers, Check, X } from 'lucide-react';
+import { Users, Filter as FilterIcon, ChevronDown, ChevronUp, Layers, Check, X, Menu, Settings } from 'lucide-react';
 import { MOCK_PEOPLE, MOCK_PROJECTS } from '../constants';
+import { MobileSidebar } from '../components/mobile/MobileSidebar';
 
 interface LayoutProps {
   viewState: ViewState;
@@ -28,15 +29,17 @@ interface LayoutProps {
   onMonthSelectionChange?: (indices: number[]) => void;
   onAddChild?: (resourceId: string) => void;
   onInlineSave?: (resourceId: string, month: string, value: number, isCapacity: boolean) => void;
+  toggleTheme?: () => void;
 }
 
 export const TabletLayout: React.FC<LayoutProps> = ({ 
     viewState, setViewState, currentData, handleSelectionChange, handleItemClick, onOpenSettings, themeSettings,
     groupBy, setGroupBy, activeFilters, onAddFilter, onRemoveFilter, density,
     selectionRange, onSelectionRangeChange, onCellClick, expandedRows, setExpandedRows,
-    selectedMonthIndices, onMonthSelectionChange, onAddChild, onInlineSave
+    selectedMonthIndices, onMonthSelectionChange, onAddChild, onInlineSave, toggleTheme
 }) => {
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isPortrait, setIsPortrait] = useState(typeof window !== 'undefined' ? window.innerHeight > window.innerWidth : false);
 
   useEffect(() => {
@@ -45,13 +48,6 @@ export const TabletLayout: React.FC<LayoutProps> = ({
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // Ensure we default to 3M view on tablet if not already set
-  useEffect(() => {
-     if (viewState.timeRange !== '3M') {
-         // setViewState(prev => ({...prev, timeRange: '3M'}));
-     }
   }, []);
 
   const filterCategories = viewState.mode === 'People' 
@@ -102,31 +98,34 @@ export const TabletLayout: React.FC<LayoutProps> = ({
   const headerRow1Padding = isPortrait ? 'px-4 py-2' : 'px-6 py-3';
   const headerRow2Padding = isPortrait ? 'px-4 py-1.5' : 'px-6 py-2';
   const toggleTextSize = isPortrait ? 'text-[11px]' : 'text-xs';
-  const iconSize = isPortrait ? 16 : 18;
   const controlsHeight = isPortrait ? 'min-h-[40px]' : 'min-h-[44px]';
 
   return (
-    <div className="bg-[#F5F2EB] text-[#1b0d10] font-sans antialiased h-screen flex flex-col overflow-hidden selection:bg-primary/20">
+    <div className="bg-[#F5F2EB] dark:bg-[#0c0c0e] text-[#1b0d10] dark:text-slate-100 font-sans antialiased h-screen flex flex-col overflow-hidden selection:bg-primary/20 transition-colors">
         
         {/* Header - 2 Rows */}
-        <header className="flex-none bg-[#FDFBF7]/80 backdrop-blur-xl border-b border-white/50 z-40 relative shadow-sm transition-all">
+        <header className="flex-none bg-[#FDFBF7]/80 dark:bg-[#0c0c0e]/80 backdrop-blur-xl border-b border-white/50 dark:border-white/10 z-40 relative shadow-sm transition-all">
             {/* Row 1: Logo, Toggle, Range, Settings */}
-            <div className={`${headerRow1Padding} flex items-center justify-between gap-4 border-b border-gray-100/50`}>
+            <div className={`${headerRow1Padding} flex items-center justify-between gap-4 border-b border-gray-100/50 dark:border-white/10`}>
                 <div className="flex items-center gap-4">
-                     <div className="size-9 bg-white rounded-xl flex items-center justify-center text-primary shadow-sm ring-1 ring-black/5">
-                        <Users size={20} />
-                    </div>
-                    
-                    <div className="flex bg-gray-200/50 p-1 rounded-lg">
+                    {/* Hamburger Button */}
+                    <button
+                        onClick={() => setIsSidebarOpen(true)}
+                        className="p-2 rounded-lg bg-white/60 dark:bg-white/5 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors active:scale-95"
+                    >
+                        <Menu size={20} />
+                    </button>
+
+                    <div className="flex bg-gray-200/50 dark:bg-white/5 p-1 rounded-lg">
                         <button 
                             onClick={() => setViewState(v => ({...v, mode: 'People'}))}
-                            className={`px-4 py-1.5 rounded-md ${toggleTextSize} font-bold transition-all ${viewState.mode === 'People' ? 'bg-white shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700'}`}
+                            className={`px-4 py-1.5 rounded-md ${toggleTextSize} font-bold transition-all ${viewState.mode === 'People' ? 'bg-white dark:bg-slate-800 shadow-sm text-primary' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                         >
                             People
                         </button>
                         <button 
                             onClick={() => setViewState(v => ({...v, mode: 'Projects'}))}
-                            className={`px-4 py-1.5 rounded-md ${toggleTextSize} font-bold transition-all ${viewState.mode === 'Projects' ? 'bg-white shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700'}`}
+                            className={`px-4 py-1.5 rounded-md ${toggleTextSize} font-bold transition-all ${viewState.mode === 'Projects' ? 'bg-white dark:bg-slate-800 shadow-sm text-primary' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                         >
                             Projects
                         </button>
@@ -134,18 +133,22 @@ export const TabletLayout: React.FC<LayoutProps> = ({
                 </div>
 
                 <div className="flex items-center gap-3">
-                     <div className="flex bg-gray-200/50 p-1 rounded-lg">
+                     <div className="flex bg-gray-200/50 dark:bg-white/5 p-1 rounded-lg">
                         {['3M', '6M', '9M'].map(r => (
                             <button 
                                 key={r}
                                 onClick={() => setViewState(v => ({...v, timeRange: r as any}))}
-                                className={`px-3 py-1.5 rounded-md ${toggleTextSize} font-bold transition-all ${viewState.timeRange === r ? 'bg-white shadow-sm text-primary' : 'text-slate-500 hover:text-slate-700'}`}
+                                className={`px-3 py-1.5 rounded-md ${toggleTextSize} font-bold transition-all ${viewState.timeRange === r ? 'bg-white dark:bg-slate-800 shadow-sm text-primary' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                             >
                                 {r}
                             </button>
                         ))}
                     </div>
-                    <button onClick={onOpenSettings} className="size-9 flex items-center justify-center rounded-lg hover:bg-white/50 text-slate-500 hover:text-slate-900 transition-colors">
+
+                    <button 
+                        onClick={onOpenSettings}
+                        className="p-2 rounded-lg bg-white/60 dark:bg-white/5 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-sm text-slate-600 dark:text-slate-400 hover:text-primary transition-colors active:scale-95"
+                    >
                         <Settings size={20} />
                     </button>
                 </div>
@@ -158,10 +161,10 @@ export const TabletLayout: React.FC<LayoutProps> = ({
                         <button 
                             className={`
                                 flex items-center gap-2 px-4 py-3 rounded-xl ${toggleTextSize} font-bold shadow-sm border transition-all duration-200
-                                bg-white border-gray-200 text-slate-900 hover:bg-slate-50
+                                bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700
                             `}
                         >
-                            <Layers size={14} className="text-slate-600" />
+                            <Layers size={14} className="text-slate-600 dark:text-slate-400" />
                             <span>Group: {groupBy}</span>
                             {groupBy !== 'None' && (
                                 <span className="bg-primary text-white text-[10px] px-2 py-0.5 rounded-full ml-1">
@@ -170,13 +173,13 @@ export const TabletLayout: React.FC<LayoutProps> = ({
                             )}
                             <ChevronDown size={14} className="opacity-50" />
                         </button>
-                        {/* Simple Hover Dropdown for Tablet */}
-                        <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 p-1 hidden group-hover:block animate-in fade-in slide-in-from-top-1">
+                        {/* Hover Dropdown */}
+                        <div className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-1 hidden group-hover:block animate-in fade-in slide-in-from-top-1 z-50">
                             {groupOptions.map(opt => (
                                 <button
                                     key={opt}
                                     onClick={() => setGroupBy(opt)}
-                                    className={`w-full text-left px-3 py-2 rounded-lg ${toggleTextSize} font-medium flex items-center justify-between hover:bg-slate-50 ${groupBy === opt ? 'text-primary bg-primary/5' : 'text-slate-600'}`}
+                                    className={`w-full text-left px-3 py-2 rounded-lg ${toggleTextSize} font-medium flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700 ${groupBy === opt ? 'text-primary bg-primary/5 dark:bg-primary/10' : 'text-slate-600 dark:text-slate-300'}`}
                                 >
                                     {opt}
                                     {groupBy === opt && <Check size={14} />}
@@ -185,16 +188,16 @@ export const TabletLayout: React.FC<LayoutProps> = ({
                         </div>
                      </div>
 
-                     <div className="h-6 w-px bg-gray-300/50 mx-1" />
+                     <div className="h-6 w-px bg-gray-300/50 dark:bg-white/10 mx-1" />
 
                      {/* Active Filters Summary */}
                      <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar max-w-[400px]">
-                         {activeFilters.length === 0 && <span className={`${toggleTextSize} text-slate-400 italic`}>No filters active</span>}
+                         {activeFilters.length === 0 && <span className={`${toggleTextSize} text-slate-400 dark:text-slate-500 italic`}>No filters active</span>}
                          {activeFilters.map((f, i) => (
-                             <div key={i} className={`flex items-center gap-1 bg-white border border-gray-200 ${isPortrait ? 'px-2 py-0.5' : 'px-2 py-1'} rounded-md shadow-sm`}>
-                                 <span className={`${isPortrait ? 'text-[9px]' : 'text-[10px]'} font-bold text-slate-500 uppercase`}>{f.key}:</span>
-                                 <span className={`${isPortrait ? 'text-[9px]' : 'text-[10px]'} font-bold text-slate-900`}>{f.values[0]}{f.values.length > 1 && ` +${f.values.length-1}`}</span>
-                                 <button onClick={() => onRemoveFilter(i)} className="ml-1 text-slate-400 hover:text-red-500"><X size={12}/></button>
+                             <div key={i} className={`flex items-center gap-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 px-3 py-1.5 rounded-lg shadow-sm whitespace-nowrap`}>
+                                 <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">{f.key}:</span>
+                                 <span className="text-[10px] font-bold text-slate-900 dark:text-white">{f.values[0]}{f.values.length > 1 && ` +${f.values.length-1}`}</span>
+                                 <button onClick={() => onRemoveFilter(i)} className="ml-1 text-slate-400 hover:text-red-500 p-0.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"><X size={12}/></button>
                              </div>
                          ))}
                      </div>
@@ -204,21 +207,20 @@ export const TabletLayout: React.FC<LayoutProps> = ({
                     onClick={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
                     className={`
                         relative flex items-center gap-2 px-4 py-3 rounded-xl ${toggleTextSize} font-bold shadow-sm border transition-all duration-200
-                        bg-white border-gray-200 text-slate-900 hover:bg-slate-50
+                        bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700
                     `}
                 >
-                    <FilterIcon size={14} className="text-slate-600" />
+                    <FilterIcon size={14} className="text-slate-600 dark:text-slate-400" />
                     Filters
-                    {/* Badge for Closed State */}
+                    {/* Badge */}
                     {!isFilterPanelOpen && activeFilters.length > 0 && (
-                        <span className={`absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[20px] h-5 ${isPortrait ? 'px-1.5 text-[9px]' : 'px-1 text-[10px]'} bg-[#ee3a5e] text-white font-bold rounded-full shadow-sm ring-2 ring-white animate-in zoom-in-50 duration-200`}>
+                        <span className={`absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[20px] h-5 ${isPortrait ? 'px-1.5 text-[9px]' : 'px-1 text-[10px]'} bg-[#ee3a5e] text-white font-bold rounded-full shadow-sm ring-2 ring-white dark:ring-slate-900 animate-in zoom-in-50 duration-200`}>
                             {activeFilters.length}
                         </span>
                     )}
 
-                    {/* Inline count if open */}
                     {isFilterPanelOpen && activeFilters.length > 0 && (
-                        <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px]">{activeFilters.length}</span>
+                        <span className="bg-white/20 dark:bg-black/20 px-1.5 py-0.5 rounded text-[10px]">{activeFilters.length}</span>
                     )}
 
                     {isFilterPanelOpen ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}
@@ -227,12 +229,12 @@ export const TabletLayout: React.FC<LayoutProps> = ({
 
             {/* Collapsible Filter Panel */}
             {isFilterPanelOpen && (
-                <div className="absolute top-full left-0 right-0 bg-white/95 backdrop-blur-xl border-b border-gray-200 shadow-xl z-50 animate-in slide-in-from-top-2 p-6">
+                <div className="absolute top-full left-0 right-0 bg-white/95 dark:bg-[#151515]/95 backdrop-blur-xl border-b border-gray-200 dark:border-white/10 shadow-xl z-50 animate-in slide-in-from-top-2 p-6">
                     <div className="max-w-4xl mx-auto">
                         <div className={`grid ${isPortrait ? 'grid-cols-2 gap-4' : 'grid-cols-4 gap-6'}`}>
                             {filterCategories.map(cat => (
                                 <div key={cat} className="space-y-3">
-                                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{cat}</h3>
+                                    <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{cat}</h3>
                                     <div className="space-y-1">
                                         {getOptionsForCategory(cat).map(opt => {
                                             const isSelected = activeFilters.find(f => f.key === cat)?.values.includes(opt);
@@ -240,7 +242,7 @@ export const TabletLayout: React.FC<LayoutProps> = ({
                                                 <button
                                                     key={opt}
                                                     onClick={() => handleFilterToggle(cat, opt)}
-                                                    className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-between group ${isSelected ? 'bg-primary/10 text-primary' : 'hover:bg-slate-50 text-slate-600'}`}
+                                                    className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-between group ${isSelected ? 'bg-primary/10 text-primary' : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400'}`}
                                                 >
                                                     {opt}
                                                     {isSelected && <Check size={14} />}
@@ -251,16 +253,16 @@ export const TabletLayout: React.FC<LayoutProps> = ({
                                 </div>
                             ))}
                         </div>
-                        <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-gray-100">
+                        <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-white/10">
                              <button 
                                 onClick={() => { activeFilters.forEach((_, i) => onRemoveFilter(0)); }}
-                                className="px-4 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"
+                                className="px-4 py-2 text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                              >
                                  Clear All
                              </button>
                              <button 
                                 onClick={() => setIsFilterPanelOpen(false)}
-                                className="px-6 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-lg shadow-lg transition-colors"
+                                className="px-6 py-2 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-lg shadow-lg transition-colors"
                              >
                                  Apply & Close
                              </button>
@@ -275,10 +277,9 @@ export const TabletLayout: React.FC<LayoutProps> = ({
             <div className="absolute inset-0 z-30 bg-slate-900/10 backdrop-blur-[1px]" onClick={() => setIsFilterPanelOpen(false)} />
         )}
 
-        <main className="flex-1 overflow-hidden relative bg-[#F5F2EB]">
+        <main className="flex-1 overflow-hidden relative bg-[#F5F2EB] dark:bg-[#0c0c0e]">
             <div className="h-full w-full p-4 overflow-auto hide-scrollbar">
                  <div className="h-full flex flex-col relative z-10">
-                    {/* Heatmap Wrapper with horizontal scroll and sticky column */}
                     <Heatmap 
                         data={currentData} 
                         viewMode={viewState.mode} 
@@ -287,7 +288,7 @@ export const TabletLayout: React.FC<LayoutProps> = ({
                         onSelectionChange={handleSelectionChange}
                         onItemClick={handleItemClick}
                         themeSettings={themeSettings}
-                        density={density} // Pass through, but tablet might enforce one
+                        density={density} 
                         selectionRange={selectionRange}
                         onSelectionRangeChange={onSelectionRangeChange}
                         onCellClick={onCellClick}
@@ -302,6 +303,15 @@ export const TabletLayout: React.FC<LayoutProps> = ({
                 </div>
             </div>
         </main>
+
+        {/* Sidebar Menu */}
+        <MobileSidebar 
+            isOpen={isSidebarOpen} 
+            onClose={() => setIsSidebarOpen(false)}
+            onOpenSettings={onOpenSettings}
+            isDarkMode={themeSettings?.mode === 'dark'}
+            toggleTheme={toggleTheme || (() => {})}
+        />
     </div>
   );
 };

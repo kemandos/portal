@@ -34,7 +34,7 @@ export const MobileListView: React.FC<MobileListViewProps> = ({
 
   const getStatusColor = (percentage: number) => {
     const t = themeSettings?.thresholds || { under: 25, low: 75, balanced: 95, over: 100 };
-    if (percentage === 0) return 'bg-white/40 text-slate-400 border-slate-200/50';
+    if (percentage === 0) return 'bg-white/40 dark:bg-white/5 text-slate-400 dark:text-slate-600 border-slate-200/50 dark:border-white/5';
     if (percentage > t.over) return 'bg-[#ef4444] text-white border-transparent shadow-[0_2px_8px_rgba(239,68,68,0.25)]';
     if (percentage > t.balanced) return 'bg-[#f59e0b] text-white border-transparent shadow-[0_2px_8px_rgba(245,158,11,0.25)]';
     if (percentage > t.low) return 'bg-[#10b981] text-white border-transparent shadow-[0_2px_8px_rgba(16,185,129,0.25)]';
@@ -60,17 +60,17 @@ export const MobileListView: React.FC<MobileListViewProps> = ({
         <div 
             key={resource.id} 
             onClick={() => onCardTap(resource)}
-            className="relative bg-white rounded-2xl p-4 shadow-sm border border-gray-100 active:scale-[0.98] transition-all"
+            className="relative bg-white dark:bg-[#151515] rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-white/5 active:scale-[0.98] transition-all"
         >
             {/* Header */}
             <div className="flex items-center gap-3 mb-4">
                 <div className="shrink-0">
                     {isEmployee ? (
-                        <div className="size-10 rounded-full bg-white overflow-hidden border border-gray-100 shadow-sm">
+                        <div className="size-10 rounded-full bg-white dark:bg-slate-800 overflow-hidden border border-gray-100 dark:border-slate-700 shadow-sm">
                              <img src={resource.avatar || `https://i.pravatar.cc/150?u=${resource.id}`} alt={resource.name} className="w-full h-full object-cover" />
                         </div>
                     ) : (
-                        <div className={`size-10 rounded-xl flex items-center justify-center border shadow-sm ${isProject ? 'bg-white border-gray-100' : 'bg-primary/5 border-primary/10 text-primary'}`}>
+                        <div className={`size-10 rounded-xl flex items-center justify-center border shadow-sm ${isProject ? 'bg-white dark:bg-slate-800 border-gray-100 dark:border-slate-700' : 'bg-primary/5 border-primary/10 text-primary'}`}>
                             {isProject && resource.avatar ? (
                                 <img src={resource.avatar} alt="icon" className="w-6 h-6 object-contain" />
                             ) : (
@@ -81,10 +81,10 @@ export const MobileListView: React.FC<MobileListViewProps> = ({
                 </div>
 
                 <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-bold text-slate-900 truncate">{resource.name}</h3>
-                    <p className="text-xs text-slate-500 truncate">{resource.subtext}</p>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white truncate">{resource.name}</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{resource.subtext}</p>
                 </div>
-                <ChevronRight size={18} className="text-slate-300" />
+                <ChevronRight size={18} className="text-slate-300 dark:text-slate-600" />
             </div>
 
             {/* Allocation Grid (3 Months) */}

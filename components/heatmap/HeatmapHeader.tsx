@@ -41,9 +41,7 @@ export const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
     ? 'left-0' 
     : (isCompact || isPortraitTablet ? 'left-[40px] 3xl:left-[48px]' : 'left-[48px] 3xl:left-[56px]');
 
-  // Only disable in Projects view when projects are selected
   const isMonthHeaderDisabled = viewMode === 'Projects' && selectedIds.length > 0;
-  // Also disable "Select All Rows" if months are selected in Projects view
   const isSelectAllDisabled = viewMode === 'Projects' && selectedMonthIndices.length > 0;
 
   const handleDisabledHover = (e: React.MouseEvent, message: string) => {
@@ -71,20 +69,20 @@ export const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
             checked={checked} 
             onChange={onChange}
             disabled={disabled}
-            className={`peer appearance-none ${isCompact || isPortraitTablet ? 'size-4' : 'size-5 3xl:size-6'} rounded-full border border-gray-300 bg-white/60 backdrop-blur-sm transition-all duration-300 ease-spring checked:bg-primary checked:border-primary checked:scale-110 ${disabled ? '' : 'cursor-pointer hover:scale-110 active:scale-90'}`}
+            className={`peer appearance-none ${isCompact || isPortraitTablet ? 'size-4' : 'size-5 3xl:size-6'} rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-white/10 transition-all duration-300 ease-spring checked:bg-white checked:border-white dark:checked:bg-white dark:checked:border-white checked:scale-110 ${disabled ? '' : 'cursor-pointer hover:scale-110 active:scale-90'}`}
         />
         <Check 
             size={isCompact || isPortraitTablet ? 10 : 12} 
-            className="absolute text-white opacity-0 peer-checked:opacity-100 transition-all duration-200 pointer-events-none stroke-[3] 3xl:w-4 3xl:h-4" 
+            className="absolute text-slate-900 opacity-0 peer-checked:opacity-100 transition-all duration-200 pointer-events-none stroke-[4] 3xl:w-4 3xl:h-4" 
         />
     </div>
   );
 
   return (
-    <thead className="sticky top-0 z-30 bg-white">
-        <tr className="border-b border-slate-200">
+    <thead className="sticky top-0 z-30 bg-white dark:bg-[#0c0c0e]">
+        <tr className="border-b border-slate-200 dark:border-[#222]">
             {viewMode === 'People' && (
-                <th className={`sticky left-0 z-40 bg-white ${headerPaddingClass} text-center border-r border-slate-200/50`}>
+                <th className={`sticky left-0 z-40 bg-white dark:bg-[#0c0c0e] ${headerPaddingClass} text-center border-r border-slate-200/50 dark:border-[#222]`}>
                     <LiquidCheckbox 
                         checked={allSelectableIds.length > 0 && allSelectableIds.every(id => selectedIds.includes(id))}
                         onChange={(e) => onSelectionChange(e.target.checked ? allSelectableIds : [])}
@@ -92,7 +90,7 @@ export const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
                     />
                 </th>
             )}
-            <th className={`sticky ${stickyLeftClass} z-40 bg-[#FDFBF7] ${headerPaddingClass} text-sm font-bold text-slate-800 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.1)] align-middle border-r border-slate-200 3xl:text-base`}>
+            <th className={`sticky ${stickyLeftClass} z-40 bg-[#FDFBF7] dark:bg-[#111] ${headerPaddingClass} text-sm font-bold text-slate-800 dark:text-slate-200 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.05)] dark:shadow-none align-middle border-r border-slate-200 dark:border-[#222] 3xl:text-base`}>
                 <div className="flex items-center h-full">
                     {viewMode === 'People' ? 'Employee' : 'Project'}
                 </div>
@@ -106,9 +104,9 @@ export const HeatmapHeader: React.FC<HeatmapHeaderProps> = ({
                         key={month} 
                         className={`
                             ${headerPaddingClass} ${isPortraitTablet ? 'text-[10px]' : 'text-sm'} font-bold text-center uppercase tracking-wider align-middle transition-all duration-300 3xl:text-base
-                            border-t-[4px] border-l border-slate-200/50 bg-white
-                            ${isMonthHeaderDisabled ? 'opacity-50 cursor-not-allowed border-t-transparent text-slate-400' : 'cursor-pointer hover:bg-slate-50'}
-                            ${isColumnSelected && !isMonthHeaderDisabled ? 'border-t-primary bg-primary/5 text-primary' : (isMonthHeaderDisabled ? '' : 'border-t-transparent text-slate-500')}
+                            border-t-[4px] border-l border-slate-200/50 dark:border-[#222] bg-white dark:bg-[#0c0c0e]
+                            ${isMonthHeaderDisabled ? 'opacity-50 cursor-not-allowed border-t-transparent text-slate-400 dark:text-slate-600' : 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900'}
+                            ${isColumnSelected && !isMonthHeaderDisabled ? 'border-t-primary bg-primary/5 dark:bg-primary/10 text-primary' : (isMonthHeaderDisabled ? '' : 'border-t-transparent text-slate-500 dark:text-slate-400')}
                         `}
                         onMouseDown={(e) => {
                             if (!isMonthHeaderDisabled) handleHeaderMouseDown(e, index);

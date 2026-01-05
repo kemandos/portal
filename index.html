@@ -6,7 +6,7 @@
     <title>Staffing</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -76,6 +76,13 @@
         background-color: rgba(180, 170, 160, 0.5);
       }
       
+      .dark ::-webkit-scrollbar-thumb {
+        background-color: rgba(255, 255, 255, 0.1);
+      }
+      .dark ::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+      }
+      
       .hide-scrollbar::-webkit-scrollbar {
         display: none;
       }
@@ -95,12 +102,13 @@
         background-attachment: fixed;
         background-size: cover;
         padding-bottom: env(safe-area-inset-bottom);
+        transition: background-color 0.3s;
       }
       
       body.dark {
-        background-color: #1a1614;
-        background-image: 
-          radial-gradient(at 50% 0%, hsla(30, 20%, 15%, 1) 0px, transparent 50%);
+        background-color: #0c0c0e; /* Deep dark background */
+        background-image: none; /* Remove gradients for cleaner dark mode */
+        color: #e2e8f0;
       }
       
       /* Liquid Animation Utilities */
@@ -131,6 +139,9 @@
       .slide-in-from-top-2 {
         animation-name: slideInTop2;
       }
+      .slide-in-from-left-2 {
+        animation-name: slideInLeft2;
+      }
       
       @keyframes fadeIn {
         from { opacity: 0; }
@@ -148,6 +159,10 @@
         from { transform: translateY(-0.5rem); opacity: 0; }
         to { transform: translateY(0); opacity: 1; }
       }
+      @keyframes slideInLeft2 {
+        from { transform: translateX(-0.5rem); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
     </style>
   <script type="importmap">
 {
@@ -161,7 +176,7 @@
 }
 </script>
 </head>
-  <body class="text-slate-800 antialiased overflow-hidden selection:bg-primary/20">
+  <body class="text-slate-800 dark:text-slate-200 antialiased overflow-hidden selection:bg-primary/20 dark:selection:bg-primary/40">
     <div id="root"></div>
   </body>
 </html>

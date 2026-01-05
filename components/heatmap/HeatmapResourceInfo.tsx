@@ -41,12 +41,12 @@ export const HeatmapResourceInfo: React.FC<HeatmapResourceInfoProps> = ({
       
       if (resource.type === 'project' && resource.avatar) {
           return (
-            <div className={`relative ${sizeClass} rounded-lg bg-white flex-shrink-0 border border-gray-100 shadow-sm transition-transform duration-300 ease-spring hover:scale-110 hover:shadow-glow overflow-hidden p-1`}>
+            <div className={`relative ${sizeClass} rounded-lg bg-white dark:bg-slate-800 flex-shrink-0 border border-gray-100 dark:border-slate-700 shadow-sm transition-transform duration-300 ease-spring hover:scale-110 hover:shadow-glow overflow-hidden p-1`}>
                 <div className="w-full h-full flex items-center justify-center">
                     <img 
                         src={resource.avatar} 
                         alt={resource.name} 
-                        className={`max-w-full max-h-full object-contain ${viewMode === 'Projects' ? 'grayscale' : ''}`}
+                        className={`max-w-full max-h-full object-contain ${viewMode === 'Projects' ? 'grayscale opacity-80' : ''}`}
                     />
                 </div>
             </div>
@@ -67,21 +67,21 @@ export const HeatmapResourceInfo: React.FC<HeatmapResourceInfoProps> = ({
           });
           const avgUtil = totalPct / monthsToCheck.length;
           
-          let statusColor = 'bg-slate-400'; // Available
-          if (avgUtil > 1.0) statusColor = 'bg-red-500'; // Over
-          else if (avgUtil > 0.95) statusColor = 'bg-amber-500'; // Warning
-          else if (avgUtil > 0.75) statusColor = 'bg-emerald-500'; // Balanced
-          else if (avgUtil > 0.25) statusColor = 'bg-sky-400'; // Low
-          else statusColor = 'bg-slate-400'; // Under
+          let statusColor = 'bg-slate-400'; 
+          if (avgUtil > 1.0) statusColor = 'bg-red-500'; 
+          else if (avgUtil > 0.95) statusColor = 'bg-amber-500'; 
+          else if (avgUtil > 0.75) statusColor = 'bg-emerald-500'; 
+          else if (avgUtil > 0.25) statusColor = 'bg-sky-400'; 
+          else statusColor = 'bg-slate-400'; 
 
           return (
-            <div className={`relative ${sizeClass} rounded-full bg-gray-100 flex-shrink-0 border-2 border-white shadow-sm transition-transform duration-300 ease-spring hover:scale-110 hover:shadow-glow group/avatar`}>
+            <div className={`relative ${sizeClass} rounded-full bg-gray-100 dark:bg-slate-800 flex-shrink-0 border-2 border-white dark:border-slate-700 shadow-sm transition-transform duration-300 ease-spring hover:scale-110 hover:shadow-glow group/avatar`}>
                 <div className="w-full h-full rounded-full overflow-hidden relative z-10">
                     <img src={resource.avatar || `https://i.pravatar.cc/150?u=${resource.id}`} alt={resource.name} className="w-full h-full object-cover" />
                 </div>
                 
                 {/* Availability Badge */}
-                <div className={`absolute bottom-0 right-0 size-3 3xl:size-4 rounded-full border-2 border-white z-20 ${statusColor} shadow-sm`}></div>
+                <div className={`absolute bottom-0 right-0 size-3 3xl:size-4 rounded-full border-2 border-white dark:border-slate-800 z-20 ${statusColor} shadow-sm`}></div>
                 
                 {/* SVG Heatmap Ring */}
                 <svg className="absolute -inset-[6px] w-[calc(100%+12px)] h-[calc(100%+12px)] z-0 rotate-[-90deg]" viewBox="0 0 52 52">
@@ -91,7 +91,7 @@ export const HeatmapResourceInfo: React.FC<HeatmapResourceInfoProps> = ({
                        const cap = alloc ? alloc.capacity : 20;
                        const pct = cap > 0 ? (pt / cap) * 100 : 0;
                        
-                       let color = '#e2e8f0'; // slate-200 (empty/default)
+                       let color = '#e2e8f0'; // Default light slate-200
                        const thresholds = themeSettings.thresholds || { under: 25, low: 75, balanced: 95, over: 100 };
                        const colors = themeSettings.thresholdColors || { under: '#94a3b8', low: '#38bdf8', balanced: '#10b981', optimal: '#f59e0b', over: '#ef4444' };
 
@@ -101,6 +101,9 @@ export const HeatmapResourceInfo: React.FC<HeatmapResourceInfoProps> = ({
                            else if (pct > thresholds.low) color = colors.balanced; 
                            else if (pct > thresholds.under) color = colors.low; 
                            else color = colors.under; 
+                       } else {
+                           // Dark mode empty ring color
+                           color = 'rgba(148, 163, 184, 0.2)'; // Slate-400 with opacity
                        }
                        
                        const gap = 3;
@@ -129,9 +132,9 @@ export const HeatmapResourceInfo: React.FC<HeatmapResourceInfoProps> = ({
       let Icon = Folder;
       if (resource.type === 'project') Icon = Briefcase;
       if (resource.type === 'group') Icon = Users;
-      const ringClass = hasChildren ? "ring-2 ring-primary ring-offset-2 ring-offset-white/80" : "";
+      const ringClass = hasChildren ? "ring-2 ring-primary ring-offset-2 ring-offset-white/80 dark:ring-offset-slate-900" : "";
       return (
-        <div className={`${iconSizeClass} rounded-full ${resource.color ? 'bg-white text-primary' : 'bg-white/80 text-primary'} flex items-center justify-center shadow-sm border border-white/50 backdrop-blur-sm ${ringClass} transition-transform duration-300 ease-spring hover:scale-110 hover:bg-white hover:shadow-glow`}>
+        <div className={`${iconSizeClass} rounded-full ${resource.color ? 'bg-white dark:bg-slate-800 text-primary' : 'bg-white/80 dark:bg-white/10 text-primary'} flex items-center justify-center shadow-sm border border-white/50 dark:border-white/10 backdrop-blur-sm ${ringClass} transition-transform duration-300 ease-spring hover:scale-110 hover:bg-white dark:hover:bg-white/20 hover:shadow-glow`}>
             <Icon size={isCompact ? 14 : 18} strokeWidth={2.5} className="3xl:w-6 3xl:h-6 4xl:w-8 4xl:h-8" />
         </div>
       );
@@ -162,8 +165,7 @@ export const HeatmapResourceInfo: React.FC<HeatmapResourceInfoProps> = ({
 
   const isSelectedRow = selectedIds.includes(resource.id);
   
-  // FIXED: Opaque background and proper shadow/z-index for sticky columns
-  const defaultClass = `sticky left-[48px] z-20 ${isSelectedRow ? 'bg-rose-50' : 'bg-[#FDFBF7]'} shadow-[4px_0_8px_-2px_rgba(0,0,0,0.1)] ${paddingClass} transition-colors cursor-pointer align-middle border-r border-slate-200`;
+  const defaultClass = `sticky left-[48px] z-20 ${isSelectedRow ? 'bg-rose-50 dark:bg-rose-950/20' : 'bg-[#FDFBF7] dark:bg-[#151515]'} shadow-[4px_0_8px_-2px_rgba(0,0,0,0.05)] dark:shadow-none ${paddingClass} transition-colors cursor-pointer align-middle border-r border-slate-200 dark:border-slate-800`;
 
   return (
     <td 
@@ -180,23 +182,23 @@ export const HeatmapResourceInfo: React.FC<HeatmapResourceInfoProps> = ({
                 <div className="min-w-0 flex-1 transition-transform duration-300 ease-spring group-hover/item:translate-x-1">
                     {resource.type === 'group' ? (
                         <div className="flex flex-col justify-center pl-2 border-l-2 border-primary/20 3xl:gap-1">
-                            <span className="text-sm font-bold text-slate-900 leading-tight 3xl:text-base">{resource.name}</span>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mt-0.5 3xl:text-xs">{resource.subtext}</span>
+                            <span className="text-sm font-bold text-slate-900 dark:text-slate-100 leading-tight 3xl:text-base">{resource.name}</span>
+                            <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide mt-0.5 3xl:text-xs">{resource.subtext}</span>
                         </div>
                     ) : resource.type === 'employee' ? (
                         <div className="flex flex-col justify-center">
-                            <span className={`${isCompact ? 'text-xs 3xl:text-sm' : 'text-sm 3xl:text-base'} font-bold truncate text-slate-900 ${selectedIds.includes(resource.id) ? 'text-primary' : ''}`}>
+                            <span className={`${isCompact ? 'text-xs 3xl:text-sm' : 'text-sm 3xl:text-base'} font-bold truncate text-slate-900 dark:text-slate-100 ${selectedIds.includes(resource.id) ? 'text-primary' : ''}`}>
                                 {resource.name}
                             </span>
                             {!isCompact && (
                                 <div className="flex flex-col">
-                                    <span className="text-[11px] text-slate-500 truncate leading-tight 3xl:text-xs">
+                                    <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate leading-tight 3xl:text-xs">
                                         {resource.subtext ? resource.subtext.split('•')[0].trim() : ''}
                                     </span>
                                     {resource.skills && resource.skills.length > 0 && (
                                         <div className="flex flex-wrap gap-1 mt-1 cursor-default" onClick={(e) => e.stopPropagation()}>
                                             {resource.skills.slice(0, 2).map(skill => (
-                                                <span key={skill} className="text-[9px] font-medium bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded border border-slate-200/50 cursor-default 3xl:text-[10px] 3xl:px-2 3xl:py-1">{skill}</span>
+                                                <span key={skill} className="text-[9px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-1.5 py-0.5 rounded border border-slate-200/50 dark:border-slate-700 cursor-default 3xl:text-[10px] 3xl:px-2 3xl:py-1">{skill}</span>
                                             ))}
                                             {resource.skills.length > 2 && (
                                                 <span 
@@ -215,11 +217,11 @@ export const HeatmapResourceInfo: React.FC<HeatmapResourceInfoProps> = ({
                     ) : (
                         <>
                              <div className="flex items-center gap-2">
-                                <span className={`${depth > 0 ? 'text-xs 3xl:text-sm font-semibold text-slate-700' : 'text-sm 3xl:text-base font-bold truncate text-slate-900'} ${selectedIds.includes(resource.id) ? 'text-primary' : ''}`}>
+                                <span className={`${depth > 0 ? 'text-xs 3xl:text-sm font-semibold text-slate-700 dark:text-slate-300' : 'text-sm 3xl:text-base font-bold truncate text-slate-900 dark:text-slate-100'} ${selectedIds.includes(resource.id) ? 'text-primary' : ''}`}>
                                     {resource.name}
                                 </span>
                             </div>
-                            {depth === 0 && <div className="text-xs text-slate-500 font-medium truncate 3xl:text-sm">{resource.subtext}</div>}
+                            {depth === 0 && <div className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate 3xl:text-sm">{resource.subtext}</div>}
                         </>
                     )}
                 </div>

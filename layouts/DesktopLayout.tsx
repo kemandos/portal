@@ -131,7 +131,7 @@ export const DesktopLayout: React.FC<LayoutProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-screen bg-transparent text-slate-900 font-sans selection:bg-primary/20">
+    <div className="flex flex-col h-screen bg-transparent text-slate-900 dark:text-slate-100 font-sans selection:bg-primary/20">
       <Header 
         viewState={viewState} 
         setViewState={setViewState} 
@@ -146,15 +146,15 @@ export const DesktopLayout: React.FC<LayoutProps> = ({
             {/* Filter Bar */}
             <div className="flex-none flex flex-wrap items-center justify-between gap-4 mb-4">
                 <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-medium text-slate-500 mr-2 drop-shadow-sm 3xl:text-base">Filters:</span>
+                    <span className="text-sm font-medium text-slate-500 dark:text-slate-400 mr-2 drop-shadow-sm 3xl:text-base">Filters:</span>
                     
                     {activeFilters.map((filter, idx) => (
-                         <div key={idx} className="flex items-center gap-2 bg-white/60 backdrop-blur-xl border border-white/60 rounded-full px-3 py-1 text-xs font-medium shadow-sm animate-in fade-in zoom-in duration-300 hover:shadow-glow transition-shadow 3xl:text-sm 3xl:px-4 3xl:py-1.5">
-                            <span className="text-slate-500">{filter.key}:</span>
-                            <span className="text-slate-900 font-bold">{filter.values.join(', ')}</span>
+                         <div key={idx} className="flex items-center gap-2 bg-white/60 dark:bg-white/10 backdrop-blur-xl border border-white/60 dark:border-white/5 rounded-full px-3 py-1 text-xs font-medium shadow-sm animate-in fade-in zoom-in duration-300 hover:shadow-glow transition-shadow 3xl:text-sm 3xl:px-4 3xl:py-1.5">
+                            <span className="text-slate-500 dark:text-slate-400">{filter.key}:</span>
+                            <span className="text-slate-900 dark:text-white font-bold">{filter.values.join(', ')}</span>
                             <button 
                                 onClick={() => onRemoveFilter(idx)}
-                                className="p-0.5 hover:bg-black/5 rounded-full text-slate-400 hover:text-red-500 transition-colors ml-1 active:scale-90"
+                                className="p-0.5 hover:bg-black/5 dark:hover:bg-white/10 rounded-full text-slate-400 dark:text-slate-500 hover:text-red-500 transition-colors ml-1 active:scale-90"
                             >
                                 <X size={14} className="3xl:w-4 3xl:h-4" />
                             </button>
@@ -171,8 +171,8 @@ export const DesktopLayout: React.FC<LayoutProps> = ({
                                 text-xs font-bold px-3 py-1 rounded-full border border-dashed flex items-center gap-1 transition-all duration-300
                                 hover:scale-105 active:scale-95 3xl:text-sm 3xl:px-4 3xl:py-1.5
                                 ${isFilterMenuOpen 
-                                    ? 'bg-white text-primary border-primary shadow-glow' 
-                                    : 'text-slate-500 hover:text-primary hover:bg-white/40 border-slate-300'
+                                    ? 'bg-white dark:bg-slate-800 text-primary border-primary shadow-glow' 
+                                    : 'text-slate-500 dark:text-slate-400 hover:text-primary hover:bg-white/40 dark:hover:bg-white/10 border-slate-300 dark:border-slate-600'
                                 }
                             `}
                         >
@@ -181,13 +181,13 @@ export const DesktopLayout: React.FC<LayoutProps> = ({
 
                         {/* Dropdown Menu */}
                         {isFilterMenuOpen && (
-                            <div className="absolute left-0 top-full mt-2 bg-white/80 backdrop-blur-2xl rounded-2xl shadow-[0_20px_40px_-10px_rgba(0,0,0,0.1)] border border-white/50 py-1 z-50 min-w-[200px] animate-in fade-in zoom-in-95 duration-200 flex flex-row h-[320px] ring-1 ring-white/80 3xl:h-[400px] 3xl:min-w-[250px]">
-                                <div className="flex flex-col py-1 min-w-[180px] border-r border-gray-100/30 3xl:min-w-[220px]">
+                            <div className="absolute left-0 top-full mt-2 bg-white/80 dark:bg-slate-900/90 backdrop-blur-2xl rounded-2xl shadow-[0_20px_40px_-10px_rgba(0,0,0,0.1)] border border-white/50 dark:border-white/10 py-1 z-50 min-w-[200px] animate-in fade-in zoom-in-95 duration-200 flex flex-row h-[320px] ring-1 ring-white/80 dark:ring-white/10 3xl:h-[400px] 3xl:min-w-[250px]">
+                                <div className="flex flex-col py-1 min-w-[180px] border-r border-gray-100/30 dark:border-gray-800/30 3xl:min-w-[220px]">
                                     {filterCategories.map(category => (
                                         <button
                                             key={category}
                                             onClick={() => setActiveFilterCategory(category)}
-                                            className={`flex items-center justify-between px-4 py-2.5 text-xs font-medium text-left transition-colors 3xl:text-sm 3xl:py-3 ${activeFilterCategory === category ? 'bg-white/60 text-primary shadow-sm' : 'text-slate-700 hover:bg-white/40'}`}
+                                            className={`flex items-center justify-between px-4 py-2.5 text-xs font-medium text-left transition-colors 3xl:text-sm 3xl:py-3 ${activeFilterCategory === category ? 'bg-white/60 dark:bg-white/10 text-primary shadow-sm' : 'text-slate-700 dark:text-slate-300 hover:bg-white/40 dark:hover:bg-white/5'}`}
                                         >
                                             <div className="flex items-center gap-2">
                                                 {category === 'Capacity' && <BarChart3 size={14} className="text-slate-400 3xl:w-4 3xl:h-4" />}
@@ -199,7 +199,7 @@ export const DesktopLayout: React.FC<LayoutProps> = ({
                                 </div>
                                 {activeFilterCategory ? (
                                     <div className="flex flex-col min-w-[240px] bg-transparent rounded-r-xl 3xl:min-w-[300px]">
-                                        <div className="p-2 border-b border-gray-100/30">
+                                        <div className="p-2 border-b border-gray-100/30 dark:border-gray-800/30">
                                             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 px-2 3xl:text-xs">
                                                 Select {activeFilterCategory}
                                             </div>
@@ -212,7 +212,7 @@ export const DesktopLayout: React.FC<LayoutProps> = ({
                                                         placeholder={`Search...`}
                                                         value={searchQuery}
                                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                                        className="w-full pl-8 pr-3 py-1.5 bg-white/40 border border-white/60 rounded-lg text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white/60 transition-all 3xl:text-sm 3xl:py-2 3xl:pl-10"
+                                                        className="w-full pl-8 pr-3 py-1.5 bg-white/40 dark:bg-white/5 border border-white/60 dark:border-white/10 rounded-lg text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white/60 dark:focus:bg-white/10 transition-all 3xl:text-sm 3xl:py-2 3xl:pl-10"
                                                     />
                                                 </div>
                                             )}
@@ -231,15 +231,15 @@ export const DesktopLayout: React.FC<LayoutProps> = ({
                                                     const isSelected = currentFilter?.values.includes(option);
                                                     
                                                     // Custom rendering for Capacity options
-                                                    let colorClass = 'bg-white/60 border-slate-300';
+                                                    let colorClass = 'bg-white/60 dark:bg-white/5 border-slate-300 dark:border-slate-600';
                                                     if (activeFilterCategory === 'Capacity') {
-                                                        if (option === 'Available') colorClass = 'bg-slate-100 border-slate-200 text-slate-600';
-                                                        if (option === 'Warning') colorClass = 'bg-amber-50 border-amber-200 text-amber-600';
-                                                        if (option === 'Overbooked') colorClass = 'bg-red-50 border-red-200 text-red-600';
+                                                        if (option === 'Available') colorClass = 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400';
+                                                        if (option === 'Warning') colorClass = 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400';
+                                                        if (option === 'Overbooked') colorClass = 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400';
                                                     }
 
                                                     return (
-                                                        <label key={option} className="flex items-center gap-2 px-3 py-2 hover:bg-white/50 rounded-lg cursor-pointer group transition-all active:scale-98 3xl:px-4 3xl:py-2.5">
+                                                        <label key={option} className="flex items-center gap-2 px-3 py-2 hover:bg-white/50 dark:hover:bg-white/10 rounded-lg cursor-pointer group transition-all active:scale-98 3xl:px-4 3xl:py-2.5">
                                                             <div className={`size-4 rounded-md border flex items-center justify-center transition-all shrink-0 3xl:size-5 ${isSelected ? 'bg-primary border-primary shadow-sm' : colorClass} ${isSelected ? '' : 'group-hover:border-primary/50'}`}>
                                                                 {isSelected && <Check size={10} className="text-white 3xl:w-3 3xl:h-3" strokeWidth={3} />}
                                                             </div>
@@ -249,7 +249,7 @@ export const DesktopLayout: React.FC<LayoutProps> = ({
                                                                 checked={isSelected || false}
                                                                 onChange={() => handleFilterValueToggle(activeFilterCategory, option)}
                                                             />
-                                                            <span className={`text-xs ${isSelected ? 'font-bold text-slate-900' : 'text-slate-600'} 3xl:text-sm`}>{option}</span>
+                                                            <span className={`text-xs ${isSelected ? 'font-bold text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400'} 3xl:text-sm`}>{option}</span>
                                                         </label>
                                                     );
                                                 });
@@ -270,21 +270,21 @@ export const DesktopLayout: React.FC<LayoutProps> = ({
                     <div className="relative group z-20">
                         <button 
                             onClick={() => setIsGroupMenuOpen(!isGroupMenuOpen)}
-                            className="flex items-center gap-2 text-xs font-semibold text-slate-700 bg-white/40 backdrop-blur-xl border border-white/50 px-3 py-1.5 rounded-xl shadow-sm hover:bg-white/70 hover:shadow-glow transition-all active:scale-95 focus:ring-2 focus:ring-primary/20 outline-none min-w-[140px] justify-between 3xl:text-sm 3xl:px-4 3xl:py-2 3xl:min-w-[160px]"
+                            className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-white/50 dark:border-white/10 px-3 py-1.5 rounded-xl shadow-sm hover:bg-white/70 dark:hover:bg-white/10 hover:shadow-glow transition-all active:scale-95 focus:ring-2 focus:ring-primary/20 outline-none min-w-[140px] justify-between 3xl:text-sm 3xl:px-4 3xl:py-2 3xl:min-w-[160px]"
                         >
                             <div className="flex items-center gap-2">
-                                 <Layers size={14} className="text-slate-500 3xl:w-4 3xl:h-4" />
+                                 <Layers size={14} className="text-slate-500 dark:text-slate-400 3xl:w-4 3xl:h-4" />
                                  <span className="truncate">Group: {groupBy}</span>
                             </div>
                             <ChevronDown size={14} className="text-slate-400 group-hover:text-primary transition-colors 3xl:w-4 3xl:h-4" />
                         </button>
                         {isGroupMenuOpen && (
-                             <div className="absolute right-0 top-full mt-2 w-[180px] bg-white/80 backdrop-blur-2xl rounded-xl shadow-glass border border-white/50 py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200 3xl:w-[220px]">
+                             <div className="absolute right-0 top-full mt-2 w-[180px] bg-white/80 dark:bg-slate-900/90 backdrop-blur-2xl rounded-xl shadow-glass border border-white/50 dark:border-white/10 py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200 3xl:w-[220px]">
                                 {groupOptions.map(opt => (
                                     <button 
                                         key={opt}
                                         onClick={() => { setGroupBy(opt); setIsGroupMenuOpen(false); }}
-                                        className="w-full flex items-center justify-between px-4 py-2 text-xs text-slate-700 hover:bg-white/50 transition-colors 3xl:text-sm 3xl:py-3"
+                                        className="w-full flex items-center justify-between px-4 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-white/50 dark:hover:bg-white/10 transition-colors 3xl:text-sm 3xl:py-3"
                                     >
                                         {opt}
                                         {groupBy === opt && <Check size={14} className="text-primary 3xl:w-4 3xl:h-4" />}
@@ -296,15 +296,15 @@ export const DesktopLayout: React.FC<LayoutProps> = ({
                     
                     <button
                         onClick={() => setDensity(density === 'comfortable' ? 'compact' : 'comfortable')}
-                        className="relative size-8 flex items-center justify-center bg-white/40 backdrop-blur-xl border border-white/50 rounded-xl shadow-sm hover:bg-white/70 hover:shadow-glow transition-all active:scale-90 focus:ring-2 focus:ring-primary/20 outline-none group overflow-hidden 3xl:size-10"
+                        className="relative size-8 flex items-center justify-center bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-white/50 dark:border-white/10 rounded-xl shadow-sm hover:bg-white/70 dark:hover:bg-white/10 hover:shadow-glow transition-all active:scale-90 focus:ring-2 focus:ring-primary/20 outline-none group overflow-hidden 3xl:size-10"
                         title={density === 'comfortable' ? "Switch to Compact View" : "Switch to Comfortable View"}
                     >
                         <div className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ease-out transform ${density === 'comfortable' ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-90 scale-50'}`}>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-slate-600 group-hover:text-slate-800 3xl:w-5 3xl:h-5"><path d="M4 4h4v4H4V4zm6 0h4v4h-4V4zm6 0h4v4h-4V4zM4 10h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4zM4 16h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4z"></path></svg>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-slate-600 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200 3xl:w-5 3xl:h-5"><path d="M4 4h4v4H4V4zm6 0h4v4h-4V4zm6 0h4v4h-4V4zM4 10h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4zM4 16h4v4H4v-4zm6 0h4v4h-4v-4zm6 0h4v4h-4v-4z"></path></svg>
                         </div>
                         
                         <div className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ease-out transform ${density === 'compact' ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 rotate-90 scale-50'}`}>
-                             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-slate-600 group-hover:text-slate-800 3xl:w-5 3xl:h-5"><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"></path></svg>
+                             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-slate-600 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200 3xl:w-5 3xl:h-5"><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"></path></svg>
                         </div>
                     </button>
                 </div>

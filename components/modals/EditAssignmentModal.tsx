@@ -42,27 +42,27 @@ export const EditAssignmentModal: React.FC<EditAssignmentModalProps> = (props) =
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div 
-        className="absolute inset-0 bg-slate-900/20 backdrop-blur-[2px] transition-opacity" 
+        className="absolute inset-0 bg-slate-900/20 dark:bg-black/60 backdrop-blur-[2px] transition-opacity" 
         onClick={onClose}
       ></div>
-      <div className="relative w-full max-w-[500px] bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300 ease-spring">
+      <div className="relative w-full max-w-[500px] bg-white dark:bg-[#1e1e20] rounded-2xl shadow-2xl border border-gray-100 dark:border-white/10 overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300 ease-spring">
         
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-white/10 bg-white dark:bg-[#1e1e20]">
           <div className="flex items-center gap-3">
              {internalMode === 'form' && listEmployee && (
-                 <button onClick={actions.handleBackToList} className="p-1 -ml-2 rounded-full hover:bg-slate-100 transition-colors">
-                     <ArrowLeft size={20} className="text-slate-500" />
+                 <button onClick={actions.handleBackToList} className="p-1 -ml-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
+                     <ArrowLeft size={20} className="text-slate-500 dark:text-slate-400" />
                  </button>
              )}
             <div>
-                <h2 className="text-lg font-bold text-slate-900">{getTitle()}</h2>
-                <p className="text-xs text-slate-500 mt-0.5">{mode === 'edit' && parentResource ? `Project: ${parentResource.name}` : (mode === 'add' && parentResource ? `To: ${parentResource.name}` : '---')}</p>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">{getTitle()}</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{mode === 'edit' && parentResource ? `Project: ${parentResource.name}` : (mode === 'add' && parentResource ? `To: ${parentResource.name}` : '---')}</p>
             </div>
           </div>
           <button 
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-slate-100 transition-colors text-slate-500 hover:text-slate-700"
+            className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 transition-colors text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
           >
             <X size={20} />
           </button>

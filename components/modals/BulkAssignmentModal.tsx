@@ -28,38 +28,38 @@ export const BulkAssignmentModal: React.FC<BulkAssignmentModalProps> = ({ onClos
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div 
-        className="absolute inset-0 bg-slate-900/10 backdrop-blur-[2px] transition-opacity" 
+        className="absolute inset-0 bg-slate-900/10 dark:bg-black/60 backdrop-blur-[2px] transition-opacity" 
         onClick={onClose}
       ></div>
-      <div className="relative w-full max-w-4xl bg-[#FDFBF7]/90 backdrop-blur-2xl rounded-2xl shadow-glass border border-white/50 overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300 ease-spring">
+      <div className="relative w-full max-w-4xl bg-[#FDFBF7]/90 dark:bg-[#1e1e20]/95 backdrop-blur-2xl rounded-2xl shadow-glass dark:shadow-none border border-white/50 dark:border-white/10 overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300 ease-spring">
         
         {/* Header */}
-        <div className="p-6 border-b border-gray-100/30 flex justify-between items-center shrink-0">
+        <div className="p-6 border-b border-gray-100/30 dark:border-white/10 flex justify-between items-center shrink-0">
           <div className="flex items-center gap-3">
             <div className="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary shadow-sm ring-1 ring-primary/10">
                <Users size={20} />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-slate-900 leading-tight">Bulk Assignment</h3>
-              <p className="text-xs text-slate-500">Assign multiple employees to a project</p>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">Bulk Assignment</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Assign multiple employees to a project</p>
             </div>
           </div>
           <button 
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-white/50 transition-colors"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-2 rounded-full hover:bg-white/50 dark:hover:bg-white/10 transition-colors"
           >
             <X size={20} />
           </button>
         </div>
 
-        <div className="p-6 space-y-8 overflow-y-auto custom-scrollbar flex-1 min-h-0">
+        <div className="p-6 space-y-8 overflow-y-auto custom-scrollbar flex-1 min-h-0 bg-white/40 dark:bg-transparent">
             
             {/* Project Select - Full Width */}
             <div>
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3 block">Project</label>
+                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3 block">Project</label>
                 <div className="relative group">
                     <FolderOpen className="absolute left-3 top-3 text-gray-400" size={18} />
-                    <select className="w-full pl-10 pr-4 py-3 bg-white/50 border border-white/60 rounded-lg text-sm font-medium text-slate-900 shadow-sm focus:border-primary focus:ring-1 focus:ring-primary appearance-none cursor-pointer hover:bg-white/80 transition-colors outline-none backdrop-blur-sm">
+                    <select className="w-full pl-10 pr-4 py-3 bg-white/50 dark:bg-black/20 border border-white/60 dark:border-white/10 rounded-lg text-sm font-medium text-slate-900 dark:text-white shadow-sm focus:border-primary focus:ring-1 focus:ring-primary appearance-none cursor-pointer hover:bg-white/80 dark:hover:bg-white/5 transition-colors outline-none backdrop-blur-sm">
                         <option>E-Commerce Platform Redesign</option>
                         <option>Internal HR Dashboard</option>
                         <option>Mobile App Migration</option>
@@ -82,11 +82,11 @@ export const BulkAssignmentModal: React.FC<BulkAssignmentModalProps> = ({ onClos
             {/* Allocations Section */}
             <div className="flex flex-col min-h-0">
                 <div className="flex items-center justify-between mb-4">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Allocations</label>
-                    <span className="text-[10px] text-slate-500 bg-gray-100/50 px-2 py-0.5 rounded-full border border-gray-200/50 font-medium">Step: 0.5 PT</span>
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Allocations</label>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 bg-gray-100/50 dark:bg-white/5 px-2 py-0.5 rounded-full border border-gray-200/50 dark:border-white/10 font-medium">Step: 0.5 PT</span>
                 </div>
                 
-                <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm flex flex-col bg-white">
+                <div className="border border-gray-200 dark:border-white/10 rounded-xl overflow-hidden shadow-sm flex flex-col bg-white dark:bg-[#151515]">
                     <BulkAllocationTable 
                         selectedEmployees={selectedEmployees}
                         activeMonths={activeMonths}
@@ -111,15 +111,15 @@ export const BulkAssignmentModal: React.FC<BulkAssignmentModalProps> = ({ onClos
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-white/40 border-t border-white/50 flex justify-between items-center shrink-0 backdrop-blur-md">
+        <div className="p-4 bg-white/40 dark:bg-[#1e1e20] border-t border-white/50 dark:border-white/10 flex justify-between items-center shrink-0 backdrop-blur-md">
             <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-500 font-medium">Total Added:</span>
-                <span className="text-sm font-bold text-slate-900">
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Total Added:</span>
+                <span className="text-sm font-bold text-slate-900 dark:text-white">
                     {visibleTotal.toFixed(1)} PT
                 </span>
             </div>
             <div className="flex gap-3">
-                <button onClick={onClose} className="px-5 py-2.5 text-sm font-bold text-slate-500 hover:text-slate-900 hover:bg-white/50 rounded-lg transition-colors active:scale-95">
+                <button onClick={onClose} className="px-5 py-2.5 text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/10 rounded-lg transition-colors active:scale-95">
                     Cancel
                 </button>
                 <button onClick={onClose} className="px-6 py-2.5 text-sm font-bold text-white bg-primary rounded-lg shadow-lg shadow-primary/30 hover:bg-primary-hover hover:shadow-primary/40 transition-all transform active:scale-95">

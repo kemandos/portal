@@ -64,7 +64,7 @@ export const Heatmap: React.FC<HeatmapProps> = ({
   const headerPaddingClass = isCompact || isPortraitTablet ? 'px-2 py-2.5 3xl:px-3 3xl:py-3.5' : 'px-4 py-3 3xl:px-6 3xl:py-4';
 
   return (
-    <div className="bg-[#FDFBF7]/60 backdrop-blur-2xl rounded-3xl shadow-glass border border-white/50 overflow-hidden flex flex-col h-full w-full select-none"
+    <div className="bg-[#FDFBF7]/60 dark:bg-[#151515]/60 backdrop-blur-2xl rounded-3xl shadow-glass dark:shadow-none border border-white/50 dark:border-white/5 overflow-hidden flex flex-col h-full w-full select-none"
          onMouseUp={actions.stopDragging}>
         
         <Tooltip content={tooltipState?.content} position={tooltipState?.position || null} />
@@ -97,7 +97,7 @@ export const Heatmap: React.FC<HeatmapProps> = ({
                     setTooltipState={actions.setTooltipState}
                 />
 
-                <tbody className="divide-y divide-slate-200">
+                <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                     {flattenedRows.map((row, rowIndex) => (
                         <HeatmapRow 
                             key={row.key}

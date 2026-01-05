@@ -48,26 +48,26 @@ export const MobileEditAssignmentModal: React.FC<EditAssignmentModalProps> = (pr
   return (
     <>
     <div className="fixed inset-0 z-[90] bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300" onClick={onClose} />
-    <div className="fixed inset-0 z-[100] flex flex-col bg-white animate-in slide-in-from-bottom duration-300 shadow-xl">
+    <div className="fixed inset-0 z-[100] flex flex-col bg-white dark:bg-[#1e1e20] animate-in slide-in-from-bottom duration-300 shadow-xl">
         
         {/* Mobile Header */}
-        <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100 bg-white sticky top-0 z-10 shrink-0">
+        <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100 dark:border-white/10 bg-white dark:bg-[#1e1e20] sticky top-0 z-10 shrink-0">
           <div className="flex items-center gap-4">
              {internalMode === 'form' && listEmployee ? (
-                 <button onClick={actions.handleBackToList} className="p-2 -ml-2 rounded-full hover:bg-slate-50 text-slate-900 transition-colors">
+                 <button onClick={actions.handleBackToList} className="p-2 -ml-2 rounded-full hover:bg-slate-50 dark:hover:bg-white/10 text-slate-900 dark:text-white transition-colors">
                      <ArrowLeft size={24} />
                  </button>
              ) : (
-                 <button onClick={onClose} className="p-2 -ml-2 rounded-full hover:bg-slate-50 text-slate-900 transition-colors">
+                 <button onClick={onClose} className="p-2 -ml-2 rounded-full hover:bg-slate-50 dark:hover:bg-white/10 text-slate-900 dark:text-white transition-colors">
                      <X size={24} />
                  </button>
              )}
             <div className="flex flex-col">
-                <h2 className="text-lg font-bold text-slate-900 leading-none">{getTitle()}</h2>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white leading-none">{getTitle()}</h2>
                 {parentResource && (
-                    <p className="text-xs font-medium text-slate-500 mt-1 truncate max-w-[200px]">
+                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1 truncate max-w-[200px]">
                         {mode === 'edit' ? 'For: ' : 'To: '} 
-                        <span className="text-slate-700">{parentResource.name}</span>
+                        <span className="text-slate-700 dark:text-slate-200">{parentResource.name}</span>
                     </p>
                 )}
             </div>
@@ -75,7 +75,7 @@ export const MobileEditAssignmentModal: React.FC<EditAssignmentModalProps> = (pr
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto bg-white custom-scrollbar pb-24">
+        <div className="flex-1 overflow-y-auto bg-white dark:bg-[#1e1e20] custom-scrollbar pb-24">
             {internalMode === 'list' && (
                 <AssignmentList 
                     assignments={listAssignments}
@@ -132,11 +132,11 @@ export const MobileEditAssignmentModal: React.FC<EditAssignmentModalProps> = (pr
 
         {/* Sticky Footer for Form Actions */}
         {internalMode === 'form' && (
-            <div className="absolute bottom-0 left-0 right-0 px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between shrink-0 pb-safe z-20">
+            <div className="absolute bottom-0 left-0 right-0 px-4 py-3 bg-white dark:bg-[#1e1e20] border-t border-gray-200 dark:border-white/10 flex items-center justify-between shrink-0 pb-safe z-20">
                     <div className="flex items-center gap-2">
                          <button 
                             onClick={onClose}
-                            className="size-12 rounded-xl bg-slate-50 border border-gray-200 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all shadow-sm active:scale-95 flex items-center justify-center"
+                            className="size-12 rounded-xl bg-slate-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 transition-all shadow-sm active:scale-95 flex items-center justify-center"
                             title="Cancel"
                         >
                             <X size={20} />
@@ -147,7 +147,7 @@ export const MobileEditAssignmentModal: React.FC<EditAssignmentModalProps> = (pr
                         {mode === 'edit' && !isCapacityEdit && (
                              <button 
                                 onClick={actions.handleUnassignClick}
-                                className="size-12 rounded-xl bg-white border border-gray-200 text-slate-400 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition-all shadow-sm active:scale-95 flex items-center justify-center"
+                                className="size-12 rounded-xl bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-200 dark:hover:border-red-900/30 transition-all shadow-sm active:scale-95 flex items-center justify-center"
                                 title="Unassign"
                             >
                                 <Trash2 size={20} />
