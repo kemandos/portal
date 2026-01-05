@@ -33,9 +33,9 @@ export const updateResourceTree = (
     childEntityId: string, 
     month: string, 
     pt: number, 
-    childTemplate: Resource | any
+    childTemplate: Partial<Resource>
 ): Resource[] => {
-    const newData = JSON.parse(JSON.stringify(data)); // Deep clone
+    const newData = structuredClone(data); // Use structuredClone for better performance
     
     const parent = findResource(newData, parentId);
     if (parent) {
@@ -55,7 +55,7 @@ export const updateResourceTree = (
         } else {
             const newId = `${childEntityId}::${parentId}`;
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { children, allocations, ...safeTemplate } = childTemplate;
+            const { children, allocations, ...safeTemplate } = childTemplate as Resource;
             
             parent.children.push({
                 ...safeTemplate,
@@ -70,7 +70,7 @@ export const updateResourceTree = (
 
 // Update Capacity for a node
 export const updateNodeCapacity = (data: Resource[], resourceId: string, month: string, capacity: number): Resource[] => {
-    const newData = JSON.parse(JSON.stringify(data));
+    const newData = structuredClone(data);
     const node = findResource(newData, resourceId);
     if (node) {
         if (!node.allocations[month]) {
@@ -83,7 +83,7 @@ export const updateNodeCapacity = (data: Resource[], resourceId: string, month: 
 
 // Remove an allocation for specific months from tree
 export const removeAllocationForMonths = (data: Resource[], parentId: string, childEntityId: string, monthsToRemove: string[]): Resource[] => {
-    const newData = JSON.parse(JSON.stringify(data));
+    const newData = structuredClone(data);
     const parent = findResource(newData, parentId);
     if (parent && parent.children) {
         const idx = parent.children.findIndex((c: Resource) => 

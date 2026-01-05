@@ -70,7 +70,9 @@ export const MobileLayout: React.FC<LayoutProps> = ({
       if (touchStartY.current > 0 && !isRefreshing) {
           const deltaY = e.touches[0].clientY - touchStartY.current;
           if (deltaY > 0) {
-              setPullY(deltaY * 0.5); // Resistance
+              // Prevent default only if we are at top and pulling down
+              if (e.cancelable) e.preventDefault(); 
+              setPullY(Math.min(deltaY * 0.5, 100)); // Cap at 100px resistance
           }
       }
   };
@@ -167,10 +169,11 @@ export const MobileLayout: React.FC<LayoutProps> = ({
       <div className="bg-[#FDFBF7] dark:bg-[#0c0c0e] border-b border-gray-200/50 dark:border-white/10 shadow-sm flex-none z-30">
           <div className="flex items-center justify-between px-4 py-3">
               
-              {/* Hamburger Button */}
+              {/* Hamburger Button - Min 44px target */}
               <button
                   onClick={() => setIsSidebarOpen(true)}
-                  className="p-2.5 rounded-xl bg-white/60 dark:bg-white/5 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors active:scale-95"
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-white/60 dark:bg-white/5 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors active:scale-95"
+                  aria-label="Open Menu"
               >
                   <Menu size={20} />
               </button>
@@ -180,7 +183,7 @@ export const MobileLayout: React.FC<LayoutProps> = ({
                   <button
                       onClick={() => setViewState(prev => ({ ...prev, mode: 'People' }))}
                       className={`
-                          px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200
+                          px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 min-h-[36px]
                           ${viewState.mode === 'People'
                               ? 'bg-white dark:bg-slate-800 text-primary shadow-sm'
                               : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
@@ -192,7 +195,7 @@ export const MobileLayout: React.FC<LayoutProps> = ({
                   <button
                       onClick={() => setViewState(prev => ({ ...prev, mode: 'Projects' }))}
                       className={`
-                          px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200
+                          px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 min-h-[36px]
                           ${viewState.mode === 'Projects'
                               ? 'bg-white dark:bg-slate-800 text-primary shadow-sm'
                               : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
@@ -203,10 +206,11 @@ export const MobileLayout: React.FC<LayoutProps> = ({
                   </button>
               </div>
               
-              {/* Settings Button */}
+              {/* Settings Button - Min 44px target */}
               <button
                   onClick={onOpenSettings}
-                  className="p-2.5 rounded-xl bg-white/60 dark:bg-white/5 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-sm text-slate-600 dark:text-slate-400 hover:text-primary transition-colors active:scale-95"
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-white/60 dark:bg-white/5 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-sm text-slate-600 dark:text-slate-400 hover:text-primary transition-colors active:scale-95"
+                  aria-label="Settings"
               >
                   <Settings size={20} />
               </button>
@@ -239,7 +243,7 @@ export const MobileLayout: React.FC<LayoutProps> = ({
                 {/* Filter Button - Full Width */}
                 <button 
                     onClick={() => setIsFilterSheetOpen(!isFilterSheetOpen)}
-                    className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold shadow-sm border transition-all duration-200 active:scale-95 bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700"
+                    className="w-full min-h-[44px] flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold shadow-sm border transition-all duration-200 active:scale-95 bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-700"
                 >
                     <div className="relative shrink-0">
                         <FilterIcon size={18} className="text-slate-600 dark:text-slate-400" />
@@ -256,12 +260,12 @@ export const MobileLayout: React.FC<LayoutProps> = ({
                 {activeFilters.length > 0 && (
                     <div className="flex gap-2 overflow-x-auto hide-scrollbar">
                         {activeFilters.map((filter, idx) => (
-                            <div key={idx} className="flex items-center gap-1.5 bg-white dark:bg-slate-800 border border-gray-200/50 dark:border-slate-700 px-3 py-1.5 rounded-lg shadow-sm whitespace-nowrap">
+                            <div key={idx} className="flex items-center gap-1.5 bg-white dark:bg-slate-800 border border-gray-200/50 dark:border-slate-700 px-3 py-1.5 rounded-lg shadow-sm whitespace-nowrap min-h-[32px]">
                                 <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">{filter.key}:</span>
                                 <span className="text-[10px] font-bold text-primary">{filter.values[0]}{filter.values.length > 1 ? ` +${filter.values.length - 1}` : ''}</span>
                                 <button 
                                     onClick={(e) => { e.stopPropagation(); onRemoveFilter(idx); }}
-                                    className="ml-0.5 p-0.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-500"
+                                    className="ml-0.5 min-w-[24px] min-h-[24px] flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-500"
                                 >
                                     <X size={12} />
                                 </button>
@@ -345,7 +349,7 @@ export const MobileLayout: React.FC<LayoutProps> = ({
                 {activeFilters.length > 0 && (
                     <button 
                         onClick={() => { activeFilters.forEach((_, i) => onRemoveFilter(0)); }}
-                        className="text-xs font-bold text-slate-500 hover:text-red-500 transition-colors"
+                        className="text-xs font-bold text-slate-500 hover:text-red-500 transition-colors min-w-[44px] min-h-[44px]"
                     >
                         Clear All
                     </button>
@@ -360,7 +364,7 @@ export const MobileLayout: React.FC<LayoutProps> = ({
                         <div key={category} className="bg-white dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 rounded-xl overflow-hidden shadow-sm transition-all mb-3 last:mb-0">
                             <button 
                                 onClick={() => setActiveFilterCategory(isOpen ? null : category)}
-                                className="w-full flex items-center justify-between p-4 text-left active:bg-slate-50 dark:active:bg-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-700/50 transition-colors"
+                                className="w-full min-h-[56px] flex items-center justify-between p-4 text-left active:bg-slate-50 dark:active:bg-slate-700 hover:bg-slate-50/50 dark:hover:bg-slate-700/50 transition-colors"
                             >
                                 <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{category}</span>
                                 <div className="flex items-center gap-3">
@@ -379,7 +383,7 @@ export const MobileLayout: React.FC<LayoutProps> = ({
                                         {getOptionsForCategory(category).map(option => {
                                             const isSelected = activeFilters.find(f => f.key === category)?.values.includes(option);
                                             return (
-                                                <label key={option} className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer group transition-colors">
+                                                <label key={option} className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer group transition-colors min-h-[44px]">
                                                     <div className={`size-5 rounded-md border flex items-center justify-center transition-colors ${isSelected ? 'bg-primary border-primary shadow-sm' : 'bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 group-hover:border-primary/50'}`}>
                                                         {isSelected && <Check size={12} className="text-white" strokeWidth={3} />}
                                                     </div>
@@ -404,7 +408,7 @@ export const MobileLayout: React.FC<LayoutProps> = ({
              <div className="p-4 bg-white dark:bg-slate-800 border-t border-gray-100 dark:border-slate-700 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.02)]">
                 <button 
                     onClick={() => setIsFilterSheetOpen(false)}
-                    className="w-full py-3.5 text-sm font-bold text-white bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 rounded-xl shadow-lg transition-colors active:scale-95"
+                    className="w-full min-h-[56px] py-3.5 text-sm font-bold text-white bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 rounded-xl shadow-lg transition-colors active:scale-95"
                 >
                     Apply Filters
                 </button>
