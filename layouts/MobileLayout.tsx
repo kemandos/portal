@@ -4,6 +4,7 @@ import { MobileListView } from '../components/MobileListView';
 import { X, Filter as FilterIcon, Settings, RefreshCw, Plus, ChevronDown, ChevronRight, Check } from 'lucide-react';
 import { MOCK_PEOPLE, MOCK_PROJECTS, MONTHS } from '../constants';
 import { DetailSheet } from '../components/mobile/DetailSheet';
+import { findResource } from '../utils/resourceHelpers';
 
 interface LayoutProps {
   viewState: ViewState;
@@ -44,6 +45,10 @@ export const MobileLayout: React.FC<LayoutProps> = ({
   // Detail Sheet State
   const [detailSheetOpen, setDetailSheetOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Resource | null>(null);
+  
+  // Compute active resource from currentData to ensure updates (like added assignments) are reflected immediately in DetailSheet
+  // and to prevent stale data when returning from Edit Modal.
+  const activeResource = selectedItem ? findResource(currentData, selectedItem.id) : null;
   
   // Pull to Refresh State
   const [pullY, setPullY] = useState(0);
@@ -284,27 +289,26 @@ export const MobileLayout: React.FC<LayoutProps> = ({
       <DetailSheet 
         isOpen={detailSheetOpen}
         onClose={() => setDetailSheetOpen(false)}
-        employee={viewState.mode === 'People' ? selectedItem : undefined}
-        project={viewState.mode === 'Projects' ? selectedItem : undefined}
+        employee={viewState.mode === 'People' ? activeResource : undefined}
+        project={viewState.mode === 'Projects' ? activeResource : undefined}
         viewMode={viewState.mode}
         onEditAllocations={() => {
-            setDetailSheetOpen(false);
-            if (selectedItem) {
+            // Keep DetailSheet open so when the modal closes, we return here
+            if (activeResource) {
                 if (viewState.mode === 'Projects') {
-                    // Force assignments intent
-                    handleItemClick(selectedItem.id, 'assignments');
+                    handleItemClick(activeResource.id, 'assignments');
                 } else {
-                    handleItemClick(selectedItem.id);
+                    handleItemClick(activeResource.id);
                 }
             }
         }}
         onEditBudget={(projectId) => {
-            setDetailSheetOpen(false);
+             // Keep DetailSheet open
             handleItemClick(projectId, 'budget');
         }}
         onAddChild={() => {
-            setDetailSheetOpen(false);
-            if (selectedItem && onAddChild) onAddChild(selectedItem.id);
+            // Keep DetailSheet open
+            if (activeResource && onAddChild) onAddChild(activeResource.id);
         }}
         onEditMonth={handleEditMonth}
       />
